@@ -17,7 +17,7 @@
       <a mat-button href="#about">About</a>
       <a mat-button href="#contact">Contact</a>
     </nav>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 d-none d-lg-flex">
       <a mat-stroked-button color="accent" routerLink="/login">Login</a>
       <a mat-flat-button color="accent" routerLink="/register">Register</a>
     </div>
@@ -25,10 +25,10 @@
 </mat-toolbar>
 
 <mat-menu #menu="matMenu">
-  <button mat-menu-item href="#home">Home</button>
-  <button mat-menu-item href="#features">Features</button>
-  <button mat-menu-item href="#about">About</button>
-  <button mat-menu-item href="#contact">Contact</button>
+  <button mat-menu-item (click)="scrollToSection('home'); menu.closed.emit()">Home</button>
+  <button mat-menu-item (click)="scrollToSection('features'); menu.closed.emit()">Features</button>
+  <button mat-menu-item (click)="scrollToSection('about'); menu.closed.emit()">About</button>
+  <button mat-menu-item (click)="scrollToSection('contact'); menu.closed.emit()">Contact</button>
   <button mat-menu-item routerLink="/login">Login</button>
   <button mat-menu-item routerLink="/register">Register</button>
 </mat-menu>

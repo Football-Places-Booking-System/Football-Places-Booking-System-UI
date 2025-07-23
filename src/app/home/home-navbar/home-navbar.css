@@ -4,7 +4,7 @@ nav {
 
 .navbar-brand img {
   height: 40px;
-  filter: none !important; /* ✅ ألغِ أي drop-shadow */
+  filter: none !important; 
 }
 
 .nav-link {
@@ -26,7 +26,6 @@ nav {
   box-shadow: none !important;
 }
 
-/* ✅ ألغِ الـ text-shadow من كل العناصر */
 .navbar-hero-bg .navbar-brand,
 .navbar-hero-bg .navbar-brand span,
 .navbar-hero-bg .mat-button,
@@ -37,7 +36,6 @@ nav {
   text-shadow: none !important;
 }
 
-/* ✅ ألغِ الـ drop-shadow من صورة اللوجو */
 .navbar-hero-bg .navbar-brand img {
   filter: none !important;
 }
@@ -62,4 +60,43 @@ nav {
 
 .navbar-light-bg .navbar-brand img {
   filter: none !important;
+}
+
+/* Responsive styles */
+@media (max-width: 991.98px) {
+  .d-lg-flex {
+    display: none !important;
+  }
+  .d-lg-none {
+    display: inline-block !important;
+  }
+  .d-flex.gap-2 {
+    gap: 0.5rem !important;
+  }
+  .container-fluid {
+    flex-direction: row;
+    padding: 0 0.5rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .d-lg-flex {
+    display: flex !important;
+  }
+  .d-lg-none {
+    display: none !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .navbar-brand span {
+    font-size: 1rem;
+  }
+  .navbar-brand img {
+    height: 32px;
+    width: 32px;
+  }
+  .container-fluid {
+    padding: 0 0.25rem;
+  }
 }
