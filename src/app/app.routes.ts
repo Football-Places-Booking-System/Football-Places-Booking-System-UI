@@ -58,10 +58,10 @@ export const routes: Routes = [
   { path: 'users/:id', component: UserCard },
 
   // Teams
-  { path: 'teams', component: TeamList },
   { path: 'teams/create', component: CreateTeam },
-  { path: 'teams/:id', component: TeamDetails },
   { path: 'teams/:id/invite', component: InvitePlayer },
+  { path: 'teams/:id', component: TeamDetails },
+  { path: 'teams', component: TeamList },
   { path: 'teams/:id/requests', component: TeamRequests },
 
   // Places

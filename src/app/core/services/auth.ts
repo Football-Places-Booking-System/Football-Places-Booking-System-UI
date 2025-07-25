@@ -1,62 +1,92 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { Observable, of,throwError  } from 'rxjs';
+import { tap, catchError ,delay} from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class Auth {
-  private readonly TOKEN_KEY = 'jwt_token';
-  private apiUrl = 'YOUR_BACKEND_API_URL';
+   private loggedIn = false;
+  private currentUserEmail: string | null = null; // Store current user's email for mock organizer check
 
-  constructor(private router: Router) { }
+  constructor(private router: Router) {
+    if (typeof localStorage !== 'undefined') {
+      this.loggedIn = !!localStorage.getItem('isLoggedIn');
+      this.currentUserEmail = localStorage.getItem('currentUserEmail'); // Load email
+    }
+  }
 
-  register(userData: any): Observable<any> {
-    // Mock implementation
-    return of({ message: 'Registration successful!', token: 'fake-jwt-token-for-register' }).pipe(
-      tap((response: any) => {
-        if (response.token) {
-          this.saveToken(response.token);
-          this.router.navigate(['/dashboard']);
+  login(email: string, password: string): Observable<boolean> {
+    console.log('AuthService: Attempting login for:', email);
+    return of(true).pipe(
+      delay(1000),
+      tap(() => {
+        if (email === 'user@example.com' && password === 'password123') {
+          this.loggedIn = true;
+          this.currentUserEmail = email; // Save email
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUserEmail', email); // Store email
+          }
+          console.log('AuthService: Login successful.');
+        } else if (email === 'organizer@example.com' && password === 'password123') {
+          this.loggedIn = true;
+          this.currentUserEmail = email; // Save email
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUserEmail', email); // Store email
+          }
+          console.log('AuthService: Organizer login successful.');
         }
-      }),
-      catchError(error => {
-        throw error;
+        else {
+          this.loggedIn = false;
+          this.currentUserEmail = null;
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('currentUserEmail');
+          }
+          console.warn('AuthService: Login failed (invalid credentials).');
+          throw new Error('Invalid email or password.');
+        }
       })
     );
   }
 
-  login(credentials: any): Observable<any> {
-    // Mock implementation
-    return of({ message: 'Login successful!', token: 'fake-jwt-token-12345' }).pipe(
-      tap((response: any) => {
-        if (response.token) {
-          this.saveToken(response.token);
-          this.router.navigate(['/dashboard']);
+  register(username: string, email: string, password: string): Observable<boolean> {
+    console.log('AuthService: Attempting registration for:', email);
+    return of(true).pipe(
+      delay(1000),
+      tap(() => {
+        if (email === 'taken@example.com') {
+          console.warn('AuthService: Registration failed (email already taken).');
+          throw new Error('Email already registered.');
+        } else {
+          console.log('AuthService: Registration successful for:', email);
         }
-      }),
-      catchError(error => {
-        throw error;
       })
     );
   }
 
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    this.router.navigate(['/auth/login']);
-  }
-
-  private saveToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    this.loggedIn = false;
+    this.currentUserEmail = null;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('currentUserEmail');
+    }
+    console.log('AuthService: Logged out. Redirecting to login.');
+    this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean {
-    const token = this.getToken();
-    return !!token;
+    return this.loggedIn;
+  }
+
+  // New: Mock isOrganizer method
+  isOrganizer(): boolean {
+    // For testing, assume 'organizer@example.com' is an organizer
+    // In a real app, this would involve checking user roles from backend
+    return this.loggedIn && this.currentUserEmail === 'organizer@example.com';
   }
 }

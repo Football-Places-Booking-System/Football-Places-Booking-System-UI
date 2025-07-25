@@ -32,9 +32,11 @@ loginForm!: FormGroup;
     this.errorMessage = '';
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
-      this.authService.login({ email, password }).subscribe({
+      this.authService.login( email, password ).subscribe({
         next: (response:any) => {
           console.log('Login successful:', response);
+                    this.router.navigate(['/dashboard']);
+
         },
         error: (err:any) => {
           console.error('Login failed:', err);
