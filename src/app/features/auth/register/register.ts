@@ -47,16 +47,14 @@ export class Register implements OnInit {
     this.errorMessage = '';
     if (this.registerForm.valid) {
       const { username, email, password } = this.registerForm.value;
-      this.authService.register( username, email, password ).subscribe({
-        next: (response :any) => {
-          console.log('Registration successful:', response);
-          this.router.navigate(['/login']);
-        },
-        error: (err :any) => {
-          console.error('Registration failed:', err);
-          this.errorMessage = 'Registration failed. Please try again.';
-        }
-      });
+      const success = this.authService.register({ username, email, password });
+      if (success) {
+        console.log('Registration successful');
+        this.router.navigate(['/login']);
+      } else {
+        console.error('Registration failed');
+        this.errorMessage = 'Registration failed. Username or email already exists.';
+      }
     } else {
       this.errorMessage = 'Please enter valid registration data.';
       this.markAllAsTouched(this.registerForm);

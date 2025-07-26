@@ -32,17 +32,14 @@ export class Login implements OnInit{
     this.errorMessage = '';
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
-      this.authService.login( email, password ).subscribe({
-        next: (response:any) => {
-          console.log('Login successful:', response);
-                    this.router.navigate(['/dashboard']);
-
-        },
-        error: (err:any) => {
-          console.error('Login failed:', err);
-          this.errorMessage = 'Login failed. Please check your credentials.';
-        }
-      });
+      const success = this.authService.login(email, password);
+      if (success) {
+        console.log('Login successful');
+        this.router.navigate(['/dashboard']);
+      } else {
+        console.error('Login failed');
+        this.errorMessage = 'Login failed. Please check your credentials.';
+      }
     } else {
       this.errorMessage = 'Please enter valid login data.';
       this.markAllAsTouched(this.loginForm);

@@ -14,6 +14,7 @@ interface IPlayer {
 
 @Component({
   selector: 'app-team-details',
+  standalone: true,
   imports: [NgIf, NgFor, ReactiveFormsModule], // Add ReactiveFormsModule and CommonModule
   templateUrl: './team-details.html', // Corrected filename
   styleUrls: ['./team-details.css'] // Corrected filename
@@ -58,7 +59,7 @@ export class TeamDetails implements OnInit, OnDestroy { // Renamed class to Team
       } else {
         this.errorMessage = 'Team ID not provided in URL.';
         console.error('TeamDetailsComponent: Team ID is missing in the URL. Redirecting to team list.');
-        this.router.navigate(['/teams']);
+        this.router.navigate(['/dashboard/teams']);
       }
     });
   }
@@ -84,13 +85,13 @@ export class TeamDetails implements OnInit, OnDestroy { // Renamed class to Team
         } else {
           this.errorMessage = 'Team not found.';
           console.warn(`TeamDetailsComponent: Team with ID "${id}" not found. Redirecting to team list.`);
-          this.router.navigate(['/teams']);
+          this.router.navigate(['/dashboard/teams']);
         }
       },
       error: (err) => {
         console.error("TeamDetailsComponent: Error loading team details:", err);
         this.errorMessage = `Failed to load team details: ${err.message || 'Unknown error'}`;
-        this.router.navigate(['/teams']); // Redirect on error
+        this.router.navigate(['/dashboard/teams']); // Redirect on error
       }
     });
   }
@@ -162,11 +163,11 @@ export class TeamDetails implements OnInit, OnDestroy { // Renamed class to Team
 
   goToInvitePlayer(teamId: string): void {
     console.log(`TeamDetailsComponent: Navigating to invite player page for team ID: ${teamId}`);
-    this.router.navigate(['/teams', teamId, 'invite']);
+    this.router.navigate(['/dashboard/teams', teamId, 'invite']);
   }
 
   goBackToList(): void {
     console.log('TeamDetailsComponent: Attempting to navigate back to team list.');
-    this.router.navigate(['/teams']);
+    this.router.navigate(['/dashboard/teams']);
   }
 }

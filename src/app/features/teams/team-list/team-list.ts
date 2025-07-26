@@ -9,10 +9,12 @@ import { NgIf,NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-team-list',
+  standalone: true,
   templateUrl: './team-list.html',
   styleUrls: ['./team-list.css'],
   imports: [
-    NgIf,NgFor,
+    NgIf,
+    NgFor,
     MatCardModule,
     MatButtonModule
   ]
@@ -50,11 +52,11 @@ export class TeamList implements OnInit, OnDestroy {
   }
 
   goToTeamDetails(id: string): void {
-    this.router.navigate(['/teams', id]);
+    this.router.navigate(['/dashboard/teams', id]);
   }
 
   goToCreateTeam(): void {
-    this.router.navigate(['/teams/create']);
+    this.router.navigate(['/dashboard/teams/create']);
   }
 
   editTeamList(): void {
@@ -83,6 +85,6 @@ export class TeamList implements OnInit, OnDestroy {
 
   goToHome(): void {
     // Assuming '/home' is your actual home page. Adjust if needed.
-    this.router.navigate(['/home']);
+    this.router.navigate(['/']);
   }
 }

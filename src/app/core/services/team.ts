@@ -1,103 +1,102 @@
-// src/app/core/services/team.service.ts
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 
-// Define the ITeam interface here directly
 export interface ITeam {
   id: string;
   name: string;
-  description: string;
-  // Add any other team properties here as needed
+  description?: string;
+  organizerId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class Team {
-  // Use ITeam interface for the Subject and Observable
-  private teamsSubject = new BehaviorSubject<ITeam[]>(this.loadTeamsFromLocalStorage());
-  teams$: Observable<ITeam[]> = this.teamsSubject.asObservable();
-
-  constructor() {
-    console.log('TeamService: Initialized.');
-  }
-
-  // Private function to load teams from localStorage
-  private loadTeamsFromLocalStorage(): ITeam[] {
-    try {
-      const storedTeams = localStorage.getItem('teams');
-      if (storedTeams) {
-        const teams = JSON.parse(storedTeams);
-        console.log('TeamService: Teams loaded from localStorage:', teams);
-        return teams;
-      }
-    } catch (error) {
-      console.error('TeamService: Error parsing teams from localStorage', error);
-    }
-    return [];
-  }
-
-  // Private function to save teams to localStorage
-  private saveTeamsToLocalStorage(teams: ITeam[]): void {
-    try {
-      localStorage.setItem('teams', JSON.stringify(teams));
-      console.log('TeamService: Teams saved to localStorage:', teams);
-    } catch (error) {
-      console.error('TeamService: Error saving teams to localStorage', error);
-    }
-  }
-
-  // Get all teams
+  
   getTeams(): Observable<ITeam[]> {
-    console.log('TeamService: Fetching teams...');
-    return this.teamsSubject.asObservable().pipe(
-      delay(100) // Simulate network delay
-    );
+    try {
+      const teamsString = localStorage.getItem('teams');
+      const teams = teamsString ? JSON.parse(teamsString) : [];
+      return of(teams);
+    } catch (error) {
+      console.error('Error loading teams from localStorage:', error);
+      return of([]);
+    }
   }
 
-  // Add a new team
-  addTeam(team: ITeam): Observable<ITeam> {
-    console.log('TeamService: Adding new team:', team);
-    const currentTeams = this.teamsSubject.getValue();
-    const newTeam = { ...team, id: Date.now().toString() }; // Add a unique ID
-    const updatedTeams = [...currentTeams, newTeam];
-    this.saveTeamsToLocalStorage(updatedTeams);
-    this.teamsSubject.next(updatedTeams); // Emit the updated list
-    return of(newTeam).pipe(delay(100)); // Simulate network delay and return the added team
+  getTeamById(id: string): Observable<ITeam | null> {
+    try {
+      const teamsString = localStorage.getItem('teams');
+      if (teamsString) {
+        const teams: ITeam[] = JSON.parse(teamsString);
+        const team = teams.find(t => t.id === id);
+        return of(team || null);
+      }
+      return of(null);
+    } catch (error) {
+      console.error('Error loading team by ID from localStorage:', error);
+      return of(null);
+    }
   }
 
-  // Delete a team by ID
+  createTeam(team: Omit<ITeam, 'id'>): Observable<ITeam> {
+    try {
+      const newTeam: ITeam = {
+        ...team,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const teamsString = localStorage.getItem('teams');
+      const teams: ITeam[] = teamsString ? JSON.parse(teamsString) : [];
+      teams.push(newTeam);
+      localStorage.setItem('teams', JSON.stringify(teams));
+
+      return of(newTeam);
+    } catch (error) {
+      console.error('Error creating team:', error);
+      throw new Error('Failed to create team');
+    }
+  }
+
+  updateTeam(team: ITeam): Observable<ITeam> {
+    try {
+      const teamsString = localStorage.getItem('teams');
+      if (teamsString) {
+        const teams: ITeam[] = JSON.parse(teamsString);
+        const index = teams.findIndex(t => t.id === team.id);
+        if (index !== -1) {
+          const updatedTeam: ITeam = {
+            ...team,
+            updatedAt: new Date().toISOString()
+          };
+          teams[index] = updatedTeam;
+          localStorage.setItem('teams', JSON.stringify(teams));
+          return of(updatedTeam);
+        }
+      }
+      throw new Error('Team not found');
+    } catch (error) {
+      console.error('Error updating team:', error);
+      throw new Error('Failed to update team');
+    }
+  }
+
   deleteTeam(id: string): Observable<void> {
-    console.log('TeamService: Deleting team with ID:', id);
-    const currentTeams = this.teamsSubject.getValue();
-    const updatedTeams = currentTeams.filter(team => team.id !== id);
-    this.saveTeamsToLocalStorage(updatedTeams);
-    this.teamsSubject.next(updatedTeams); // Emit the updated list
-    return of(void 0).pipe(delay(100)); // Simulate network delay
-  }
-
-  // Get a single team by ID
-  getTeamById(id: string): Observable<ITeam | undefined> {
-    console.log('TeamService: Fetching team by ID:', id);
-    const currentTeams = this.teamsSubject.getValue();
-    const team = currentTeams.find(t => t.id === id);
-    return of(team).pipe(delay(100)); // Simulate network delay
-  }
-
-  // Update an existing team
-  updateTeam(updatedTeam: ITeam): Observable<ITeam> {
-    console.log('TeamService: Updating team:', updatedTeam);
-    const currentTeams = this.teamsSubject.getValue();
-    const index = currentTeams.findIndex(t => t.id === updatedTeam.id);
-    if (index > -1) {
-      currentTeams[index] = updatedTeam;
-      this.saveTeamsToLocalStorage(currentTeams);
-      this.teamsSubject.next(currentTeams); // Emit the updated list
-      return of(updatedTeam).pipe(delay(100));
-    } else {
-      console.error('TeamService: Team not found for update:', updatedTeam.id);
-      return of(null as any).pipe(delay(100)); // In a real app, you might throw an error or handle this more gracefully
+    try {
+      const teamsString = localStorage.getItem('teams');
+      if (teamsString) {
+        const teams: ITeam[] = JSON.parse(teamsString);
+        const filteredTeams = teams.filter(t => t.id !== id);
+        localStorage.setItem('teams', JSON.stringify(filteredTeams));
+      }
+      return of(void 0);
+    } catch (error) {
+      console.error('Error deleting team:', error);
+      throw new Error('Failed to delete team');
     }
   }
 }

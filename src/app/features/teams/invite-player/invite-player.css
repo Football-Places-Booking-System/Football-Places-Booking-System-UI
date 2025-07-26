@@ -1,4 +1,3 @@
-/* src/app/features/teams/invite-player/invite-player.component.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* Define color variables for the neumorphism theme */
@@ -133,7 +132,7 @@
     box-sizing: border-box;
 }
 .form-input::placeholder {
-    opacity: var(--placeholder-opacity);
+    opacity: 0.5;
     color: var(--neumorphism-text-medium);
 }
 .form-input:focus {

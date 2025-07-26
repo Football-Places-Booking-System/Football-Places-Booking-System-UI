@@ -5,7 +5,8 @@ import { Router } from '@angular/router'; // Import Router for navigation
 
 @Component({
   selector: 'app-create-team',
-  imports: [ReactiveFormsModule,NgIf ,NgFor], // Add CommonModule here
+  standalone: true,
+  imports: [ReactiveFormsModule,NgIf], // Add CommonModule here
   templateUrl: './create-team.html',
   styleUrls: ['./create-team.css']
 })
@@ -62,7 +63,7 @@ export class CreateTeam implements OnInit {
         // Navigate to the team list page after a short delay
         setTimeout(() => {
           console.log('Navigating to team list page...');
-          this.router.navigate(['/teams']); // Changed to '/teams' as per new routing
+          this.router.navigate(['/dashboard/teams']); // Changed to '/dashboard/teams' as per new routing
         }, 1500);
 
       } catch (error: any) {

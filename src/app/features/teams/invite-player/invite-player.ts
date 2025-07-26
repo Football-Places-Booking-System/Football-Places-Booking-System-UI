@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 @Component({
   selector: 'app-invite-player',
   standalone: true,
-  imports: [ReactiveFormsModule, NgIf,NgFor],
+  imports: [ReactiveFormsModule, NgIf],
   templateUrl: './invite-player.html',
   styleUrls: ['./invite-player.css']
 })
@@ -35,7 +35,7 @@ export class InvitePlayer implements OnInit {
       } else {
         this.errorMessage = 'Team ID is missing. Cannot invite player.';
         console.error('InvitePlayerComponent: Team ID is missing for invitation. Redirecting to team list.');
-        setTimeout(() => this.router.navigate(['/teams']), 2000);
+        setTimeout(() => this.router.navigate(['/dashboard/teams']), 2000);
       }
     });
 
@@ -58,12 +58,12 @@ export class InvitePlayer implements OnInit {
         } else {
           this.errorMessage = 'Team not found.';
           console.warn(`InvitePlayerComponent: Team with ID "${id}" not found when loading name for invitation. Redirecting to team list.`);
-          setTimeout(() => this.router.navigate(['/teams']), 2000);
+          setTimeout(() => this.router.navigate(['/dashboard/teams']), 2000);
         }
       } else {
         this.errorMessage = 'No teams found in local storage.';
         console.warn('InvitePlayerComponent: No teams found in localStorage when loading name for invitation. Redirecting to team list.');
-        setTimeout(() => this.router.navigate(['/teams']), 2000);
+        setTimeout(() => this.router.navigate(['/dashboard/teams']), 2000);
       }
     } catch (error: any) {
       console.error("InvitePlayerComponent: Error loading team name:", error);
@@ -106,7 +106,7 @@ export class InvitePlayer implements OnInit {
         // Optionally navigate back to team details or team list
         setTimeout(() => {
           console.log('InvitePlayerComponent: Navigating back to team details page...');
-          this.router.navigate(['/teams', this.teamId]); // Go back to team details
+          this.router.navigate(['/dashboard/teams', this.teamId]); // Go back to team details
         }, 2000);
 
       } catch (error: any) {
@@ -127,10 +127,10 @@ export class InvitePlayer implements OnInit {
   goBackToTeamDetails(): void {
     console.log('InvitePlayerComponent: Attempting to navigate back to team details.');
     if (this.teamId) {
-      this.router.navigate(['/teams', this.teamId]);
+      this.router.navigate(['/dashboard/teams', this.teamId]);
     } else {
       console.warn('InvitePlayerComponent: Team ID not available for navigation. Redirecting to team list.');
-      this.router.navigate(['/teams']); // Fallback
+      this.router.navigate(['/dashboard/teams']); // Fallback
     }
   }
 }
