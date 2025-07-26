@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router ,RouterModule} from '@angular/router';
 import { Auth } from '../../../core/services/auth';
-import { NgIf } from '@angular/common'; 
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms'; 
+import { NgIf } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
@@ -12,7 +12,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
   styleUrl: './login.css'
 })
 export class Login implements OnInit{
-loginForm!: FormGroup;
+  loginForm!: FormGroup;
   errorMessage: string = '';
 
   constructor(

@@ -20,6 +20,7 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "^20.1.2",
     "@angular/cdk": "^20.1.2",
     "@angular/common": "^20.0.0",
     "@angular/compiler": "^20.0.0",
@@ -35,7 +36,6 @@
     "@fortawesome/free-regular-svg-icons": "^7.0.0",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
     "bootstrap": "^5.3.7",
-    "lucide-angular": "^0.525.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
