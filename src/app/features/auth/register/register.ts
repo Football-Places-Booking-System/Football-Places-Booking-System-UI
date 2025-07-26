@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router ,RouterModule} from '@angular/router';
 import { Auth } from '../../../core/services/auth';
-import { NgIf } from '@angular/common'; 
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms'; 
+import { NgIf } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-register',
@@ -47,13 +47,16 @@ export class Register implements OnInit {
     this.errorMessage = '';
     if (this.registerForm.valid) {
       const { username, email, password } = this.registerForm.value;
-      // Adapt to Auth service: register expects username, email, password
-      const success = this.authService.register({ username, email, password });
-      if (success) {
-        this.router.navigate(['/login']);
-      } else {
-        this.errorMessage = 'Registration failed. Username or email may already exist.';
-      }
+      this.authService.register( username, email, password ).subscribe({
+        next: (response :any) => {
+          console.log('Registration successful:', response);
+          this.router.navigate(['/login']);
+        },
+        error: (err :any) => {
+          console.error('Registration failed:', err);
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
+      });
     } else {
       this.errorMessage = 'Please enter valid registration data.';
       this.markAllAsTouched(this.registerForm);
