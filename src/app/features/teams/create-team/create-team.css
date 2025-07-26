@@ -129,8 +129,8 @@
 
 
 .form-card .form-submit-btn:hover {
-    background-color: #ffffff; /* White on hover */
-    border-color: #ffffff; /* White border on hover */
+    background-color: var(--card-bg); /* White on hover */
+    border-color: var(--card-bg); /* White border on hover */
     color: var(--dark-bg); /* Dark text on white hover */
 }
 

@@ -1,3 +1,4 @@
+/* src/app/features/teams/team-list/team-list.component.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* Define main color palette */
@@ -14,6 +15,7 @@
   --error-red: #dc2626;
   --success-green: #22c55e;
 }
+
 
 
 /* Top Header Bar - Consistent with previous design */

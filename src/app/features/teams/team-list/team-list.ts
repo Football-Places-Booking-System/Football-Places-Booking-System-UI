@@ -13,7 +13,8 @@ import { NgIf,NgFor } from '@angular/common';
   templateUrl: './team-list.html',
   styleUrls: ['./team-list.css'],
   imports: [
-    NgIf,NgFor,
+    NgIf,
+    NgFor,
     MatCardModule,
     MatButtonModule
   ]
@@ -84,6 +85,6 @@ export class TeamList implements OnInit, OnDestroy {
 
   goToHome(): void {
     // Assuming '/home' is your actual home page. Adjust if needed.
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/']);
   }
 }

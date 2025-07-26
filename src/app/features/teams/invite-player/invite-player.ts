@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
+import { NgIf,NgFor } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Team } from '../../../core/services/team';
 
 @Component({
   selector: 'app-invite-player',
@@ -21,8 +20,7 @@ export class InvitePlayer implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
-    private teamService: Team
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -50,22 +48,23 @@ export class InvitePlayer implements OnInit {
   // Load team name from localStorage for display purposes
   loadTeamName(id: string): void {
     try {
-      this.teamService.getTeamById(id).subscribe({
-        next: (team) => {
-          if (team) {
-            this.teamName = team.name;
-            console.log(`InvitePlayerComponent: Team name "${this.teamName}" loaded for invitation.`);
-          } else {
-            this.errorMessage = 'Team not found.';
-            console.warn(`InvitePlayerComponent: Team with ID "${id}" not found when loading name for invitation. Redirecting to team list.`);
-            setTimeout(() => this.router.navigate(['/dashboard/teams']), 2000);
-          }
-        },
-        error: (error) => {
-          console.error("InvitePlayerComponent: Error loading team name:", error);
-          this.errorMessage = `Error loading team name: ${error.message}`;
+      const storedTeams = localStorage.getItem('teams');
+      if (storedTeams) {
+        const teams: any[] = JSON.parse(storedTeams);
+        const team = teams.find(t => t.id === id);
+        if (team) {
+          this.teamName = team.name;
+          console.log(`InvitePlayerComponent: Team name "${this.teamName}" loaded for invitation.`);
+        } else {
+          this.errorMessage = 'Team not found.';
+          console.warn(`InvitePlayerComponent: Team with ID "${id}" not found when loading name for invitation. Redirecting to team list.`);
+          setTimeout(() => this.router.navigate(['/dashboard/teams']), 2000);
         }
-      });
+      } else {
+        this.errorMessage = 'No teams found in local storage.';
+        console.warn('InvitePlayerComponent: No teams found in localStorage when loading name for invitation. Redirecting to team list.');
+        setTimeout(() => this.router.navigate(['/dashboard/teams']), 2000);
+      }
     } catch (error: any) {
       console.error("InvitePlayerComponent: Error loading team name:", error);
       this.errorMessage = `Error loading team name: ${error.message}`;
@@ -79,29 +78,36 @@ export class InvitePlayer implements OnInit {
 
     if (this.invitePlayerForm.valid && this.teamId) {
       const inviteData = {
+        id: Date.now().toString(), // Unique ID for the invitation
         teamId: this.teamId,
         teamName: this.teamName, // Store team name for easier display later
         playerEmail: this.invitePlayerForm.value.email,
-        status: 'pending' // Initial status
+        status: 'pending', // Initial status
+        timestamp: new Date().toISOString()
       };
 
       try {
-        this.teamService.createTeamInvite(inviteData).subscribe({
-          next: (newInvite) => {
-            console.log('InvitePlayerComponent: Invitation sent and saved to localStorage:', newInvite);
-            this.successMessage = `Invitation sent to ${inviteData.playerEmail} for team "${this.teamName}"!`;
-            this.invitePlayerForm.reset(); // Clear the form
-            // Optionally navigate back to team details or team list
-            setTimeout(() => {
-              console.log('InvitePlayerComponent: Navigating back to team details page...');
-              this.router.navigate(['/dashboard/teams', this.teamId]); // Go back to team details
-            }, 2000);
-          },
-          error: (error) => {
-            console.error("InvitePlayerComponent: Error saving invitation to local storage:", error);
-            this.errorMessage = `Failed to send invitation: ${error.message}`;
-          }
-        });
+        const existingInvitesString = localStorage.getItem('teamInvites');
+        let invites: any[] = [];
+        if (existingInvitesString) {
+          invites = JSON.parse(existingInvitesString);
+          console.log('InvitePlayerComponent: Existing invites loaded from localStorage:', invites);
+        } else {
+          console.log('InvitePlayerComponent: No existing invites found in localStorage. Starting with an empty array.');
+        }
+
+        invites.push(inviteData);
+        localStorage.setItem('teamInvites', JSON.stringify(invites));
+        console.log('InvitePlayerComponent: Invitation sent and saved to localStorage:', inviteData);
+        console.log('InvitePlayerComponent: All invitations in localStorage now:', invites);
+
+        this.successMessage = `Invitation sent to ${inviteData.playerEmail} for team "${this.teamName}"!`;
+        this.invitePlayerForm.reset(); // Clear the form
+        // Optionally navigate back to team details or team list
+        setTimeout(() => {
+          console.log('InvitePlayerComponent: Navigating back to team details page...');
+          this.router.navigate(['/dashboard/teams', this.teamId]); // Go back to team details
+        }, 2000);
 
       } catch (error: any) {
         console.error("InvitePlayerComponent: Error saving invitation to local storage:", error);

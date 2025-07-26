@@ -1,36 +1,8 @@
+/* src/app/features/teams/team-details/team-details.component.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Define color variables for the neumorphism theme */
-:root {
-  --neumorphism-bg: #e0e0e0; /* Light gray background */
-  --neumorphism-contrast: #e2e0e0; /* Slightly different light gray for inner card */
-  --neumorphism-grey: #93a1a1; /* Gray for overlay pattern */
-  --neumorphism-text-dark: #333333; /* Dark text for contrast */
-  --neumorphism-text-medium: #666666; /* Medium gray text */
-  --neumorphism-shadow-light: rgba(50, 50, 93, 0.25);
-  --neumorphism-shadow-dark: rgba(0, 0, 0, 0.3);
-  --neumorphism-shadow-inset: rgba(10, 37, 64, 0.35);
 
-  /* Reused colors for messages */
-  --error-red: #dc2626;
-  --success-green: #22c55e;
-}
 
-/* Main component container styles */
-:host {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 1rem;
-    box-sizing: border-box;
-    background-color: var(--neumorphism-bg); /* Apply neumorphism background to host */
-}
 
 /* Top Header with Edit Button */
 .top-header {
