@@ -1,62 +1,67 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { Router } from '@angular/router';
+
+export type UserRole = 'PLAYER' | 'ORGANIZER' | 'ADMIN';
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class Auth {
-  private readonly TOKEN_KEY = 'jwt_token';
-  private apiUrl = 'YOUR_BACKEND_API_URL';
+  private users: User[] = [
+    { id: 1, username: 'admin', email: 'admin@admin.com', password: 'admin1', role: 'ADMIN' },
+    { id: 2, username: 'organizer', email: 'org@org.com', password: 'organizer', role: 'ORGANIZER' },
+    { id: 3, username: 'player', email: 'player@player.com', password: 'player', role: 'PLAYER' }
+  ];
+  private currentUserKey = 'currentUser';
+  private nextId = 4;
 
-  constructor(private router: Router) { }
-
-  register(userData: any): Observable<any> {
-    // Mock implementation
-    return of({ message: 'Registration successful!', token: 'fake-jwt-token-for-register' }).pipe(
-      tap((response: any) => {
-        if (response.token) {
-          this.saveToken(response.token);
-          this.router.navigate(['/dashboard']);
-        }
-      }),
-      catchError(error => {
-        throw error;
-      })
-    );
+  register(user: { username: string; email: string; password: string }): boolean {
+    if (
+      this.users.find(
+        u => u.username === user.username || u.email === user.email
+      )
+    ) {
+      return false; // Username or email already exists
+    }
+    const newUser: User = {
+      id: this.nextId++,
+      username: user.username,
+      email: user.email,
+      password: user.password,
+      role: 'PLAYER'
+    };
+    this.users.push(newUser);
+    this.setCurrentUser(newUser);
+    return true;
   }
 
-  login(credentials: any): Observable<any> {
-    // Mock implementation
-    return of({ message: 'Login successful!', token: 'fake-jwt-token-12345' }).pipe(
-      tap((response: any) => {
-        if (response.token) {
-          this.saveToken(response.token);
-          this.router.navigate(['/dashboard']);
-        }
-      }),
-      catchError(error => {
-        throw error;
-      })
+  login(identifier: string, password: string): boolean {
+    const user = this.users.find(
+      u => (u.username === identifier || u.email === identifier) && u.password === password
     );
+    if (user) {
+      this.setCurrentUser(user);
+      return true;
+    }
+    return false;
   }
 
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    this.router.navigate(['/auth/login']);
+    localStorage.removeItem(this.currentUserKey);
   }
 
-  private saveToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
+  getCurrentUser(): User | null {
+    const userJson = localStorage.getItem(this.currentUserKey);
+    return userJson ? JSON.parse(userJson) : null;
   }
 
-  getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
-
-  isLoggedIn(): boolean {
-    const token = this.getToken();
-    return !!token;
+  private setCurrentUser(user: User): void {
+    localStorage.setItem(this.currentUserKey, JSON.stringify(user));
   }
 }
