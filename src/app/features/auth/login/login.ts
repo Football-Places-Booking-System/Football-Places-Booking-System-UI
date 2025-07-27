@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router ,RouterModule} from '@angular/router';
 import { Auth } from '../../../core/services/auth';
-import { NgIf } from '@angular/common'; 
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms'; 
+import { NgIf } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
@@ -12,7 +12,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
   styleUrl: './login.css'
 })
 export class Login implements OnInit{
-loginForm!: FormGroup;
+  loginForm!: FormGroup;
   errorMessage: string = '';
 
   constructor(
@@ -32,15 +32,14 @@ loginForm!: FormGroup;
     this.errorMessage = '';
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
-      this.authService.login({ email, password }).subscribe({
-        next: (response:any) => {
-          console.log('Login successful:', response);
-        },
-        error: (err:any) => {
-          console.error('Login failed:', err);
-          this.errorMessage = 'Login failed. Please check your credentials.';
-        }
-      });
+      const success = this.authService.login(email, password);
+      if (success) {
+        console.log('Login successful');
+        this.router.navigate(['/dashboard']);
+      } else {
+        console.error('Login failed');
+        this.errorMessage = 'Login failed. Please check your credentials.';
+      }
     } else {
       this.errorMessage = 'Please enter valid login data.';
       this.markAllAsTouched(this.loginForm);
