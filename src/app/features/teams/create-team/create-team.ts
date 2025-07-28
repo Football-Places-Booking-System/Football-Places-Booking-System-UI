@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { Router } from '@angular/router';
-import { Team } from '../../../core/services/team'; // <-- تأكدي أن هذا المسار صحيح لاستيراد الخدمة
-import { ITeam } from '../../../shared/models/team.model'; // <-- استيراد واجهة ITeam
+import { Team } from '../../../core/services/team'; 
+import { ITeam } from '../../../shared/models/team.model'; 
 import { takeUntil ,Subject} from 'rxjs';
 
 @Component({
