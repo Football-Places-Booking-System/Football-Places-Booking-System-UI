@@ -2,14 +2,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Team, ITeam } from '../../../core/services/team';
+import { Team } from '../../../core/services/team';
+import { ITeam } from '../../../shared/models/team.model';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { NgIf,NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-team-list',
-  standalone: true,
   templateUrl: './team-list.html',
   styleUrls: ['./team-list.css'],
   imports: [

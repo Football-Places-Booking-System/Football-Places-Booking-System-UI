@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
+//import { MatchParticipants } from './features/matches/match-participants/match-participants';
 
 export const routes: Routes = [
   {
@@ -19,7 +20,6 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/dashboard/dashboard-layout/dashboard-layout').then(
         (m) => m.DashboardLayout
@@ -92,6 +92,10 @@ export const routes: Routes = [
             (m) => m.MatchList
           ),
       },
+        {
+    path: 'matches/participants/:matchId/:teamId',
+    loadComponent: () => import('./features/matches/match-participants/match-participants').then(m => m.MatchParticipants)
+  },
       {
         path: 'notifications',
         loadComponent: () =>

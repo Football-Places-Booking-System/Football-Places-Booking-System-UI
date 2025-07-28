@@ -5,7 +5,6 @@ import { Router } from '@angular/router'; // Import Router for navigation
 
 @Component({
   selector: 'app-create-team',
-  standalone: true,
   imports: [ReactiveFormsModule,NgIf], // Add CommonModule here
   templateUrl: './create-team.html',
   styleUrls: ['./create-team.css']

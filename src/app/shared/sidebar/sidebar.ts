@@ -8,14 +8,24 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-sidebar',
-  standalone: true,
   imports: [CommonModule, MatListModule, MatIconModule, RouterModule, FontAwesomeModule],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.css'],
 })
 export class SidebarComponent {
-  constructor(private auth: Auth) {}
+  constructor(private authService: Auth) {}
   get role(): string | undefined {
-    return this.auth.getCurrentUser()?.role;
+    return this.authService.getCurrentUser()?.role;
+  }
+    getCurrentUserRole(): string | null {
+    return this.authService.getCurrentUser()?.role || null;
+  }
+
+  isLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 }
