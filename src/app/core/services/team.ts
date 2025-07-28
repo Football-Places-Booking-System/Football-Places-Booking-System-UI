@@ -68,6 +68,22 @@ export class Team {
     }
   }
 
+  // Get teams created by a specific user
+  getTeamsByCreator(userId: number): Observable<ITeam[]> {
+    try {
+      const teamsString = localStorage.getItem('teams');
+      if (teamsString) {
+        const teams: ITeam[] = JSON.parse(teamsString);
+        const userTeams = teams.filter(team => team.organizerId === userId.toString());
+        return of(userTeams);
+      }
+      return of([]);
+    } catch (error) {
+      console.error('Error loading teams by creator from localStorage:', error);
+      return of([]);
+    }
+  }
+
   getUserById(userId: string): Observable<IUser | null> {
     console.log(`TeamService: Searching for user with ID: ${userId} (mock)`);
     const user = this.mockUsers.find(u => u.id === userId);
