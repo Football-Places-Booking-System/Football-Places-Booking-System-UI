@@ -1,49 +1,53 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgIf,NgFor } from '@angular/common';
+import { CommonModule, NgIf, NgFor, DatePipe } from '@angular/common'; 
 import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
-import { ITeam ,Team} from '../../../core/services/team';
-import { Auth} from '../../../core/services/auth';
+import { delay, Observable, of, Subject, takeUntil, throwError } from 'rxjs';
 
-interface IPlayer {
-  id: string;
-  name: string;
-  position: string;
-}
+import { ITeam } from '../../../shared/models/team.model';
+import { ITeamMember, TeamMemberStatus, TeamMemberRole } from '../../../shared/models/team-member.model';
+import { IUser } from '../../../shared/models/user.model';
+import { IBookingMatch, IMatchParticipant, BookingMatchStatus, MatchParticipantStatus } from '../../../shared/models/match.model';
+
+import { Team } from '../../../core/services/team'; 
+import { Auth } from '../../../core/services/auth'; 
+import { Match } from '../../../core/services/match'; 
 
 @Component({
   selector: 'app-team-details',
-  standalone: true,
-  imports: [NgIf, NgFor, ReactiveFormsModule], // Add ReactiveFormsModule and CommonModule
-  templateUrl: './team-details.html', // Corrected filename
-  styleUrls: ['./team-details.css'] // Corrected filename
+  imports: [CommonModule, ReactiveFormsModule], 
+  templateUrl: './team-details.html', 
+  styleUrls: ['./team-details.css'] 
 })
-export class TeamDetails implements OnInit, OnDestroy { // Renamed class to TeamDetailsComponent for consistency
-  team: ITeam | undefined; // Use ITeam interface
-  players: IPlayer[] = []; // Dummy player data
+export class TeamDetails implements OnInit, OnDestroy { 
+  team: ITeam | undefined;
+  teamMembers: ITeamMember[] = [];
+  usersInTeam: IUser[] = [];
   errorMessage: string | null = null;
   successMessage: string | null = null;
-  isOrganizer: boolean = false; // To control edit button visibility
-  isEditing: boolean = false; // To toggle edit mode
-  editTeamForm!: FormGroup; // Form for editing team details
-  currentUser: any;
+  isOrganizer: boolean = false;
+  isEditing: boolean = false;
+  editTeamForm!: FormGroup;
 
   private destroy$ = new Subject<void>();
+  private mockMatchIdToLink: string = 'match_for_dynamic_team';
+  teamId!: string;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private teamService: Team, // Inject Team
-    private authService: Auth, // Inject AuthService
-    private fb: FormBuilder // Inject FormBuilder
+    private teamService: Team,
+    private authService: Auth,
+    private fb: FormBuilder,
+    private matchService: Match,
   ) { }
 
   ngOnInit(): void {
     console.log('TeamDetailsComponent: Initialized.');
-    this.currentUser = this.authService.getCurrentUser();
 
-    // Initialize the edit form (even if not editing yet)
+    this.isOrganizer = this.authService.isOrganizer();
+    console.log('TeamDetailsComponent: Is current user an organizer?', this.isOrganizer);
+
     this.editTeamForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
       description: ['', Validators.maxLength(500)]
@@ -53,7 +57,9 @@ export class TeamDetails implements OnInit, OnDestroy { // Renamed class to Team
       const teamId = params.get('id');
       console.log('TeamDetailsComponent: Team ID from route params:', teamId);
       if (teamId) {
+        this.teamId = teamId;
         this.loadTeamDetails(teamId);
+        this.loadTeamMembers(teamId);
       } else {
         this.errorMessage = 'Team ID not provided in URL.';
         console.error('TeamDetailsComponent: Team ID is missing in the URL. Redirecting to team list.');
@@ -74,13 +80,10 @@ export class TeamDetails implements OnInit, OnDestroy { // Renamed class to Team
         if (team) {
           this.team = team;
           console.log('TeamDetailsComponent: Team details loaded successfully:', this.team);
-          // Populate the form when team details are loaded
           this.editTeamForm.patchValue({
             name: this.team.name,
             description: this.team.description
           });
-          this.loadDummyPlayers(); // Load dummy players for the team
-          this.checkIfUserIsOrganizer(id); // Check if current user is organizer of this team
         } else {
           this.errorMessage = 'Team not found.';
           console.warn(`TeamDetailsComponent: Team with ID "${id}" not found. Redirecting to team list.`);
@@ -90,42 +93,42 @@ export class TeamDetails implements OnInit, OnDestroy { // Renamed class to Team
       error: (err) => {
         console.error("TeamDetailsComponent: Error loading team details:", err);
         this.errorMessage = `Failed to load team details: ${err.message || 'Unknown error'}`;
-        this.router.navigate(['/dashboard/teams']); // Redirect on error
+        this.router.navigate(['/dashboard/teams']);
       }
     });
   }
 
-  checkIfUserIsOrganizer(teamId: string): void {
-    if (!this.currentUser) return;
-
-    this.teamService.isUserTeamOrganizer(this.currentUser.id, teamId).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (isOrganizer) => {
-        this.isOrganizer = isOrganizer || this.currentUser.role === 'ORGANIZER' || this.currentUser.role === 'ADMIN';
-        console.log('TeamDetailsComponent: Is current user an organizer of this team?', this.isOrganizer);
+  loadTeamMembers(teamId: string): void {
+    console.log(`TeamDetailsComponent: Attempting to load team members for team ID: "${teamId}"`);
+    this.teamService.getTeamMembers(teamId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (members) => {
+        this.teamMembers = members;
+        console.log('TeamDetailsComponent: Team members loaded:', this.teamMembers);
+        this.teamService.getPlayersByTeamId(teamId).pipe(takeUntil(this.destroy$)).subscribe({
+          next: (users) => {
+            this.usersInTeam = users;
+            console.log('TeamDetailsComponent: User details for members loaded:', this.usersInTeam);
+          },
+          error: (err) => {
+            console.error('TeamDetailsComponent: Error loading user details for team members:', err);
+            this.errorMessage = `Failed to load member details: ${err.message || 'Unknown error'}`;
+          }
+        });
       },
-      error: (error) => {
-        console.error('TeamDetailsComponent: Error checking organizer status:', error);
+      error: (err) => {
+        console.error('TeamDetailsComponent: Error loading team members:', err);
+        this.errorMessage = `Failed to load team members: ${err.message || 'Unknown error'}`;
       }
     });
   }
 
-  // New: Load dummy player data
-  loadDummyPlayers(): void {
-    // Generate some dummy players for demonstration
-    this.players = [
-      { id: 'p1', name: 'Ahmed Salah', position: 'Forward' },
-      { id: 'p2', name: 'Mohamed Ali', position: 'Midfielder' },
-      { id: 'p3', name: 'Omar Hassan', position: 'Defender' },
-      { id: 'p4', name: 'Khaled Mahmoud', position: 'Goalkeeper' }
-    ];
-    console.log('TeamDetailsComponent: Dummy players loaded:', this.players);
+  getUserForTeamMember(userId: string): IUser | undefined {
+    return this.usersInTeam.find(user => user.id === userId);
   }
 
-  // New: Toggle edit mode
   toggleEditMode(): void {
     this.isEditing = !this.isEditing;
     if (this.isEditing) {
-      // When entering edit mode, ensure form is populated with current team data
       this.editTeamForm.patchValue({
         name: this.team?.name,
         description: this.team?.description
@@ -133,21 +136,20 @@ export class TeamDetails implements OnInit, OnDestroy { // Renamed class to Team
     }
   }
 
-  // New: Save team changes
   saveTeamChanges(): void {
     if (this.editTeamForm.valid && this.team) {
       const updatedTeam: ITeam = {
-        ...this.team, // Keep existing properties
+        ...this.team,
         name: this.editTeamForm.value.name,
         description: this.editTeamForm.value.description
       };
 
       this.teamService.updateTeam(updatedTeam).pipe(takeUntil(this.destroy$)).subscribe({
         next: (responseTeam) => {
-          this.team = responseTeam; // Update local team object with the response
+          this.team = responseTeam;
           this.successMessage = 'Team updated successfully!';
           this.errorMessage = null;
-          this.isEditing = false; // Exit edit mode
+          this.isEditing = false;
           setTimeout(() => this.successMessage = null, 3000);
         },
         error: (err) => {
@@ -162,21 +164,50 @@ export class TeamDetails implements OnInit, OnDestroy { // Renamed class to Team
     }
   }
 
-  // New: Remove player
-  removePlayer(playerId: string): void {
-    if (confirm('Are you sure you want to remove this player from the team?')) {
-      console.log(`TeamDetailsComponent: Removing player ${playerId} from team ${this.team?.name}`);
-      // In a real app, this would be an API call to remove the player
-      this.players = this.players.filter(player => player.id !== playerId);
-      this.successMessage = 'Player removed successfully!';
-      this.errorMessage = null;
-      setTimeout(() => this.successMessage = null, 3000);
+  removeTeamMember(teamMemberId: string): void {
+    if (confirm('Are you sure you want to remove this member from the team?')) {
+      console.log(`TeamDetailsComponent: Initiating removal of team member ${teamMemberId}`);
+      this.teamService.removeTeamMember(teamMemberId).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.successMessage = 'Member removed successfully!';
+          this.errorMessage = null;
+          setTimeout(() => this.successMessage = null, 3000);
+          this.loadTeamMembers(this.teamId); // Reload members from service to reflect changes
+          console.log(`TeamDetailsComponent: Team member ${teamMemberId} removal confirmed by service.`);
+        },
+        error: (err) => {
+          console.error('TeamDetailsComponent: Failed to remove team member:', err);
+          this.errorMessage = `Failed to remove member: ${err.message || 'Unknown error'}`;
+          this.successMessage = null;
+        }
+      });
     }
   }
 
   goToInvitePlayer(teamId: string): void {
     console.log(`TeamDetailsComponent: Navigating to invite player page for team ID: ${teamId}`);
     this.router.navigate(['/dashboard/teams', teamId, 'invite']);
+  }
+
+  navigateToMatchParticipants(): void {
+    console.log('navigateToMatchParticipants called.');
+    console.log('Current teamId:', this.teamId);
+    console.log('Current mockMatchIdToLink:', this.mockMatchIdToLink);
+
+    if (this.teamId && this.mockMatchIdToLink) {
+      this.router.navigate(['/dashboard/matches/participants', this.mockMatchIdToLink, this.teamId]);
+    } else {
+      const missingInfo = [];
+      if (!this.teamId) {
+        missingInfo.push('Team ID');
+      }
+      if (!this.mockMatchIdToLink) {
+        missingInfo.push('Match ID');
+      }
+      const message = `Cannot navigate: ${missingInfo.join(' and ')} is missing. Please check the data.`;
+      console.warn('TeamDetailsComponent:', message);
+      window.alert(message);
+    }
   }
 
   goBackToList(): void {

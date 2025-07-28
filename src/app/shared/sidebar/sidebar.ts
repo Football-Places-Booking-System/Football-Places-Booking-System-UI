@@ -9,7 +9,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-sidebar',
-  standalone: true,
   imports: [CommonModule, MatListModule, MatIconModule, RouterModule, FontAwesomeModule],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.css'],
@@ -45,7 +44,7 @@ export class SidebarComponent implements OnInit {
     }
   }
 
-  private checkIfUserIsOrganizer(userId: number): void {
+  private checkIfUserIsOrganizer(userId: string): void {
     // Check if user is organizer in any team
     const checkPromises = this.userTeams.map(team => 
       this.teamService.isUserTeamOrganizer(userId, team.id).toPromise()
