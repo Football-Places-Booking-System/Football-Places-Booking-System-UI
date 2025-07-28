@@ -198,6 +198,6 @@ export class Team {
 
   // TODO: Replace with real implementation
   isUserTeamOrganizer(userId: string, id: any): Observable<boolean> {
-    return of(true);
+    return of(false);
   }
 }
