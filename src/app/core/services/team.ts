@@ -10,7 +10,8 @@ import { ITeamMember, TeamMemberRole, TeamMemberStatus } from '../../shared/mode
 @Injectable({
   providedIn: 'root'
 })
-export class Team { 
+export class Team {
+
   private apiUrl = 'YOUR_BACKEND_API_URL'; // Replace with your backend API URL
 
  
@@ -28,7 +29,7 @@ export class Team {
   ];
 
   private mockTeams: ITeam[] = [
-    { id: 'team1', name: 'Al Ahly', description: 'The Red Devils from Cairo.', created_by: 'user8', created_at: '2024-01-01T10:00:00Z' },
+    { id: 'team1', name: 'Al Ahly', description: 'The Red Devils from Cairo.', created_by: 'user8', created_at: '2024-01-01T10:00:00Z', },
     { id: 'team2', name: 'Zamalek', description: 'The White Knights from Giza.', created_by: 'user8', created_at: '2024-01-05T11:00:00Z' },
     // **Crucial Fix:** Ensure this ID matches the one you see in your URL for the dynamic team
     { id: '1753451266735', name: 'teamghgh', description: 'dhhfmn', created_by: 'user7', created_at: '2024-07-27T12:00:00Z' }
@@ -69,12 +70,12 @@ export class Team {
   }
 
   // Get teams created by a specific user
-  getTeamsByCreator(userId: number): Observable<ITeam[]> {
+  getTeamsByCreator(userId: string): Observable<ITeam[]> {
     try {
       const teamsString = localStorage.getItem('teams');
       if (teamsString) {
         const teams: ITeam[] = JSON.parse(teamsString);
-        const userTeams = teams.filter(team => team.organizerId === userId.toString());
+        const userTeams = teams.filter(team => team.created_by === userId);
         return of(userTeams);
       }
       return of([]);
@@ -192,5 +193,11 @@ export class Team {
       console.error(`TeamService: Team member ${teamMemberId} not found for removal (mock).`);
       return throwError(() => new Error('Team member not found for removal.'));
     }
+  }
+
+
+  // TODO: Replace with real implementation
+  isUserTeamOrganizer(userId: string, id: any): Observable<boolean> {
+    return of(true);
   }
 }
