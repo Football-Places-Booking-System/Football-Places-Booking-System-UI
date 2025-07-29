@@ -21,11 +21,10 @@ export class MatchParticipants implements OnInit,OnDestroy {
   match$!: Observable<IBookingMatch>;
   players$!: Observable<IUser[]>;
   matchParticipants$!: Observable<IMatchParticipant[]>;
-  // Corrected: Allow 'match' to be null in the combined data type
   combinedData$!: Observable<{ match: IBookingMatch | null, players: IUser[], participants: IMatchParticipant[], teamId: string }>;
 
   errorMessage: string | null = null;
-  private destroy$ = new Subject<void>(); // For managing subscriptions
+  private destroy$ = new Subject<void>();
 
   constructor(
     private route: ActivatedRoute,
@@ -56,18 +55,15 @@ export class MatchParticipants implements OnInit,OnDestroy {
           this.teamService.getPlayersByTeamId(teamId),
           this.matchService.getMatchParticipants(matchId)
         ]).pipe(
-          // Explicitly type the tuple elements here to help TypeScript
           tap(([match, players, participants]: [IBookingMatch, IUser[], IMatchParticipant[]]) => {
             console.log('MatchParticipantsComponent: Service Data Received - Match:', match);
             console.log('MatchParticipantsComponent: Service Data Received - Players:', players);
             console.log('MatchParticipantsComponent: Service Data Received - Participants:', participants);
           }),
-          // Explicitly type the tuple elements here as well
           map(([match, players, participants]: [IBookingMatch, IUser[], IMatchParticipant[]]) => ({ match, players, participants, teamId })),
-          catchError((err: any) => { // Explicitly type err
+          catchError((err: any) => {
             this.errorMessage = `Error loading data from services: ${err.message}`;
             console.error('MatchParticipantsComponent: Service data fetch error caught:', err);
-            // Corrected: Ensure the returned object strictly matches the Observable type
             return of({ match: null, players: [] as IUser[], participants: [] as IMatchParticipant[], teamId: teamId });
           })
         );
@@ -77,7 +73,6 @@ export class MatchParticipants implements OnInit,OnDestroy {
         if (!data.match) {
           console.warn('MatchParticipantsComponent: Final data has no match object. Check mock data or service logic.');
         }
-        // Corrected: Add null checks for players and participants before accessing length
         if (data.players && data.players.length === 0) {
           console.warn('MatchParticipantsComponent: Final data has no players. Check mock data or service logic.');
         }
@@ -85,19 +80,16 @@ export class MatchParticipants implements OnInit,OnDestroy {
           console.warn('MatchParticipantsComponent: Final data has no participants. Check mock data or service logic.');
         }
       }),
-      catchError((err: any) => { // Explicitly type err
+      catchError((err: any) => {
         this.errorMessage = `Error in overall combinedData$ stream: ${err.message}`;
         console.error('MatchParticipantsComponent: Overall stream error caught:', err);
-        // Corrected: Ensure the returned object strictly matches the Observable type
         return of({ match: null, players: [] as IUser[], participants: [] as IMatchParticipant[], teamId: '' });
       }),
-      takeUntil(this.destroy$) // Unsubscribe on component destroy
+      takeUntil(this.destroy$)
     );
 
-    // Subscribe to the combinedData$ to trigger the observable chain
-    // and log the final state for debugging
     this.combinedData$.subscribe({
-      next: (data: { match: IBookingMatch | null, players: IUser[], participants: IMatchParticipant[], teamId: string }) => { // Explicitly type data
+      next: (data: { match: IBookingMatch | null, players: IUser[], participants: IMatchParticipant[], teamId: string }) => {
         console.log('MatchParticipantsComponent: combinedData$ subscription received data:', data);
         if (data.match) {
           console.log('MatchParticipantsComponent: Match data is available for rendering.');
@@ -105,7 +97,7 @@ export class MatchParticipants implements OnInit,OnDestroy {
           console.warn('MatchParticipantsComponent: Match data is NULL in subscription. Template will show "No match data available."');
         }
       },
-      error: (err: any) => { // Explicitly type err
+      error: (err: any) => {
         console.error('MatchParticipantsComponent: combinedData$ subscription error:', err);
       },
       complete: () => {
@@ -128,18 +120,19 @@ export class MatchParticipants implements OnInit,OnDestroy {
     return participant ? participant.status.charAt(0).toUpperCase() + participant.status.slice(1) : 'Not Invited';
   }
 
-  invitePlayer(userId: string): void {
+  invitePlayer(playerEmail: string): void {
     if (!this.matchId) {
       this.errorMessage = 'Match ID is not available.';
       return;
     }
 
-    this.matchService.inviteParticipant(this.matchId, userId).subscribe({
-      next: (participant: IMatchParticipant) => { // Explicitly type participant
+    
+    this.matchService.inviteParticipant(this.matchId, playerEmail).subscribe({
+      next: (participant: IMatchParticipant) => {
         console.log('User invited successfully:', participant);
-        this.refreshParticipants();
+        this.refreshParticipants(); 
       },
-      error: (err: any) => { // Explicitly type err
+      error: (err: any) => {
         this.errorMessage = `Failed to invite user: ${err.message}`;
         console.error(err);
       }
@@ -149,20 +142,19 @@ export class MatchParticipants implements OnInit,OnDestroy {
   private refreshParticipants(): void {
     if (this.matchId) {
       this.matchService.getMatchParticipants(this.matchId).pipe(
-        catchError((err: any) => { // Explicitly type err
+        catchError((err: any) => {
           this.errorMessage = `Error refreshing participants: ${err.message}`;
           console.error(err);
           return of([]);
         }),
         takeUntil(this.destroy$)
-      ).subscribe((newParticipants: IMatchParticipant[]) => { // Explicitly type newParticipants
-        // This is a simple way to update the observable, for more complex state management
-        // consider using a BehaviorSubject in the service.
+      ).subscribe((newParticipants: IMatchParticipant[]) => {
+        
         this.combinedData$ = this.combinedData$.pipe(
           map(data => ({ ...data, participants: newParticipants })),
-          takeUntil(this.destroy$)
+          takeUntil(this.destroy$) 
         );
       });
     }
   }
-  }
+}

@@ -7,7 +7,6 @@
     <div *ngIf="data.match">
       <h2>Match Details</h2>
       <div class="match-details">
-        <!-- Displaying properties available in IBookingMatch -->
         <p><strong>Booking ID:</strong> {{ data.match.id }}</p>
         <p><strong>Place ID:</strong> {{ data.match.place_id }}</p>
         <p><strong>Booked By User ID:</strong> {{ data.match.user_id }}</p>
@@ -18,13 +17,12 @@
         <p><strong>Created At:</strong> {{ data.match.created_at | date:'medium' }}</p>
       </div>
 
-      <!-- Corrected: Access teamId directly from data -->
       <h3>List of Players (from Team ID: {{ data.teamId || 'Selected Team' }})</h3>
       <div class="players-table-wrapper">
         <table class="players-table">
           <thead>
             <tr>
-              <th>Username</th> <!-- Changed from Name to Username -->
+              <th>Username</th>
               <th>Email</th>
               <th>Invite Button</th>
               <th>Status</th>
@@ -32,13 +30,11 @@
           </thead>
           <tbody>
             <tr *ngFor="let player of data.players">
-              <!-- Corrected: Use player.username instead of player.name -->
               <td>{{ player.username }}</td>
               <td>{{ player.email }}</td>
               <td>
                 <button
-                  (click)="invitePlayer(player.id)"
-                  [disabled]="isPlayerInvited(player.id, data.participants)"
+                  (click)="invitePlayer(player.email)" [disabled]="isPlayerInvited(player.id, data.participants)"
                   [ngClass]="{'invited-button': isPlayerInvited(player.id, data.participants)}"
                 >
                   {{ isPlayerInvited(player.id, data.participants) ? 'Invited' : 'Invite' }}

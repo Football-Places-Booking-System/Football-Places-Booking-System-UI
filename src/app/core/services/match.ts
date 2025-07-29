@@ -1,108 +1,109 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, tap, catchError } from 'rxjs/operators';
-import { IBookingMatch, IMatchParticipant, MatchParticipantStatus, BookingMatchStatus } from '../../shared/models/match.model';
-import { IUser } from '../../shared/models/user.model'; 
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { tap, catchError, switchMap } from 'rxjs/operators';
+import { IBookingMatch, IMatchParticipant, MatchParticipantStatus } from '../../shared/models/match.model';
+import { IUser } from '../../shared/models/user.model';
+import { Team } from './team';
+import { BackendError, ErrorCode, ErrorCodeMessages } from '../../shared/models/error-code.enum'; 
 
 @Injectable({
   providedIn: 'root'
 })
-export class Match { 
-  private apiUrl = 'YOUR_BACKEND_API_URL';
+export class Match {
+  private matchesApiUrl = 'http://localhost:3000/api/matches';
+  private participantsApiUrl = 'http://localhost:3000/api/match-participants';
 
-  private mockMatches: IBookingMatch[] = [
-    {
-      id: 'match1', 
-      place_id: 'placeA',
-      user_id: 'user7',
-      team_id: 'team1',
-      start_time: '2025-08-10T19:00:00Z',
-      end_time: '2025-08-10T21:00:00Z',
-      status: 'CONFIRMED',
-      created_at: '2025-08-01T10:00:00Z'
-    },
-    {
-      id: 'match2',
-      place_id: 'placeB',
-      user_id: 'user8',
-      team_id: 'team2',
-      start_time: '2025-08-15T20:00:00Z',
-      end_time: '2025-08-15T22:00:00Z',
-      status: 'PENDING',
-      created_at: '2025-08-05T11:00:00Z'
-    },
-    {
-      id: 'match_for_dynamic_team', // New match ID
-      place_id: 'placeC',
-      user_id: 'user7',
-      team_id: '1753451266735', // Linked to the dynamic team ID
-      start_time: '2025-09-01T15:00:00Z',
-      end_time: '2025-09-01T17:00:00Z',
-      status: 'SCHEDULED', // Using the new SCHEDULED status
-      created_at: '2025-08-20T09:00:00Z'
+  constructor(private http: HttpClient, private teamService: Team) { }
+
+private handleError(error: HttpErrorResponse): Observable<never> {
+  let errorMessage = 'An unknown error occurred!';
+
+  if (error.error instanceof ErrorEvent) {
+    errorMessage = `Error: ${error.error.message}`;
+  } else {
+    if (error.error && typeof error.error === 'object' && 'code' in error.error && 'msg' in error.error) {
+      const backendError = error.error as BackendError;
+      errorMessage = `Backend Error [Code: ${backendError.code}]: ${backendError.msg}`;
+    } else {
+      errorMessage = `Server returned code: ${error.status}, message: ${error.message}`;
+      if (error.status === 404) {
+        errorMessage = 'Resource not found.';
+      } else if (error.status === 400) {
+        errorMessage = 'Bad request. Please check your input.';
+      } else if (error.status === 409) {
+        errorMessage = 'Conflict: Resource already exists or operation not allowed.';
+      } else if (error.status === 500) {
+        errorMessage = 'Internal Server Error.';
+      }
     }
-  ];
+  }
 
-  private mockMatchParticipants: { [matchId: string]: IMatchParticipant[] } = {
-    'match1': [
-      { id: 'mp1_1', booking_match_id: 'match1', user_id: 'user1', status: 'ACCEPTED', responded_at: '2025-08-05T10:00:00Z' },
-      { id: 'mp1_2', booking_match_id: 'match1', user_id: 'user2', status: 'INVITED', responded_at: undefined },
-      { id: 'mp1_3', booking_match_id: 'match1', user_id: 'user3', status: 'INVITED', responded_at: undefined },
-    ],
-    'match2': [
-      { id: 'mp2_1', booking_match_id: 'match2', user_id: 'user1', status: 'INVITED', responded_at: undefined },
-      { id: 'mp2_2', booking_match_id: 'match2', user_id: 'user4', status: 'ACCEPTED', responded_at: '2025-08-12T14:30:00Z' },
-    ],
-    // Participants for the dynamic team's match
-    'match_for_dynamic_team': [
-      { id: 'mp_dyn_1', booking_match_id: 'match_for_dynamic_team', user_id: 'user1', status: 'INVITED', responded_at: undefined },
-      { id: 'mp_dyn_2', booking_match_id: 'match_for_dynamic_team', user_id: 'user4', status: 'ACCEPTED', responded_at: '2025-08-25T10:00:00Z' },
-    ]
-  };
-
-  constructor(private http: HttpClient) { }
+  console.error('Service Error:', errorMessage, error);
+  return throwError(() => new Error(errorMessage));
+}
 
   getMatchById(matchId: string): Observable<IBookingMatch> {
-    console.log(`MatchService: Fetching booking match with ID: ${matchId}`);
-    const match = this.mockMatches.find(m => m.id === matchId);
-    if (match) {
-      return of(match).pipe(delay(500));
-    } else {
-      return throwError(() => new Error('Booking Match not found'));
-    }
+    console.log(`MatchService: Fetching booking match with ID: ${matchId} from backend.`);
+    return this.http.get<IBookingMatch>(`${this.matchesApiUrl}/${matchId}`)
+      .pipe(
+        tap(match => console.log(`MatchService: Fetched match ${matchId} from backend:`, match)),
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            console.log(`MatchService: Match with ID ${matchId} not found on backend.`);
+            return throwError(() => new Error(`Booking Match with ID ${matchId} not found.`));
+          }
+          return this.handleError(error);
+        })
+      );
   }
 
   getMatchParticipants(matchId: string): Observable<IMatchParticipant[]> {
-    console.log(`MatchService: Fetching participants for booking match ID: ${matchId}`);
-    const participants = this.mockMatchParticipants[matchId] || [];
-    return of(participants).pipe(delay(500));
+    console.log(`MatchService: Fetching participants for booking match ID: ${matchId} from backend.`);
+    return this.http.get<IMatchParticipant[]>(`${this.participantsApiUrl}?booking_match_id=${matchId}`)
+      .pipe(
+        tap(participants => console.log(`MatchService: Fetched participants for ${matchId} from backend:`, participants)),
+        catchError(this.handleError)
+      );
+  }
+  inviteParticipant(matchId: string, userEmail: string): Observable<IMatchParticipant> {
+    console.log(`MatchService: Inviting user with email ${userEmail} to booking match ${matchId} via backend.`);
+
+    return this.teamService.getUserByEmail(userEmail).pipe( 
+      switchMap(user => { 
+        if (!user || !user.id) {
+          console.error(`MatchService: User with email ${userEmail} not found or has no ID.`);
+          return throwError(() => new Error(`User with email ${userEmail} not found.`));
+        }
+
+        const newParticipantData: Omit<IMatchParticipant, 'id' | 'responded_at'> = {
+          booking_match_id: matchId,
+          user_id: user.id, 
+          status: 'INVITED'
+        };
+
+        return this.http.post<IMatchParticipant>(this.participantsApiUrl, newParticipantData).pipe(
+          tap(participant => console.log('MatchService: User invited successfully on backend:', participant)),
+          catchError(this.handleError)
+        );
+      }),
+      catchError(this.handleError) 
+    );
   }
 
-  inviteParticipant(matchId: string, userId: string): Observable<IMatchParticipant> {
-    console.log(`MatchService: Inviting user ${userId} to booking match ${matchId}`);
-    const currentParticipants = this.mockMatchParticipants[matchId] || [];
-    const existingParticipant = currentParticipants.find(p => p.user_id === userId);
+  // createMatch(matchData: Omit<IBookingMatch, 'id' | 'created_at'>): Observable<IBookingMatch> {
+  //   return this.http.post<IBookingMatch>(this.matchesApiUrl, matchData).pipe(catchError(this.handleError));
+  // }
 
-    if (existingParticipant) {
-      if (existingParticipant.status === 'INVITED') {
-        console.warn(`User ${userId} already invited for booking match ${matchId}`);
-        return throwError(() => new Error('User already invited.'));
-      } else {
-        console.warn(`User ${userId} already ${existingParticipant.status} for booking match ${matchId}`);
-        return throwError(() => new Error(`User already ${existingParticipant.status}.`));
-      }
-    } else {
-      const newParticipant: IMatchParticipant = {
-        id: `mp${Math.random().toString(36).substring(2, 9)}`,
-        booking_match_id: matchId,
-        user_id: userId,
-        status: 'INVITED',
-        responded_at: undefined
-      };
-      this.mockMatchParticipants[matchId] = [...currentParticipants, newParticipant];
-      console.log(`User ${userId} invited to booking match ${matchId} (mock success).`);
-      return of(newParticipant).pipe(delay(500));
-    }
-  }
+  // updateMatch(match: IBookingMatch): Observable<IBookingMatch> {
+  //   return this.http.put<IBookingMatch>(`${this.matchesApiUrl}/${match.id}`, match).pipe(catchError(this.handleError));
+  // }
+
+  // deleteMatch(matchId: string): Observable<void> {
+  //   return this.http.delete<void>(`${this.matchesApiUrl}/${matchId}`).pipe(catchError(this.handleError));
+  // }
+
+  // updateParticipantStatus(participantId: string, newStatus: MatchParticipantStatus): Observable<IMatchParticipant> {
+  //   return this.http.patch<IMatchParticipant>(`${this.participantsApiUrl}/${participantId}`, { status: newStatus }).pipe(catchError(this.handleError));
+  // }
 }
