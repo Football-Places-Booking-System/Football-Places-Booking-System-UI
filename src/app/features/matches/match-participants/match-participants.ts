@@ -1,17 +1,14 @@
 import { Component, OnInit ,OnDestroy} from '@angular/core';
 import { CommonModule } from '@angular/common'; 
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Observable, combineLatest, map, switchMap, of, catchError,tap, takeUntil,Subject } from 'rxjs';
 
-import { IBookingMatch, IMatchParticipant } from '../../../shared/models/match.model';
-import { IUser } from '../../../shared/models/user.model';
-
-import { Match } from '../../../core/services/match'; 
-import { Team } from '../../../core/services/team'; 
+import { Match, IMatchParticipant, IBookingMatch } from '../../../core/services/match';
+import { Team, ITeamMember } from '../../../core/services/team';
 
 @Component({
   selector: 'app-match-participants',
-  imports: [CommonModule, RouterLink], 
+  imports: [CommonModule], 
   templateUrl: './match-participants.html',
   styleUrls: ['./match-participants.css'] 
 })
@@ -19,10 +16,10 @@ export class MatchParticipants implements OnInit,OnDestroy {
   matchId!: string;
   teamId!: string;
   match$!: Observable<IBookingMatch>;
-  players$!: Observable<IUser[]>;
+  players$!: Observable<ITeamMember[]>;
   matchParticipants$!: Observable<IMatchParticipant[]>;
   // Corrected: Allow 'match' to be null in the combined data type
-  combinedData$!: Observable<{ match: IBookingMatch | null, players: IUser[], participants: IMatchParticipant[], teamId: string }>;
+  combinedData$!: Observable<{ match: IBookingMatch | null, players: ITeamMember[], participants: IMatchParticipant[], teamId: string }>;
 
   errorMessage: string | null = null;
   private destroy$ = new Subject<void>(); // For managing subscriptions
@@ -38,7 +35,7 @@ export class MatchParticipants implements OnInit,OnDestroy {
 
     this.combinedData$ = this.route.paramMap.pipe(
       map(params => {
-        this.matchId = params.get('matchId') || '';
+        this.matchId = params.get('id') || '';
         this.teamId = params.get('teamId') || '';
         console.log(`MatchParticipantsComponent: Route Params - matchId: ${this.matchId}, teamId: ${this.teamId}`);
 
@@ -52,23 +49,23 @@ export class MatchParticipants implements OnInit,OnDestroy {
       switchMap(({ matchId, teamId }) => {
         console.log(`MatchParticipantsComponent: Initiating service calls for matchId: ${matchId}, teamId: ${teamId}`);
         return combineLatest([
-          this.matchService.getMatchById(matchId),
-          this.teamService.getPlayersByTeamId(teamId),
+          this.matchService.getBookingMatchById(matchId),
+          this.teamService.getTeamMembers(teamId),
           this.matchService.getMatchParticipants(matchId)
         ]).pipe(
           // Explicitly type the tuple elements here to help TypeScript
-          tap(([match, players, participants]: [IBookingMatch, IUser[], IMatchParticipant[]]) => {
+          tap(([match, players, participants]: [IBookingMatch | null, ITeamMember[], IMatchParticipant[]]) => {
             console.log('MatchParticipantsComponent: Service Data Received - Match:', match);
             console.log('MatchParticipantsComponent: Service Data Received - Players:', players);
             console.log('MatchParticipantsComponent: Service Data Received - Participants:', participants);
           }),
           // Explicitly type the tuple elements here as well
-          map(([match, players, participants]: [IBookingMatch, IUser[], IMatchParticipant[]]) => ({ match, players, participants, teamId })),
+          map(([match, players, participants]: [IBookingMatch | null, ITeamMember[], IMatchParticipant[]]) => ({ match, players, participants, teamId })),
           catchError((err: any) => { // Explicitly type err
             this.errorMessage = `Error loading data from services: ${err.message}`;
             console.error('MatchParticipantsComponent: Service data fetch error caught:', err);
             // Corrected: Ensure the returned object strictly matches the Observable type
-            return of({ match: null, players: [] as IUser[], participants: [] as IMatchParticipant[], teamId: teamId });
+            return of({ match: null, players: [] as ITeamMember[], participants: [] as IMatchParticipant[], teamId: teamId });
           })
         );
       }),
@@ -89,7 +86,7 @@ export class MatchParticipants implements OnInit,OnDestroy {
         this.errorMessage = `Error in overall combinedData$ stream: ${err.message}`;
         console.error('MatchParticipantsComponent: Overall stream error caught:', err);
         // Corrected: Ensure the returned object strictly matches the Observable type
-        return of({ match: null, players: [] as IUser[], participants: [] as IMatchParticipant[], teamId: '' });
+        return of({ match: null, players: [] as ITeamMember[], participants: [] as IMatchParticipant[], teamId: '' });
       }),
       takeUntil(this.destroy$) // Unsubscribe on component destroy
     );
@@ -97,7 +94,7 @@ export class MatchParticipants implements OnInit,OnDestroy {
     // Subscribe to the combinedData$ to trigger the observable chain
     // and log the final state for debugging
     this.combinedData$.subscribe({
-      next: (data: { match: IBookingMatch | null, players: IUser[], participants: IMatchParticipant[], teamId: string }) => { // Explicitly type data
+      next: (data: { match: IBookingMatch | null, players: ITeamMember[], participants: IMatchParticipant[], teamId: string }) => { // Explicitly type data
         console.log('MatchParticipantsComponent: combinedData$ subscription received data:', data);
         if (data.match) {
           console.log('MatchParticipantsComponent: Match data is available for rendering.');
@@ -120,11 +117,11 @@ export class MatchParticipants implements OnInit,OnDestroy {
   }
 
   isPlayerInvited(userId: string, participants: IMatchParticipant[]): boolean {
-    return participants.some(p => p.user_id === userId && (p.status === 'INVITED' || p.status === 'ACCEPTED'));
+    return participants.some(p => p.userId.toString() === userId && (p.status === 'INVITED' || p.status === 'ACCEPTED'));
   }
 
   getPlayerInvitationStatus(userId: string, participants: IMatchParticipant[]): string {
-    const participant = participants.find(p => p.user_id === userId);
+    const participant = participants.find(p => p.userId.toString() === userId);
     return participant ? participant.status.charAt(0).toUpperCase() + participant.status.slice(1) : 'Not Invited';
   }
 
@@ -134,7 +131,7 @@ export class MatchParticipants implements OnInit,OnDestroy {
       return;
     }
 
-    this.matchService.inviteParticipant(this.matchId, userId).subscribe({
+    this.matchService.addMatchParticipant(this.matchId, parseInt(userId)).subscribe({
       next: (participant: IMatchParticipant) => { // Explicitly type participant
         console.log('User invited successfully:', participant);
         this.refreshParticipants();
@@ -165,4 +162,4 @@ export class MatchParticipants implements OnInit,OnDestroy {
       });
     }
   }
-  }
+}

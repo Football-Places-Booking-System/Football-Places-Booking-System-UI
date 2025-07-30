@@ -9,12 +9,12 @@
     <div *ngIf="!isEditing" class="details-card">
       <p><strong>Name:</strong> {{ team.name }}</p>
       <p><strong>Description:</strong> {{ team.description || 'N/A' }}</p>
-      <p><strong>Created By:</strong> {{ team.created_by }}</p>
-      <p><strong>Created At:</strong> {{ team.created_at | date:'medium' }}</p>
+      <p><strong>Created By:</strong> {{ team.createdBy }}</p>
+      <p><strong>Created At:</strong> {{ team.createdAt | date:'medium' }}</p>
 
       <div class="button-group">
         <button *ngIf="isOrganizer" (click)="toggleEditMode()" class="edit-button">Edit Team</button>
-        <button class="navigate-button" (click)="navigateToMatchParticipants()">
+        <button class="navigate-button" (click)="navigateToMatchParticipants('sample-match-id')">
           View Match Participants (Sample)
         </button>
         <button (click)="goBackToList()" class="back-button">Back to List</button>
@@ -54,8 +54,8 @@
       <div *ngIf="teamMembers.length === 0" class="no-members-message">No members in this team yet.</div>
       <div *ngFor="let member of teamMembers" class="member-card">
         <div class="member-info">
-          <p><strong>Name:</strong> {{ getUserForTeamMember(member.user_id)?.username || 'Unknown User' }}</p>
-          <p><strong>Email:</strong> {{ getUserForTeamMember(member.user_id)?.email || 'N/A' }}</p>
+          <p><strong>Name:</strong> {{ getUserForTeamMember(member.userId)?.username || 'Unknown User' }}</p>
+          <p><strong>Email:</strong> {{ getUserForTeamMember(member.userId)?.email || 'N/A' }}</p>
           <p><strong>Role:</strong> {{ member.role }}</p>
           <p><strong>Status:</strong> {{ member.status }}</p>
         </div>

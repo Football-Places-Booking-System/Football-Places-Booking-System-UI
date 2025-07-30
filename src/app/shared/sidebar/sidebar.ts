@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
@@ -9,11 +9,12 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-sidebar',
+  standalone: true,
   imports: [CommonModule, MatListModule, MatIconModule, RouterModule, FontAwesomeModule],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.css'],
 })
-export class SidebarComponent implements OnInit {
+export class SidebarComponent implements OnInit, OnDestroy {
   role: string | undefined;
   isOrganizerInAnyTeam: boolean = false;
   userTeams: any[] = [];
@@ -25,6 +26,20 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.role = this.auth.getCurrentUser()?.role;
+    this.loadUserTeams();
+    
+    // Listen for team creation events to refresh sidebar state
+    window.addEventListener('teamCreated', this.handleTeamCreated.bind(this) as EventListener);
+  }
+
+  ngOnDestroy(): void {
+    // Clean up event listener
+    window.removeEventListener('teamCreated', this.handleTeamCreated.bind(this) as EventListener);
+  }
+
+  private handleTeamCreated(event: Event): void {
+    console.log('Team created event received, refreshing sidebar state...');
+    // Refresh user teams and organizer status
     this.loadUserTeams();
   }
 
@@ -44,7 +59,7 @@ export class SidebarComponent implements OnInit {
     }
   }
 
-  private checkIfUserIsOrganizer(userId: string): void {
+  private checkIfUserIsOrganizer(userId: number): void {
     // Check if user is organizer in any team
     const checkPromises = this.userTeams.map(team => 
       this.teamService.isUserTeamOrganizer(userId, team.id).toPromise()

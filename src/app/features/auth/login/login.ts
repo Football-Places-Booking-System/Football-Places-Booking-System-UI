@@ -32,7 +32,7 @@ export class Login implements OnInit{
     this.errorMessage = '';
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
-      const success = this.authService.login({ identifier: email, password: password });
+      const success = this.authService.login(email, password);
       if (success) {
         console.log('Login successful');
         this.router.navigate(['/dashboard']);

@@ -3,20 +3,21 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Team } from '../../../core/services/team';
-import { ITeam } from '../../../shared/models/team.model';
+import { ITeam } from '../../../core/services/team';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { NgIf,NgFor } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-team-list',
   templateUrl: './team-list.html',
   styleUrls: ['./team-list.css'],
   imports: [
-    NgIf,
-    NgFor,
+    CommonModule,
     MatCardModule,
-    MatButtonModule
+    MatButtonModule,
+    MatIconModule
   ]
 })
 export class TeamList implements OnInit, OnDestroy {
@@ -84,7 +85,7 @@ export class TeamList implements OnInit, OnDestroy {
   }
 
   goToHome(): void {
-    // Assuming '/home' is your actual home page. Adjust if needed.
-    this.router.navigate(['/']);
+    // Navigate to dashboard instead of home page
+    this.router.navigate(['/dashboard']);
   }
 }
