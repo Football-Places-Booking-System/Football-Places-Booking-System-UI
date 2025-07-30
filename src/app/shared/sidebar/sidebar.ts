@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { Auth } from '../../core/services/auth';
 import { Team } from '../../core/services/team';
@@ -21,7 +21,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   constructor(
     private auth: Auth,
-    private teamService: Team
+    private teamService: Team,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -103,5 +104,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
   // Check if user can access profile
   get canAccessProfile(): boolean {
     return this.effectiveRole === 'ORGANIZER' || this.effectiveRole === 'PLAYER' || this.effectiveRole === 'ADMIN';
+  }
+
+  // Logout method
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/']);
   }
 }

@@ -48,6 +48,12 @@
     <mat-icon class="me-2">add_circle</mat-icon>
     Create Team
   </a>
+
+  <!-- Logout button -->
+  <a mat-list-item (click)="logout()" class="logout-button">
+    <mat-icon class="me-2">logout</mat-icon>
+    Logout
+  </a>
 </mat-nav-list>
 <ng-template #loginMsg>
   <div class="text-center text-muted mt-4">Please login to see dashboard links.</div>
