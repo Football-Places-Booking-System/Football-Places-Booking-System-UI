@@ -32,7 +32,8 @@ export class Auth {
   private nextId = 4;
 
     // private apiUrl = '/api/auth';
-    private apiUrl = 'http://localhost:8080/api/auth';
+    // private apiUrl = 'http://localhost:8080/api/auth';
+    private apiUrl = '/api/auth';
 
   private loggedIn = false;
   private currentUserRole: string | null = null;
