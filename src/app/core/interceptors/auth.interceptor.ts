@@ -1,38 +1,33 @@
-import { Injectable } from '@angular/core';
-import {
-  HttpInterceptor,
-  HttpRequest,
-  HttpHandler,
-  HttpEvent
-} from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpInterceptorFn } from '@angular/common/http';
 
-@Injectable()
-export class AuthInterceptor implements HttpInterceptor {
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  console.log('🔐 AuthInterceptor: Processing request to:', req.url);
 
-    const excludedUrls = [
-      '/api/auth/login',
-      '/api/auth/register'
-    ];
+  const excludedUrls = [
+    '/api/auth/login',
+    '/api/auth/register'
+  ];
 
-    const isExcluded = excludedUrls.some(url => req.url.includes(url));
+  const isExcluded = excludedUrls.some(url => req.url.includes(url));
 
-    if (isExcluded) {
-      return next.handle(req);
-    }
-
-    const token = sessionStorage.getItem('token');
-
-    if (token) {
-      const cloned = req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      return next.handle(cloned);
-    }
-
-    return next.handle(req);
+  if (isExcluded) {
+    console.log('🔐 AuthInterceptor: Excluded URL, passing through without token');
+    return next(req);
   }
-}
+
+  const token = sessionStorage.getItem('jwt_token');
+
+  if (token) {
+    console.log('🔐 AuthInterceptor: Adding Authorization header with token');
+    const cloned = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return next(cloned);
+  } else {
+    console.log('🔐 AuthInterceptor: No token found, passing through without Authorization header');
+  }
+
+  return next(req);
+};

@@ -3,8 +3,10 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { NgIf } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { AuthService, User } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { TeamService, TeamMemberRole } from '../../../core/services/team.service';
+
+
 
 @Component({
   selector: 'app-invite-player',

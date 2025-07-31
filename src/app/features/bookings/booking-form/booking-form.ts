@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -14,8 +14,11 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BookingService, IBooking, ITimeSlot } from '../../../core/services/booking.service';
 import { TeamService } from '../../../core/services/team.service';
-import { PlaceService, PlaceModel } from '../../../core/services/place.service';
+import { PlaceService } from '../../../core/services/place.service';
+import { IPlace } from '../../../core/models/iplace.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 interface IBookingGroup {
   start_time: string;
@@ -44,16 +47,17 @@ interface IBookingGroup {
   templateUrl: './booking-form.html',
   styleUrls: ['./booking-form.css']
 })
-export class BookingFormComponent implements OnInit {
+export class BookingFormComponent implements OnInit, OnDestroy {
   bookingForm!: FormGroup;
-  places: PlaceModel[] = [];
+  places: IPlace[] = [];
   userTeams: any[] = [];
-  selectedPlace: PlaceModel | null = null;
+  selectedPlace: IPlace | null = null;
   selectedDate: Date = new Date();
   availableTimeSlots: ITimeSlot[] = [];
   selectedTimeSlots: ITimeSlot[] = [];
   bookingGroups: IBookingGroup[] = [];
   currentUser: any;
+  private destroy$ = new Subject<void>();
 
   successMessage: string | null = null;
   errorMessage: string | null = null;
@@ -76,6 +80,11 @@ export class BookingFormComponent implements OnInit {
     this.loadUserTeams();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private initForm(): void {
     this.bookingForm = this.fb.group({
       place_id: ['', Validators.required],
@@ -86,7 +95,17 @@ export class BookingFormComponent implements OnInit {
   }
 
   private loadPlaces(): void {
-    this.places = this.placeService.getAllPlaces();
+    this.placeService.getAllPlaces().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (places) => {
+        this.places = places;
+      },
+      error: (error) => {
+        console.error('Failed to load places:', error);
+        this.errorMessage = 'Failed to load places. Please try again.';
+      }
+    });
   }
 
   private loadUserTeams(): void {

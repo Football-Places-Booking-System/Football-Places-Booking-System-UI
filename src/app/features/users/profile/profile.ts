@@ -8,13 +8,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { AuthService, User } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { IUser } from '../../../core/models/iuser.model';
+
 import { TeamService } from '../../../core/services/team.service';
 
-interface UserProfile extends User {
-  status?: 'ACTIVE' | 'INACTIVE'; // Extended to include status
-  createdAt?: string;
-}
 
 @Component({
   selector: 'app-profile',
@@ -34,7 +32,7 @@ interface UserProfile extends User {
   styleUrl: './profile.css'
 })
 export class Profile implements OnInit {
-  currentUser: UserProfile | null = null;
+  currentUser: IUser | null = null;
   isEditing = false;
   isLoading = false;
   isSaving = false;

@@ -1,11 +1,17 @@
 import { myUserRole } from '../enums/user-role';
 
+export type UserRole = 'PLAYER' | 'ADMIN' | 'ORGANIZER';
+
 export interface IUser {
   id: string;
   username: string;
   email: string;
   password: string;
-  role: myUserRole;
+  role: UserRole;
+  // role: myUserRole;
+  status?: 'ACTIVE' | 'INACTIVE';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 

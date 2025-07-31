@@ -6,7 +6,8 @@ import { takeUntil } from 'rxjs/operators';
 import { MatchService, IBookingMatch } from '../../../core/services/match.service';
 import { TeamService, ITeam } from '../../../core/services/team.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { PlaceService, PlaceModel } from '../../../core/services/place.service';
+import { PlaceService } from '../../../core/services/place.service';
+import { IPlace } from '../../../core/models/iplace.model';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -41,7 +42,7 @@ import { NgIf, NgFor, DatePipe } from '@angular/common';
 export class ScheduleMatch implements OnInit, OnDestroy {
   scheduleForm: FormGroup;
   userTeams: ITeam[] = [];
-  availablePlaces: PlaceModel[] = [];
+  availablePlaces: IPlace[] = [];
   timeOptions: string[] = [];
   successMessage: string | null = null;
   errorMessage: string | null = null;
@@ -110,7 +111,15 @@ export class ScheduleMatch implements OnInit, OnDestroy {
   }
 
   loadPlaces(): void {
-    this.availablePlaces = this.placeService.getAllPlaces();
+    this.placeService.getAllPlaces().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (places) => {
+        this.availablePlaces = places;
+      },
+      error: (error) => {
+        console.error('Failed to load places:', error);
+        this.errorMessage = 'Failed to load places. Please try again.';
+      }
+    });
   }
 
   loadUserTeams(): void {

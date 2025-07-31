@@ -5,7 +5,9 @@ import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angula
 import { Subject, takeUntil } from 'rxjs';
 
 import { ITeam, TeamService, ITeamMember } from '../../../core/services/team.service';
-import { User, AuthService } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { IUser } from '../../../core/models/iuser.model';
+
 
 @Component({
   selector: 'app-team-details',
@@ -16,7 +18,7 @@ import { User, AuthService } from '../../../core/services/auth.service';
 export class TeamDetails implements OnInit, OnDestroy {
   team: ITeam | undefined;
   teamMembers: ITeamMember[] = [];
-  usersInTeam: User[] = [];
+  usersInTeam: IUser[] = [];
   errorMessage: string | null = null;
   successMessage: string | null = null;
   isOrganizer: boolean = false;
@@ -112,7 +114,7 @@ export class TeamDetails implements OnInit, OnDestroy {
     });
   }
 
-  getUserForTeamMember(userId: string): User | undefined {
+  getUserForTeamMember(userId: string): IUser | undefined {
     return this.usersInTeam.find(user => user.id === userId);
   }
 

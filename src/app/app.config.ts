@@ -5,8 +5,8 @@ import { routes } from './app.routes';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 
-import { provideHttpClient, HTTP_INTERCEPTORS} from '@angular/common/http';
-import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 
 // export const appConfig: ApplicationConfig = {
@@ -22,12 +22,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes),
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: AuthInterceptor,
-      multi: true
-    },importProvidersFrom(MatCardModule, MatButtonModule)
+    importProvidersFrom(MatCardModule, MatButtonModule)
   ]
 };

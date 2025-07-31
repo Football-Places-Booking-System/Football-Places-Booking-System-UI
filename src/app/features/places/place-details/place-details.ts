@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PlaceModel } from '../../../core/services/place.service';
+import { IPlace } from '../../../core/models/iplace.model';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -11,7 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrl: './place-details.css'
 })
 export class PlaceDetails {
-  @Input() place!: PlaceModel;
+  @Input() place!: IPlace;
   @Output() edit = new EventEmitter<void>();
   @Output() delete = new EventEmitter<void>();
 
