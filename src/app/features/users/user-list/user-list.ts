@@ -19,7 +19,7 @@ import { Auth } from '../../../core/services/auth';
 import { Router } from '@angular/router';
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   role: 'ADMIN' | 'PLAYER' | 'ORGANIZER';
@@ -80,21 +80,21 @@ export class UserList implements OnInit {
 
   loadUsers(): void {
     this.isLoading = true;
-    
-    // Simulate loading users from localStorage
-    const usersString = localStorage.getItem('users');
+
+    // Simulate loading users from sessionStorage
+    const usersString = sessionStorage.getItem('users');
     if (usersString) {
       this.allUsers = JSON.parse(usersString);
     } else {
       // Initialize with default users
       this.allUsers = [
-        { id: 1, username: 'admin', email: 'admin@admin.com', role: 'ADMIN', status: 'ACTIVE' },
-        { id: 2, username: 'organizer', email: 'org@org.com', role: 'ORGANIZER', status: 'ACTIVE'},
-        { id: 3, username: 'player', email: 'player@player.com', role: 'PLAYER', status: 'ACTIVE'}
+        { id: '1', username: 'admin', email: 'admin@admin.com', role: 'ADMIN', status: 'ACTIVE' },
+        { id: '2', username: 'organizer', email: 'org@org.com', role: 'ORGANIZER', status: 'ACTIVE'},
+        { id: '3', username: 'player', email: 'player@player.com', role: 'PLAYER', status: 'ACTIVE'}
       ];
-      localStorage.setItem('users', JSON.stringify(this.allUsers));
+      sessionStorage.setItem('users', JSON.stringify(this.allUsers));
     }
-    
+
     this.filteredUsers = [...this.allUsers];
     this.isLoading = false;
   }
@@ -105,30 +105,30 @@ export class UserList implements OnInit {
   //                          user.email.toLowerCase().includes(this.searchTerm.toLowerCase());
   //     const matchesRole = !this.roleFilter || user.role === this.roleFilter;
   //     const matchesStatus = !this.statusFilter || user.status === this.statusFilter;
-      
+
   //     return matchesSearch && matchesRole && matchesStatus;
   //   });
   // }
 
-  changeUserRole(userId: number, newRole: 'ADMIN' | 'PLAYER' | 'ORGANIZER'): void {
+  changeUserRole(userId: string, newRole: 'ADMIN' | 'PLAYER' | 'ORGANIZER'): void {
     const user = this.allUsers.find(u => u.id === userId);
     if (user) {
       user.role = newRole;
-      localStorage.setItem('users', JSON.stringify(this.allUsers));
+      sessionStorage.setItem('users', JSON.stringify(this.allUsers));
       // this.applyFilters();
     }
   }
 
-  changeUserStatus(userId: number, newStatus: 'ACTIVE' | 'INACTIVE'): void {
+  changeUserStatus(userId: string, newStatus: 'ACTIVE' | 'INACTIVE'): void {
     const user = this.allUsers.find(u => u.id === userId);
     if (user) {
       user.status = newStatus;
-      localStorage.setItem('users', JSON.stringify(this.allUsers));
+      sessionStorage.setItem('users', JSON.stringify(this.allUsers));
       // this.applyFilters();
     }
   }
 
- 
+
 
   getRoleColor(role: string): string {
     switch (role) {

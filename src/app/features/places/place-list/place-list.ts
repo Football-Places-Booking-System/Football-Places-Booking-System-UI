@@ -26,7 +26,7 @@ export class PlaceList implements OnInit {
   editPlaceData: any = null;
   showDeleteConfirmModal = false;
   successMessage = '';
-  deletePlaceId: number | null = null;
+  deletePlaceId: string | null = null;
 
   constructor(private placeService: Place, private auth: Auth) {}
 

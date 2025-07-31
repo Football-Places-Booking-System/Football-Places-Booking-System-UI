@@ -1,5 +1,5 @@
 import { Component, OnInit ,OnDestroy} from '@angular/core';
-import { CommonModule } from '@angular/common'; 
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, combineLatest, map, switchMap, of, catchError,tap, takeUntil,Subject } from 'rxjs';
 
@@ -8,11 +8,11 @@ import { Team, ITeamMember } from '../../../core/services/team';
 
 @Component({
   selector: 'app-match-participants',
-  imports: [CommonModule], 
+  imports: [CommonModule],
   templateUrl: './match-participants.html',
-  styleUrls: ['./match-participants.css'] 
+  styleUrls: ['./match-participants.css']
 })
-export class MatchParticipants implements OnInit,OnDestroy { 
+export class MatchParticipants implements OnInit,OnDestroy {
   matchId!: string;
   teamId!: string;
   match$!: Observable<IBookingMatch>;
@@ -131,7 +131,7 @@ export class MatchParticipants implements OnInit,OnDestroy {
       return;
     }
 
-    this.matchService.addMatchParticipant(this.matchId, parseInt(userId)).subscribe({
+    this.matchService.addMatchParticipant(this.matchId, userId).subscribe({
       next: (participant: IMatchParticipant) => { // Explicitly type participant
         console.log('User invited successfully:', participant);
         this.refreshParticipants();

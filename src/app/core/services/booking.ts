@@ -6,7 +6,7 @@ export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING' | 'PENDING_PAY
 export interface IBooking {
   id: string;
   place_id: string;
-  user_id: number;
+  user_id: string;
   team_id: string;
   start_time: string;
   end_time: string;
@@ -30,23 +30,23 @@ export interface ITimeSlot {
   providedIn: 'root'
 })
 export class BookingService {
-  
+
   // Get all bookings
   getBookings(): Observable<IBooking[]> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       const bookings = bookingsString ? JSON.parse(bookingsString) : [];
       return of(bookings);
     } catch (error) {
-      console.error('Error loading bookings from localStorage:', error);
+      console.error('Error loading bookings from sessionStorage:', error);
       return of([]);
     }
   }
 
   // Get bookings by user
-  getUserBookings(userId: number): Observable<IBooking[]> {
+  getUserBookings(userId: string): Observable<IBooking[]> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const userBookings = bookings.filter(booking => booking.user_id === userId);
@@ -54,7 +54,7 @@ export class BookingService {
       }
       return of([]);
     } catch (error) {
-      console.error('Error loading user bookings from localStorage:', error);
+      console.error('Error loading user bookings from sessionStorage:', error);
       return of([]);
     }
   }
@@ -62,7 +62,7 @@ export class BookingService {
   // Get bookings by team
   getTeamBookings(teamId: string): Observable<IBooking[]> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const teamBookings = bookings.filter(booking => booking.team_id === teamId);
@@ -70,7 +70,7 @@ export class BookingService {
       }
       return of([]);
     } catch (error) {
-      console.error('Error loading team bookings from localStorage:', error);
+      console.error('Error loading team bookings from sessionStorage:', error);
       return of([]);
     }
   }
@@ -78,7 +78,7 @@ export class BookingService {
   // Get bookings by place
   getPlaceBookings(placeId: string): Observable<IBooking[]> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const placeBookings = bookings.filter(booking => booking.place_id === placeId);
@@ -86,7 +86,7 @@ export class BookingService {
       }
       return of([]);
     } catch (error) {
-      console.error('Error loading place bookings from localStorage:', error);
+      console.error('Error loading place bookings from sessionStorage:', error);
       return of([]);
     }
   }
@@ -94,7 +94,7 @@ export class BookingService {
   // Get booking by ID
   getBookingById(id: string): Observable<IBooking | null> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const booking = bookings.find(b => b.id === id);
@@ -102,7 +102,7 @@ export class BookingService {
       }
       return of(null);
     } catch (error) {
-      console.error('Error loading booking by ID from localStorage:', error);
+      console.error('Error loading booking by ID from sessionStorage:', error);
       return of(null);
     }
   }
@@ -117,10 +117,10 @@ export class BookingService {
         status: 'PENDING_PAYMENT' // Set initial status to PENDING_PAYMENT
       };
 
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       const bookings: IBooking[] = bookingsString ? JSON.parse(bookingsString) : [];
       bookings.push(newBooking);
-      localStorage.setItem('bookings', JSON.stringify(bookings));
+      sessionStorage.setItem('bookings', JSON.stringify(bookings));
 
       return of(newBooking);
     } catch (error) {
@@ -132,13 +132,13 @@ export class BookingService {
   // Update booking
   updateBooking(booking: IBooking): Observable<IBooking> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const index = bookings.findIndex(b => b.id === booking.id);
         if (index !== -1) {
           bookings[index] = booking;
-          localStorage.setItem('bookings', JSON.stringify(bookings));
+          sessionStorage.setItem('bookings', JSON.stringify(bookings));
           return of(booking);
         }
       }
@@ -152,13 +152,13 @@ export class BookingService {
   // Cancel booking
   cancelBooking(id: string): Observable<IBooking> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const index = bookings.findIndex(b => b.id === id);
         if (index !== -1) {
           bookings[index].status = 'CANCELLED';
-          localStorage.setItem('bookings', JSON.stringify(bookings));
+          sessionStorage.setItem('bookings', JSON.stringify(bookings));
           return of(bookings[index]);
         }
       }
@@ -172,13 +172,13 @@ export class BookingService {
   // Approve booking (Admin only) - Change from PENDING_PAYMENT to CONFIRMED
   approveBooking(id: string): Observable<IBooking> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const index = bookings.findIndex(b => b.id === id);
         if (index !== -1) {
           bookings[index].status = 'CONFIRMED';
-          localStorage.setItem('bookings', JSON.stringify(bookings));
+          sessionStorage.setItem('bookings', JSON.stringify(bookings));
           return of(bookings[index]);
         }
       }
@@ -192,7 +192,7 @@ export class BookingService {
   // Get bookings with PENDING_PAYMENT status (for admin)
   getPendingPaymentBookings(): Observable<IBooking[]> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const pendingBookings = bookings.filter(booking => booking.status === 'PENDING_PAYMENT');
@@ -212,14 +212,14 @@ export class BookingService {
       const timeSlots: ITimeSlot[] = [];
       const startHour = 8; // 8 AM
       const endHour = 22; // 10 PM
-      
+
       for (let hour = startHour; hour < endHour; hour++) {
         const startTime = new Date(date);
         startTime.setHours(hour, 0, 0, 0);
-        
+
         const endTime = new Date(date);
         endTime.setHours(hour + 1, 0, 0, 0);
-        
+
         timeSlots.push({
           id: `${placeId}-${date}-${hour}`,
           place_id: placeId,
@@ -230,11 +230,11 @@ export class BookingService {
       }
 
       // Check existing bookings for this place and date
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
-        const placeBookings = bookings.filter(b => 
-          b.place_id === placeId && 
+        const placeBookings = bookings.filter(b =>
+          b.place_id === placeId &&
           b.status !== 'CANCELLED' &&
           new Date(b.start_time).toDateString() === new Date(date).toDateString()
         );
@@ -243,11 +243,11 @@ export class BookingService {
         placeBookings.forEach(booking => {
           const bookingStart = new Date(booking.start_time);
           const bookingEnd = new Date(booking.end_time);
-          
+
           timeSlots.forEach(slot => {
             const slotStart = new Date(slot.start_time);
             const slotEnd = new Date(slot.end_time);
-            
+
             if (slotStart < bookingEnd && slotEnd > bookingStart) {
               slot.is_available = false;
               slot.booking_id = booking.id;
@@ -266,11 +266,11 @@ export class BookingService {
   // Delete booking
   deleteBooking(id: string): Observable<void> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const filteredBookings = bookings.filter(b => b.id !== id);
-        localStorage.setItem('bookings', JSON.stringify(filteredBookings));
+        sessionStorage.setItem('bookings', JSON.stringify(filteredBookings));
       }
       return of(void 0);
     } catch (error) {
@@ -280,14 +280,14 @@ export class BookingService {
   }
 
   // Get upcoming bookings for user
-  getUpcomingBookings(userId: number): Observable<IBooking[]> {
+  getUpcomingBookings(userId: string): Observable<IBooking[]> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const now = new Date();
-        const upcomingBookings = bookings.filter(booking => 
-          booking.user_id === userId && 
+        const upcomingBookings = bookings.filter(booking =>
+          booking.user_id === userId &&
           new Date(booking.start_time) > now &&
           booking.status !== 'CANCELLED'
         );
@@ -301,14 +301,14 @@ export class BookingService {
   }
 
   // Get past bookings for user
-  getPastBookings(userId: number): Observable<IBooking[]> {
+  getPastBookings(userId: string): Observable<IBooking[]> {
     try {
-      const bookingsString = localStorage.getItem('bookings');
+      const bookingsString = sessionStorage.getItem('bookings');
       if (bookingsString) {
         const bookings: IBooking[] = JSON.parse(bookingsString);
         const now = new Date();
-        const pastBookings = bookings.filter(booking => 
-          booking.user_id === userId && 
+        const pastBookings = bookings.filter(booking =>
+          booking.user_id === userId &&
           new Date(booking.start_time) < now
         );
         return of(pastBookings);

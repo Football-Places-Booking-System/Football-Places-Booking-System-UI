@@ -6,7 +6,7 @@ export type MatchParticipantStatus = 'INVITED' | 'ACCEPTED' | 'DECLINED' | 'EXPI
 export interface IMatchParticipant {
   id: string;
   bookingMatchId: string;
-  userId: number;
+  userId: string;
   status: MatchParticipantStatus;
   respondedAt?: string;
   createdAt: string;
@@ -16,7 +16,7 @@ export interface IBookingMatch {
   id: string;
   placeId: string;
   teamId: string;
-  organizerId: number;
+  organizerId: string;
   matchDate: string;
   startTime: string;
   endTime: string;
@@ -32,9 +32,9 @@ export interface IBookingMatch {
   providedIn: 'root'
 })
 export class Match {
-  
+
   // Booking Match Management
-  createBookingMatch(booking: Omit<IBookingMatch, 'id' | 'createdAt'>, organizerId: number): Observable<IBookingMatch> {
+  createBookingMatch(booking: Omit<IBookingMatch, 'id' | 'createdAt'>, organizerId: string): Observable<IBookingMatch> {
     try {
       const newBooking: IBookingMatch = {
         ...booking,
@@ -45,10 +45,10 @@ export class Match {
         updatedAt: new Date().toISOString()
       };
 
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       const bookings: IBookingMatch[] = bookingsString ? JSON.parse(bookingsString) : [];
       bookings.push(newBooking);
-      localStorage.setItem('bookingMatches', JSON.stringify(bookings));
+      sessionStorage.setItem('bookingMatches', JSON.stringify(bookings));
 
       return of(newBooking);
     } catch (error) {
@@ -59,7 +59,7 @@ export class Match {
 
   getBookingMatches(): Observable<IBookingMatch[]> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       const bookings = bookingsString ? JSON.parse(bookingsString) : [];
       return of(bookings);
     } catch (error) {
@@ -70,7 +70,7 @@ export class Match {
 
   getBookingMatchById(id: string): Observable<IBookingMatch | null> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       if (bookingsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const booking = bookings.find(b => b.id === id);
@@ -83,9 +83,9 @@ export class Match {
     }
   }
 
-  getBookingMatchesByOrganizer(organizerId: number): Observable<IBookingMatch[]> {
+  getBookingMatchesByOrganizer(organizerId: string): Observable<IBookingMatch[]> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       if (bookingsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const organizerBookings = bookings.filter(b => b.organizerId === organizerId);
@@ -100,7 +100,7 @@ export class Match {
 
   updateBookingMatch(booking: IBookingMatch): Observable<IBookingMatch> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       if (bookingsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const index = bookings.findIndex(b => b.id === booking.id);
@@ -110,7 +110,7 @@ export class Match {
             updatedAt: new Date().toISOString()
           };
           bookings[index] = updatedBooking;
-          localStorage.setItem('bookingMatches', JSON.stringify(bookings));
+          sessionStorage.setItem('bookingMatches', JSON.stringify(bookings));
           return of(updatedBooking);
         }
       }
@@ -123,11 +123,11 @@ export class Match {
 
   deleteBookingMatch(id: string): Observable<void> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       if (bookingsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const filteredBookings = bookings.filter(b => b.id !== id);
-        localStorage.setItem('bookingMatches', JSON.stringify(filteredBookings));
+        sessionStorage.setItem('bookingMatches', JSON.stringify(filteredBookings));
       }
       return of(void 0);
     } catch (error) {
@@ -137,7 +137,7 @@ export class Match {
   }
 
   // Match Participant Management
-  addMatchParticipant(bookingMatchId: string, userId: number): Observable<IMatchParticipant> {
+  addMatchParticipant(bookingMatchId: string, userId: string): Observable<IMatchParticipant> {
     try {
       const newParticipant: IMatchParticipant = {
         id: Date.now().toString(),
@@ -147,10 +147,10 @@ export class Match {
         createdAt: new Date().toISOString()
       };
 
-      const participantsString = localStorage.getItem('matchParticipants');
+      const participantsString = sessionStorage.getItem('matchParticipants');
       const participants: IMatchParticipant[] = participantsString ? JSON.parse(participantsString) : [];
       participants.push(newParticipant);
-      localStorage.setItem('matchParticipants', JSON.stringify(participants));
+      sessionStorage.setItem('matchParticipants', JSON.stringify(participants));
 
       return of(newParticipant);
     } catch (error) {
@@ -161,7 +161,7 @@ export class Match {
 
   getMatchParticipants(bookingMatchId: string): Observable<IMatchParticipant[]> {
     try {
-      const participantsString = localStorage.getItem('matchParticipants');
+      const participantsString = sessionStorage.getItem('matchParticipants');
       if (participantsString) {
         const participants: IMatchParticipant[] = JSON.parse(participantsString);
         const matchParticipants = participants.filter(p => p.bookingMatchId === bookingMatchId);
@@ -174,9 +174,9 @@ export class Match {
     }
   }
 
-  getUserMatchInvites(userId: number): Observable<IMatchParticipant[]> {
+  getUserMatchInvites(userId: string): Observable<IMatchParticipant[]> {
     try {
-      const participantsString = localStorage.getItem('matchParticipants');
+      const participantsString = sessionStorage.getItem('matchParticipants');
       if (participantsString) {
         const participants: IMatchParticipant[] = JSON.parse(participantsString);
         const userInvites = participants.filter(p => p.userId === userId && p.status === 'INVITED');
@@ -191,15 +191,15 @@ export class Match {
 
   respondToMatchInvite(participantId: string, status: 'ACCEPTED' | 'DECLINED'): Observable<void> {
     try {
-      const participantsString = localStorage.getItem('matchParticipants');
+      const participantsString = sessionStorage.getItem('matchParticipants');
       if (participantsString) {
         const participants: IMatchParticipant[] = JSON.parse(participantsString);
         const participantIndex = participants.findIndex(p => p.id === participantId);
-        
+
         if (participantIndex !== -1) {
           participants[participantIndex].status = status;
           participants[participantIndex].respondedAt = new Date().toISOString();
-          localStorage.setItem('matchParticipants', JSON.stringify(participants));
+          sessionStorage.setItem('matchParticipants', JSON.stringify(participants));
 
           // Check if match should be confirmed based on minimum participants
           this.checkAndConfirmMatch(participants[participantIndex].bookingMatchId);
@@ -214,24 +214,24 @@ export class Match {
 
   private checkAndConfirmMatch(bookingMatchId: string): void {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
-      const participantsString = localStorage.getItem('matchParticipants');
-      
+      const bookingsString = sessionStorage.getItem('bookingMatches');
+      const participantsString = sessionStorage.getItem('matchParticipants');
+
       if (bookingsString && participantsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const participants: IMatchParticipant[] = JSON.parse(participantsString);
-        
+
         const booking = bookings.find(b => b.id === bookingMatchId);
-        const acceptedParticipants = participants.filter(p => 
+        const acceptedParticipants = participants.filter(p =>
           p.bookingMatchId === bookingMatchId && p.status === 'ACCEPTED'
         );
-        
+
         if (booking && acceptedParticipants.length >= booking.minParticipants) {
           // Change status to PENDING_PAYMENT when minimum participants accept
           booking.status = 'PENDING_PAYMENT';
           booking.updatedAt = new Date().toISOString();
-          localStorage.setItem('bookingMatches', JSON.stringify(bookings));
-          
+          sessionStorage.setItem('bookingMatches', JSON.stringify(bookings));
+
           // Expire remaining invitations
           this.expireRemainingInvitations(bookingMatchId);
         }
@@ -244,15 +244,15 @@ export class Match {
   // Admin function to confirm match (change from PENDING_PAYMENT to CONFIRMED)
   confirmMatch(bookingMatchId: string): Observable<void> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       if (bookingsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const booking = bookings.find(b => b.id === bookingMatchId);
-        
+
         if (booking && booking.status === 'PENDING_PAYMENT') {
           booking.status = 'CONFIRMED';
           booking.updatedAt = new Date().toISOString();
-          localStorage.setItem('bookingMatches', JSON.stringify(bookings));
+          sessionStorage.setItem('bookingMatches', JSON.stringify(bookings));
           return of(void 0);
         } else {
           throw new Error('Match not found or not in PENDING_PAYMENT status');
@@ -268,15 +268,15 @@ export class Match {
   // Cancel match
   cancelMatch(bookingMatchId: string): Observable<void> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       if (bookingsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const booking = bookings.find(b => b.id === bookingMatchId);
-        
+
         if (booking) {
           booking.status = 'CANCELLED';
           booking.updatedAt = new Date().toISOString();
-          localStorage.setItem('bookingMatches', JSON.stringify(bookings));
+          sessionStorage.setItem('bookingMatches', JSON.stringify(bookings));
           return of(void 0);
         } else {
           throw new Error('Match not found');
@@ -292,7 +292,7 @@ export class Match {
   // Expire remaining invitations when minimum participants accept
   private expireRemainingInvitations(bookingMatchId: string): void {
     try {
-      const participantsString = localStorage.getItem('matchParticipants');
+      const participantsString = sessionStorage.getItem('matchParticipants');
       if (participantsString) {
         const participants: IMatchParticipant[] = JSON.parse(participantsString);
         const updatedParticipants = participants.map(p => {
@@ -301,7 +301,7 @@ export class Match {
           }
           return p;
         });
-        localStorage.setItem('matchParticipants', JSON.stringify(updatedParticipants));
+        sessionStorage.setItem('matchParticipants', JSON.stringify(updatedParticipants));
       }
     } catch (error) {
       console.error('Error expiring invitations:', error);
@@ -311,7 +311,7 @@ export class Match {
   // Get matches by status for admin
   getMatchesByStatus(status: IBookingMatch['status']): Observable<IBookingMatch[]> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       if (bookingsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const filteredBookings = bookings.filter(b => b.status === status);
@@ -327,7 +327,7 @@ export class Match {
   // Utility methods
   isMatchConfirmed(bookingMatchId: string): Observable<boolean> {
     try {
-      const bookingsString = localStorage.getItem('bookingMatches');
+      const bookingsString = sessionStorage.getItem('bookingMatches');
       if (bookingsString) {
         const bookings: IBookingMatch[] = JSON.parse(bookingsString);
         const booking = bookings.find(b => b.id === bookingMatchId);
@@ -342,10 +342,10 @@ export class Match {
 
   getAcceptedParticipantsCount(bookingMatchId: string): Observable<number> {
     try {
-      const participantsString = localStorage.getItem('matchParticipants');
+      const participantsString = sessionStorage.getItem('matchParticipants');
       if (participantsString) {
         const participants: IMatchParticipant[] = JSON.parse(participantsString);
-        const acceptedCount = participants.filter(p => 
+        const acceptedCount = participants.filter(p =>
           p.bookingMatchId === bookingMatchId && p.status === 'ACCEPTED'
         ).length;
         return of(acceptedCount);

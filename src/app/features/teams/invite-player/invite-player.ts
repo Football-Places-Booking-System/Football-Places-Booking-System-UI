@@ -55,10 +55,10 @@ export class InvitePlayer implements OnInit, OnDestroy {
     this.successMessage = null;
 
     if (this.inviteForm.valid && this.teamId) {
-      const { email } = this.inviteForm.value; 
-      const role: TeamMemberRole = 'MEMBER'; 
+      const { email } = this.inviteForm.value;
+      const role: TeamMemberRole = 'MEMBER';
       const currentUser = this.authService.getCurrentUser();
-      
+
       if (!currentUser) {
         this.errorMessage = 'User not authenticated. Please login again.';
         return;
@@ -69,19 +69,19 @@ export class InvitePlayer implements OnInit, OnDestroy {
       // For now, we'll use a mock user since getUserByEmail doesn't exist
       // In a real app, you would implement this method in the team service
       const mockUser = {
-        id: 999, // Mock user ID
+        id: "999", // Mock user ID
         username: email.split('@')[0], // Use email prefix as username
         email: email
       };
 
       // Add team member with the required parameters
       this.teamService.addTeamMember(
-        this.teamId, 
-        mockUser.id, 
-        mockUser.username, 
-        mockUser.email, 
-        role, 
-        'PENDING', 
+        this.teamId,
+        mockUser.id,
+        mockUser.username,
+        mockUser.email,
+        role,
+        'PENDING',
         currentUser.id
       ).pipe(takeUntil(this.destroy$))
         .subscribe({

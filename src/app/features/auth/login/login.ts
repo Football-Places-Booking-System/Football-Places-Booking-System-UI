@@ -24,7 +24,7 @@ export class Login implements OnInit{
   ngOnInit(): void {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(4)]]
     });
   }
 
@@ -32,14 +32,18 @@ export class Login implements OnInit{
     this.errorMessage = '';
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
-      const success = this.authService.login(email, password);
-      if (success) {
-        console.log('Login successful');
-        this.router.navigate(['/dashboard']);
-      } else {
-        console.error('Login failed');
-        this.errorMessage = 'Login failed. Please check your credentials.';
-      }
+      this.authService.login(email, password).subscribe({
+        next: () => {
+          console.log('Login successful');
+          console.log('Navigaaaattttee');
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err) => {
+          console.error('Login failed', err);
+          this.errorMessage = 'Login failed. Please check your credentials.';
+        }
+      });
+      console.log('Login attempt:', { email, password });
     } else {
       this.errorMessage = 'Please enter valid login data.';
       this.markAllAsTouched(this.loginForm);

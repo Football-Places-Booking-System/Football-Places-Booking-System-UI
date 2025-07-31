@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 export interface PlaceModel {
-  id: number;
+  id: string;
   name: string;
   location: string;
   type: string;
@@ -16,22 +16,22 @@ export class Place {
   private storageKey = 'places';
   private idKey = 'places_nextId';
   private places: PlaceModel[] = [];
-  private nextId = 1;
+  private nextId = '1';
 
   constructor() {
     this.loadFromStorage();
   }
 
   private loadFromStorage() {
-    const placesJson = localStorage.getItem(this.storageKey);
-    const idJson = localStorage.getItem(this.idKey);
+    const placesJson = sessionStorage.getItem(this.storageKey);
+    const idJson = sessionStorage.getItem(this.idKey);
     if (placesJson) {
       this.places = JSON.parse(placesJson);
     } else {
       // Default data if nothing in storage
       this.places = [
         {
-          id: 1,
+          id: '1',
           name: 'Camp Nou',
           location: 'Barcelona',
           type: '11-a-side',
@@ -39,7 +39,7 @@ export class Place {
           description: 'Legendary stadium in Barcelona, home of FC Barcelona.'
         },
         {
-          id: 2,
+          id: '2',
           name: 'Mini Estadi',
           location: 'Barcelona',
           type: '7-a-side',
@@ -47,33 +47,32 @@ export class Place {
           description: 'Smaller pitch for 7-a-side games.'
         },
         {
-          id: 3,
+          id: '3',
           name: 'City Arena',
           location: 'Madrid',
           type: '5-a-side',
           imageUrl: '/5.jpg',
           description: 'Popular 5-a-side pitch in Madrid.'
         },
-                {
-          id: 4,
+        {
+          id: '4',
           name: 'City Arena',
           location: 'Madrid',
           type: '5-a-side',
           imageUrl: '/Mini Estadi.webp',
           description: 'Popular 5-a-side pitch in Madrid.'
         }
-        
       ];
-      this.nextId = 4;
+      this.nextId = '5';
       this.saveToStorage();
       return;
     }
-    this.nextId = idJson ? +idJson : (this.places.length ? Math.max(...this.places.map(p => p.id)) + 1 : 1);
+    this.nextId = idJson ? idJson : (this.places.length ? (Math.max(...this.places.map(p => parseInt(p.id))) + 1).toString() : '1');
   }
 
   private saveToStorage() {
-    localStorage.setItem(this.storageKey, JSON.stringify(this.places));
-    localStorage.setItem(this.idKey, this.nextId.toString());
+    sessionStorage.setItem(this.storageKey, JSON.stringify(this.places));
+    sessionStorage.setItem(this.idKey, this.nextId);
   }
 
   getAllPlaces(): PlaceModel[] {
@@ -81,13 +80,17 @@ export class Place {
   }
 
   addPlace(place: Omit<PlaceModel, 'id'>): PlaceModel {
-    const newPlace: PlaceModel = { ...place, id: this.nextId++ };
+    const currentId = this.nextId;
+    const nextIdNum = parseInt(this.nextId) + 1;
+    this.nextId = nextIdNum.toString();
+
+    const newPlace: PlaceModel = { ...place, id: currentId };
     this.places.push(newPlace);
     this.saveToStorage();
     return newPlace;
   }
 
-  updatePlace(id: number, updated: Partial<Omit<PlaceModel, 'id'>>): boolean {
+  updatePlace(id: string, updated: Partial<Omit<PlaceModel, 'id'>>): boolean {
     const idx = this.places.findIndex(p => p.id === id);
     if (idx === -1) return false;
     this.places[idx] = { ...this.places[idx], ...updated };
@@ -95,7 +98,7 @@ export class Place {
     return true;
   }
 
-  deletePlace(id: number): boolean {
+  deletePlace(id: string): boolean {
     const idx = this.places.findIndex(p => p.id === id);
     if (idx === -1) return false;
     this.places.splice(idx, 1);

@@ -28,7 +28,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.role = this.auth.getCurrentUser()?.role;
     this.loadUserTeams();
-    
+
     // Listen for team creation events to refresh sidebar state
     window.addEventListener('teamCreated', this.handleTeamCreated.bind(this) as EventListener);
   }
@@ -60,9 +60,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   }
 
-  private checkIfUserIsOrganizer(userId: number): void {
+  private checkIfUserIsOrganizer(userId: string): void {
     // Check if user is organizer in any team
-    const checkPromises = this.userTeams.map(team => 
+    const checkPromises = this.userTeams.map(team =>
       this.teamService.isUserTeamOrganizer(userId, team.id).toPromise()
     );
 
