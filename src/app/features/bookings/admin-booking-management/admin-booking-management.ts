@@ -15,8 +15,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking';
-import { Auth } from '../../../core/services/auth';
+import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -57,7 +57,7 @@ export class AdminBookingManagementComponent implements OnInit {
 
   constructor(
     private bookingService: BookingService,
-    private authService: Auth,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -196,4 +196,4 @@ export class AdminBookingManagementComponent implements OnInit {
   }
 
 
-} 
+}

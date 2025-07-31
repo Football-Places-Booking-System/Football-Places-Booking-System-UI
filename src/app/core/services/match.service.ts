@@ -31,7 +31,7 @@ export interface IBookingMatch {
 @Injectable({
   providedIn: 'root'
 })
-export class Match {
+export class MatchService {
 
   // Booking Match Management
   createBookingMatch(booking: Omit<IBookingMatch, 'id' | 'createdAt'>, organizerId: string): Observable<IBookingMatch> {

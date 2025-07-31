@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Place, PlaceModel } from '../../../core/services/place';
+import { PlaceService, PlaceModel } from '../../../core/services/place.service';
 import { FilterBar } from '../filter-bar/filter-bar';
 import { PlaceDetails } from '../place-details/place-details';
-import { Auth } from '../../../core/services/auth';
+import { AuthService } from '../../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -28,7 +28,7 @@ export class PlaceList implements OnInit {
   successMessage = '';
   deletePlaceId: string | null = null;
 
-  constructor(private placeService: Place, private auth: Auth) {}
+  constructor(private placeService: PlaceService, private auth: AuthService) {}
 
   ngOnInit() {
     this.allPlaces = this.placeService.getAllPlaces();

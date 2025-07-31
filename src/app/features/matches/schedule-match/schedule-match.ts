@@ -3,10 +3,10 @@ import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Match, IBookingMatch } from '../../../core/services/match';
-import { Team, ITeam } from '../../../core/services/team';
-import { Auth } from '../../../core/services/auth';
-import { Place, PlaceModel } from '../../../core/services/place';
+import { MatchService, IBookingMatch } from '../../../core/services/match.service';
+import { TeamService, ITeam } from '../../../core/services/team.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { PlaceService, PlaceModel } from '../../../core/services/place.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -51,11 +51,11 @@ export class ScheduleMatch implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
-    private matchService: Match,
-    private teamService: Team,
-    private placeService: Place,
+    private matchService: MatchService,
+    private teamService: TeamService,
+    private placeService: PlaceService,
     private router: Router,
-    private authService: Auth,
+    private authService: AuthService,
     private fb: FormBuilder
   ) {
     this.scheduleForm = this.fb.group({
@@ -68,7 +68,7 @@ export class ScheduleMatch implements OnInit, OnDestroy {
       maxParticipants: [22, [Validators.required, Validators.min(1)]],
       description: ['', [Validators.maxLength(500)]]
     });
-    
+
     this.generateTimeOptions();
   }
 
@@ -171,7 +171,7 @@ export class ScheduleMatch implements OnInit, OnDestroy {
           maxParticipants: 22
         });
         this.isLoading = false;
-        
+
         // Navigate to matches page after successful creation
         setTimeout(() => {
           this.successMessage = null;
@@ -203,7 +203,7 @@ export class ScheduleMatch implements OnInit, OnDestroy {
     if (!startTime) {
       return this.timeOptions;
     }
-    
+
     // Filter out times that are before or equal to start time
     return this.timeOptions.filter(time => time > startTime);
   }

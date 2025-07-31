@@ -12,7 +12,7 @@ export interface PlaceModel {
 @Injectable({
   providedIn: 'root'
 })
-export class Place {
+export class PlaceService {
   private storageKey = 'places';
   private idKey = 'places_nextId';
   private places: PlaceModel[] = [];

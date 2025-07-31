@@ -32,7 +32,7 @@ export interface ITeam {
 @Injectable({
   providedIn: 'root'
 })
-export class Team {
+export class TeamService {
 
   getTeams(): Observable<ITeam[]> {
     try {

@@ -3,8 +3,8 @@ import { CommonModule, NgIf } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Match, IBookingMatch } from '../../../core/services/match';
-import { Team } from '../../../core/services/team';
+import { MatchService, IBookingMatch } from '../../../core/services/match.service';
+import { TeamService } from '../../../core/services/team.service';
 
 @Component({
   selector: 'app-match-details',
@@ -21,8 +21,8 @@ export class MatchDetails implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private matchService: Match,
-    private teamService: Team
+    private matchService: MatchService,
+    private teamService: TeamService
   ) {}
 
   ngOnInit(): void {

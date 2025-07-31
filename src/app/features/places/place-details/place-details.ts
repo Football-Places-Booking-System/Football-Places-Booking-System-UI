@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PlaceModel } from '../../../core/services/place';
-import { Auth } from '../../../core/services/auth';
+import { PlaceModel } from '../../../core/services/place.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-place-details',
@@ -15,7 +15,7 @@ export class PlaceDetails {
   @Output() edit = new EventEmitter<void>();
   @Output() delete = new EventEmitter<void>();
 
-  constructor(private auth: Auth) {}
+  constructor(private auth: AuthService) {}
 
   get isAdmin(): boolean {
     const user = this.auth.getCurrentUser();

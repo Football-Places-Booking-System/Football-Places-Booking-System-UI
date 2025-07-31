@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Team } from './team';
-import { User as UserService, UserProfile } from './user';
+import { TeamService } from './team.service';
+import { UserService as UserService, UserProfile } from './user.service';
 
 import { IUser, IRegisterUser, ILoginUser, IRegisterResponseUser } from '../models/iuser';
 import { Router } from '@angular/router';
@@ -24,7 +24,7 @@ export interface User {
 @Injectable({
   providedIn: 'root'
 })
-export class Auth {
+export class AuthService {
   private users: User[] = [
     { id: '1', username: 'admin', email: 'admin@admin.com', password: 'admin1', role: 'ADMIN' },
     { id: '2', username: 'organizer', email: 'org@org.com', password: 'organizer', role: 'ORGANIZER' },

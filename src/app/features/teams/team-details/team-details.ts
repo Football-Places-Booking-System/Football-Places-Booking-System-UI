@@ -4,8 +4,8 @@ import { CommonModule, NgIf, NgFor, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
-import { ITeam, Team, ITeamMember } from '../../../core/services/team';
-import { User, Auth } from '../../../core/services/auth';
+import { ITeam, TeamService, ITeamMember } from '../../../core/services/team.service';
+import { User, AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-team-details',
@@ -30,8 +30,8 @@ export class TeamDetails implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private teamService: Team,
-    private authService: Auth,
+    private teamService: TeamService,
+    private authService: AuthService,
     private fb: FormBuilder
   ) { }
 

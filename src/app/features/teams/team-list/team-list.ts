@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Team } from '../../../core/services/team';
-import { ITeam } from '../../../core/services/team';
+import { TeamService } from '../../../core/services/team.service';
+import { ITeam } from '../../../core/services/team.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,7 +26,7 @@ export class TeamList implements OnInit, OnDestroy {
   errorMessage: string | null = null;
   private destroy$ = new Subject<void>();
 
-  constructor(private teamService: Team, private router: Router) {}
+  constructor(private teamService: TeamService, private router: Router) {}
 
   ngOnInit(): void {
     this.loadTeams();

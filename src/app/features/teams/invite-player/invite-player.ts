@@ -3,8 +3,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { NgIf } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { Auth, User } from '../../../core/services/auth';
-import { Team, TeamMemberRole } from '../../../core/services/team';
+import { AuthService, User } from '../../../core/services/auth.service';
+import { TeamService, TeamMemberRole } from '../../../core/services/team.service';
 
 @Component({
   selector: 'app-invite-player',
@@ -23,8 +23,8 @@ export class InvitePlayer implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private teamService: Team,
-    private authService: Auth
+    private teamService: TeamService,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {

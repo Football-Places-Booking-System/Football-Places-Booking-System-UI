@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
-import { Auth } from '../../../core/services/auth';
-import { Team } from '../../../core/services/team';
+import { AuthService } from '../../../core/services/auth.service';
+import { TeamService } from '../../../core/services/team.service';
 import { AdminDashboardComponent } from '../admin-dashboard/admin-dashboard';
 import { UnifiedDashboardComponent } from '../unified-dashboard/unified-dashboard';
 
@@ -26,8 +26,8 @@ export class OverviewComponent implements OnInit {
   userTeams: any[] = [];
 
   constructor(
-    private auth: Auth,
-    private teamService: Team
+    private auth: AuthService,
+    private teamService: TeamService
   ) {
     this.role = this.auth.getCurrentUser()?.role;
   }

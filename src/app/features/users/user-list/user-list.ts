@@ -15,7 +15,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Auth } from '../../../core/services/auth';
+import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
 
 interface User {
@@ -69,7 +69,7 @@ export class UserList implements OnInit {
   displayedColumns: string[] = ['id', 'username', 'email', 'role', 'status',  'actions'];
 
   constructor(
-    private authService: Auth,
+    private authService: AuthService,
     private router: Router
   ) {}
 

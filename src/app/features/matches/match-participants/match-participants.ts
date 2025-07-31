@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, combineLatest, map, switchMap, of, catchError,tap, takeUntil,Subject } from 'rxjs';
 
-import { Match, IMatchParticipant, IBookingMatch } from '../../../core/services/match';
-import { Team, ITeamMember } from '../../../core/services/team';
+import { MatchService, IMatchParticipant, IBookingMatch } from '../../../core/services/match.service';
+import { TeamService, ITeamMember } from '../../../core/services/team.service';
 
 @Component({
   selector: 'app-match-participants',
@@ -26,8 +26,8 @@ export class MatchParticipants implements OnInit,OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
-    private matchService: Match,
-    private teamService: Team
+    private matchService: MatchService,
+    private teamService: TeamService
   ) { }
 
   ngOnInit(): void {

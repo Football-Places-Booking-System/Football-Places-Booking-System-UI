@@ -8,8 +8,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Auth, User } from '../../../core/services/auth';
-import { Team } from '../../../core/services/team';
+import { AuthService, User } from '../../../core/services/auth.service';
+import { TeamService } from '../../../core/services/team.service';
 
 interface UserProfile extends User {
   status?: 'ACTIVE' | 'INACTIVE'; // Extended to include status
@@ -50,8 +50,8 @@ export class Profile implements OnInit {
   };
 
   constructor(
-    private authService: Auth,
-    private teamService: Team,
+    private authService: AuthService,
+    private teamService: TeamService,
     private snackBar: MatSnackBar
   ) {}
 
