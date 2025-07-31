@@ -198,6 +198,7 @@ export class AuthService {
       sessionStorage.removeItem('isLoggedIn');
       sessionStorage.removeItem('jwt_token'); // Clear the JWT token
       sessionStorage.removeItem('currentUserRole'); // Clear the user's role
+      sessionStorage.removeItem('currentUser'); // Clear the current user
     }
     console.log('AuthService: Logged out. Redirecting to login.');
     this.router.navigate(['/login']); // Redirect to the login page
