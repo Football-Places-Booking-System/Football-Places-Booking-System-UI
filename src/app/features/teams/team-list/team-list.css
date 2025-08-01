@@ -1,7 +1,4 @@
-/* src/app/features/teams/team-list/team-list.component.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Define main color palette */
 :root {
   --primary-teal: #20c997; /* A vibrant teal/mint green */
   --secondary-gray: #f0f2f5; /* Light background gray for main content */
