@@ -6,8 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking';
-import { Auth } from '../../../core/services/auth';
+import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-booking-details',
@@ -26,7 +26,7 @@ import { Auth } from '../../../core/services/auth';
 export class BookingDetailsComponent implements OnInit {
   booking: IBooking | null = null;
   currentUser: any;
-  
+
   successMessage: string | null = null;
   errorMessage: string | null = null;
   isLoading: boolean = false;
@@ -35,7 +35,7 @@ export class BookingDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private bookingService: BookingService,
-    private authService: Auth
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {

@@ -3,8 +3,8 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterModule, Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { Auth } from '../../core/services/auth';
-import { Team } from '../../core/services/team';
+import { AuthService } from '../../core/services/auth.service';
+import { TeamService } from '../../core/services/team.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -20,15 +20,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
   userTeams: any[] = [];
 
   constructor(
-    private auth: Auth,
-    private teamService: Team,
+    private auth: AuthService,
+    private teamService: TeamService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.role = this.auth.getCurrentUser()?.role;
     this.loadUserTeams();
-    
+
     // Listen for team creation events to refresh sidebar state
     window.addEventListener('teamCreated', this.handleTeamCreated.bind(this) as EventListener);
   }
@@ -60,9 +60,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   }
 
-  private checkIfUserIsOrganizer(userId: number): void {
+  private checkIfUserIsOrganizer(userId: string): void {
     // Check if user is organizer in any team
-    const checkPromises = this.userTeams.map(team => 
+    const checkPromises = this.userTeams.map(team =>
       this.teamService.isUserTeamOrganizer(userId, team.id).toPromise()
     );
 

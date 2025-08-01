@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Match, IBookingMatch } from '../../../core/services/match';
-import { Auth } from '../../../core/services/auth';
+import { MatchService, IBookingMatch } from '../../../core/services/match.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -33,9 +33,9 @@ export class MatchList implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
-    private matchService: Match,
+    private matchService: MatchService,
     private router: Router,
-    private authService: Auth
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {

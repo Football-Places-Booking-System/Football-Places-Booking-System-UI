@@ -8,13 +8,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Auth, User } from '../../../core/services/auth';
-import { Team } from '../../../core/services/team';
+import { AuthService } from '../../../core/services/auth.service';
+import { IUser } from '../../../core/models/iuser.model';
 
-interface UserProfile extends User {
-  status?: 'ACTIVE' | 'INACTIVE'; // Extended to include status
-  createdAt?: string;
-}
+import { TeamService } from '../../../core/services/team.service';
+
 
 @Component({
   selector: 'app-profile',
@@ -34,7 +32,7 @@ interface UserProfile extends User {
   styleUrl: './profile.css'
 })
 export class Profile implements OnInit {
-  currentUser: UserProfile | null = null;
+  currentUser: IUser | null = null;
   isEditing = false;
   isLoading = false;
   isSaving = false;
@@ -50,8 +48,8 @@ export class Profile implements OnInit {
   };
 
   constructor(
-    private authService: Auth,
-    private teamService: Team,
+    private authService: AuthService,
+    private teamService: TeamService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -61,10 +59,10 @@ export class Profile implements OnInit {
 
   loadUserProfile(): void {
     this.isLoading = true;
-    
+
     // Get current user from auth service
     const user = this.authService.getCurrentUser();
-    
+
     if (user) {
       // Convert User to UserProfile and add default status
       this.currentUser = {
@@ -72,11 +70,11 @@ export class Profile implements OnInit {
         status: 'ACTIVE' // Default to ACTIVE since User type doesn't have status
       };
       this.editForm.username = this.currentUser.username;
-      
+
       // Load user teams and determine effective role
       this.loadUserTeams();
     }
-    
+
     this.isLoading = false;
   }
 
@@ -100,7 +98,7 @@ export class Profile implements OnInit {
     if (!this.currentUser) return;
 
     // Check if user is organizer in any team
-    const checkPromises = this.userTeams.map(team => 
+    const checkPromises = this.userTeams.map(team =>
       this.teamService.isUserTeamOrganizer(this.currentUser!.id, team.id).toPromise()
     );
 
@@ -169,7 +167,7 @@ export class Profile implements OnInit {
         this.snackBar.open('New password must be at least 6 characters', 'Close', { duration: 3000 });
         return;
       }
-      
+
       // Validate current password
       if (this.editForm.currentPassword !== this.currentUser.password) {
         this.snackBar.open('Current password is incorrect', 'Close', { duration: 3000 });
@@ -184,25 +182,25 @@ export class Profile implements OnInit {
       if (this.currentUser) {
         // Update user data
         this.currentUser.username = this.editForm.username;
-        
+
         // Update password if provided
         if (this.editForm.newPassword) {
           this.currentUser.password = this.editForm.newPassword;
         }
-        
-        // Update in localStorage (simulating database update)
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
+
+        // Update in sessionStorage (simulating database update)
+        const users = JSON.parse(sessionStorage.getItem('users') || '[]');
         const userIndex = users.findIndex((u: any) => u.id === this.currentUser?.id);
         if (userIndex !== -1) {
           users[userIndex].username = this.editForm.username;
           if (this.editForm.newPassword) {
             users[userIndex].password = this.editForm.newPassword;
           }
-          localStorage.setItem('users', JSON.stringify(users));
+          sessionStorage.setItem('users', JSON.stringify(users));
         }
 
-        // Update current user in localStorage
-        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        // Update current user in sessionStorage
+        sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
 
         this.isEditing = false;
         this.isSaving = false;

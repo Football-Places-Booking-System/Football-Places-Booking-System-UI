@@ -10,10 +10,10 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking';
-import { Match, IBookingMatch, IMatchParticipant } from '../../../core/services/match';
-import { Team, ITeamMember } from '../../../core/services/team';
-import { Auth } from '../../../core/services/auth';
+import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking.service';
+import { MatchService, IBookingMatch, IMatchParticipant } from '../../../core/services/match.service';
+import { TeamService, ITeamMember } from '../../../core/services/team.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-booking-list',
@@ -36,7 +36,7 @@ import { Auth } from '../../../core/services/auth';
 export class BookingListComponent implements OnInit {
   upcomingBookings: IBooking[] = [];
   currentUser: any;
-  
+
   successMessage: string | null = null;
   errorMessage: string | null = null;
   isLoading: boolean = false;
@@ -46,9 +46,9 @@ export class BookingListComponent implements OnInit {
 
   constructor(
     private bookingService: BookingService,
-    private matchService: Match,
-    private teamService: Team,
-    private authService: Auth,
+    private matchService: MatchService,
+    private teamService: TeamService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -186,12 +186,12 @@ export class BookingListComponent implements OnInit {
       next: (matches) => {
         console.log('All matches:', matches);
         console.log('Current booking:', booking);
-        
+
         // Find matches that match the booking criteria (same place, team, and similar date/time)
         const relatedMatches = matches.filter(match => {
           const bookingDate = new Date(booking.start_time);
           const matchDate = new Date(match.matchDate);
-          
+
           console.log('Comparing booking vs match:', {
             bookingPlaceId: booking.place_id,
             matchPlaceId: match.placeId,
@@ -204,19 +204,19 @@ export class BookingListComponent implements OnInit {
             bookingEndTime: booking.end_time,
             matchEndTime: match.endTime
           });
-          
+
           // Check if place, team, and date match
           const placeMatch = match.placeId.toString() === booking.place_id.toString();
           const teamMatch = match.teamId.toString() === booking.team_id.toString();
           const dateMatch = bookingDate.toDateString() === matchDate.toDateString();
-          
+
           // Also check if times are similar (within 1 hour)
           const bookingStartHour = bookingDate.getHours();
           const matchStartHour = new Date(`2000-01-01T${match.startTime}`).getHours();
           const timeMatch = Math.abs(bookingStartHour - matchStartHour) <= 1;
-          
+
           console.log('Match criteria:', { placeMatch, teamMatch, dateMatch, timeMatch });
-          
+
           return placeMatch && teamMatch && dateMatch && timeMatch;
         });
 
@@ -226,7 +226,7 @@ export class BookingListComponent implements OnInit {
           // Use the first related match
           const match = relatedMatches[0];
           console.log('Showing participants for match:', match.id, 'team:', match.teamId);
-          
+
           // Navigate to match participants page (same as matches page)
           this.router.navigate(['/dashboard/matches', match.id, 'participants', match.teamId]);
         } else {
@@ -271,14 +271,14 @@ export class BookingListComponent implements OnInit {
             message += `- Place ID: ${match.placeId}\n`;
             message += `- Team ID: ${match.teamId}\n`;
             message += `- Status: ${match.status}\n\n`;
-            
+
             message += `Team Players (${players.length}):\n`;
             if (players.length > 0) {
               players.forEach(player => {
                 const isInvited = participants.some(p => p.userId.toString() === player.userId.toString());
                 const participant = participants.find(p => p.userId.toString() === player.userId.toString());
                 const status = participant ? participant.status : 'NOT_INVITED';
-                
+
                 message += `- ${player.username} (${player.email})\n`;
                 message += `  Role: ${player.role}\n`;
                 message += `  Status: ${status}\n\n`;
@@ -286,13 +286,13 @@ export class BookingListComponent implements OnInit {
             } else {
               message += `No players found for this team.\n\n`;
             }
-            
+
             message += `Participants Summary:\n`;
             message += `- Total Invited: ${participants.length}\n`;
             message += `- Accepted: ${participants.filter(p => p.status === 'ACCEPTED').length}\n`;
             message += `- Declined: ${participants.filter(p => p.status === 'DECLINED').length}\n`;
             message += `- Pending: ${participants.filter(p => p.status === 'INVITED').length}\n`;
-            
+
             alert(message);
           },
           error: (error) => {
@@ -313,4 +313,4 @@ export class BookingListComponent implements OnInit {
       }
     });
   }
-} 
+}

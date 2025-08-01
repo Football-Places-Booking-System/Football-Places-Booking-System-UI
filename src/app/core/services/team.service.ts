@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, catchError, map } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 
 export type TeamMemberRole = 'MEMBER' | 'ORGANIZER';
 export type TeamMemberStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -7,12 +8,12 @@ export type TeamMemberStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export interface ITeamMember {
   id: string;
   teamId: string;
-  userId: number;
+  userId: string;
   username: string;
   email: string;
   role: TeamMemberRole;
   status: TeamMemberStatus;
-  invitedBy?: number; // FK to User(id)
+  invitedBy?: string; // FK to User(id)
   createdAt: string;
   respondedAt?: string;
 }
@@ -21,34 +22,35 @@ export interface ITeam {
   id: string;
   name: string;
   description?: string;
-  createdBy: number; // FK to User(id)
+  createdBy: string; // FK to User(id)
   createdAt: string;
   updatedAt?: string;
 }
 
-
-
-
 @Injectable({
   providedIn: 'root'
 })
-export class Team {
+export class TeamService {
+  private apiUrl = 'http://localhost:8080/api/teams'; // Update with your Spring backend URL
+
+  constructor(private http: HttpClient) {}
+
   
   getTeams(): Observable<ITeam[]> {
     try {
-      const teamsString = localStorage.getItem('teams');
+      const teamsString = sessionStorage.getItem('teams');
       const teams = teamsString ? JSON.parse(teamsString) : [];
       return of(teams);
     } catch (error) {
-      console.error('Error loading teams from localStorage:', error);
+      console.error('Error loading teams from sessionStorage:', error);
       return of([]);
     }
   }
 
   // Get teams created by a specific user
-  getTeamsByCreator(userId: number): Observable<ITeam[]> {
+  getTeamsByCreator(userId: string): Observable<ITeam[]> {
     try {
-      const teamsString = localStorage.getItem('teams');
+      const teamsString = sessionStorage.getItem('teams');
       if (teamsString) {
         const teams: ITeam[] = JSON.parse(teamsString);
         const userTeams = teams.filter(team => team.createdBy === userId);
@@ -56,14 +58,14 @@ export class Team {
       }
       return of([]);
     } catch (error) {
-      console.error('Error loading teams by creator from localStorage:', error);
+      console.error('Error loading teams by creator from sessionStorage:', error);
       return of([]);
     }
   }
 
   getTeamById(id: string): Observable<ITeam | null> {
     try {
-      const teamsString = localStorage.getItem('teams');
+      const teamsString = sessionStorage.getItem('teams');
       if (teamsString) {
         const teams: ITeam[] = JSON.parse(teamsString);
         const team = teams.find(t => t.id === id);
@@ -71,39 +73,31 @@ export class Team {
       }
       return of(null);
     } catch (error) {
-      console.error('Error loading team by ID from localStorage:', error);
+      console.error('Error loading team by ID from sessionStorage:', error);
       return of(null);
     }
   }
 
-  createTeam(team: Omit<ITeam, 'id' | 'createdAt'>, creatorId: number, creatorUsername: string, creatorEmail: string): Observable<ITeam> {
-    try {
-      const newTeam: ITeam = {
-        ...team,
-        id: Date.now().toString(),
-        createdBy: creatorId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+  createTeam(teamData: { name: string; description?: string }, creatorId: string, creatorUsername: string, creatorEmail: string): Observable<ITeam> {
+    const teamRequest = {
+      name: teamData.name,
+      description: teamData.description || '',
+      createdBy: creatorId,
+      creatorUsername,
+      creatorEmail
+    };
 
-      const teamsString = localStorage.getItem('teams');
-      const teams: ITeam[] = teamsString ? JSON.parse(teamsString) : [];
-      teams.push(newTeam);
-      localStorage.setItem('teams', JSON.stringify(teams));
-
-      // Add creator as organizer in team members
-      this.addTeamMember(newTeam.id, creatorId, creatorUsername, creatorEmail, 'ORGANIZER', 'APPROVED');
-
-      return of(newTeam);
-    } catch (error) {
-      console.error('Error creating team:', error);
-      throw new Error('Failed to create team');
-    }
+    return this.http.post<ITeam>(this.apiUrl, teamRequest).pipe(
+      catchError(error => {
+        console.error('Error creating team:', error);
+        throw new Error(error.error?.message || 'Failed to create team. Please try again.');
+      })
+    );
   }
 
   updateTeam(team: ITeam): Observable<ITeam> {
     try {
-      const teamsString = localStorage.getItem('teams');
+      const teamsString = sessionStorage.getItem('teams');
       if (teamsString) {
         const teams: ITeam[] = JSON.parse(teamsString);
         const index = teams.findIndex(t => t.id === team.id);
@@ -113,7 +107,7 @@ export class Team {
             updatedAt: new Date().toISOString()
           };
           teams[index] = updatedTeam;
-          localStorage.setItem('teams', JSON.stringify(teams));
+          sessionStorage.setItem('teams', JSON.stringify(teams));
           return of(updatedTeam);
         }
       }
@@ -124,23 +118,18 @@ export class Team {
     }
   }
 
-  deleteTeam(id: string): Observable<void> {
-    try {
-      const teamsString = localStorage.getItem('teams');
-      if (teamsString) {
-        const teams: ITeam[] = JSON.parse(teamsString);
-        const filteredTeams = teams.filter(t => t.id !== id);
-        localStorage.setItem('teams', JSON.stringify(filteredTeams));
-      }
-      return of(void 0);
-    } catch (error) {
-      console.error('Error deleting team:', error);
-      throw new Error('Failed to delete team');
-    }
+  deleteTeam(teamId: string): Observable<void> {
+    const url = `${this.apiUrl}/${teamId}`;
+    return this.http.delete<void>(url).pipe(
+      catchError(error => {
+        console.error('Error deleting team:', error);
+        throw new Error(error.error?.message || 'Failed to delete team. Please try again.');
+      })
+    );
   }
 
   // Team Member Management
-  addTeamMember(teamId: string, userId: number, username: string, email: string, role: TeamMemberRole, status: TeamMemberStatus = 'PENDING', invitedBy?: number): Observable<ITeamMember> {
+  addTeamMember(teamId: string, userId: string, username: string, email: string, role: TeamMemberRole, status: TeamMemberStatus = 'PENDING', invitedBy?: string): Observable<ITeamMember> {
     try {
       const newMember: ITeamMember = {
         id: Date.now().toString(),
@@ -154,10 +143,10 @@ export class Team {
         createdAt: new Date().toISOString()
       };
 
-      const membersString = localStorage.getItem('teamMembers');
+      const membersString = sessionStorage.getItem('teamMembers');
       const members: ITeamMember[] = membersString ? JSON.parse(membersString) : [];
       members.push(newMember);
-      localStorage.setItem('teamMembers', JSON.stringify(members));
+      sessionStorage.setItem('teamMembers', JSON.stringify(members));
 
       return of(newMember);
     } catch (error) {
@@ -168,7 +157,7 @@ export class Team {
 
   getTeamMembers(teamId: string): Observable<ITeamMember[]> {
     try {
-      const membersString = localStorage.getItem('teamMembers');
+      const membersString = sessionStorage.getItem('teamMembers');
       if (membersString) {
         const members: ITeamMember[] = JSON.parse(membersString);
         const teamMembers = members.filter(m => m.teamId === teamId);
@@ -181,32 +170,29 @@ export class Team {
     }
   }
 
-  getUserTeams(userId: number): Observable<ITeam[]> {
-    try {
-      const membersString = localStorage.getItem('teamMembers');
-      const teamsString = localStorage.getItem('teams');
-      
-      if (membersString && teamsString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const teams: ITeam[] = JSON.parse(teamsString);
-        
-        const userTeamIds = members
-          .filter(m => m.userId === userId && m.status === 'APPROVED')
-          .map(m => m.teamId);
-        
-        const userTeams = teams.filter(t => userTeamIds.includes(t.id));
-        return of(userTeams);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading user teams:', error);
-      return of([]);
-    }
+  getUserTeams(): Observable<ITeam[]> {
+    const url = `${this.apiUrl}/my-teams`;
+    console.log('TeamService: Making request to:', url);
+
+    return this.http.get<{content: ITeam[]}>(url).pipe(
+      map(response => {
+        console.log('TeamService: Received response:', response);
+        // Extract the teams array from the content property
+        return response.content || [];
+      }),
+      catchError(error => {
+        console.error('TeamService: Error loading user teams from backend:', error);
+        console.error('TeamService: Request URL was:', url);
+        console.error('TeamService: Error status:', error.status);
+        console.error('TeamService: Error message:', error.message);
+        return of([]);
+      })
+    );
   }
 
-  isUserTeamOrganizer(userId: number, teamId: string): Observable<boolean> {
+  isUserTeamOrganizer(userId: string, teamId: string): Observable<boolean> {
     try {
-      const membersString = localStorage.getItem('teamMembers');
+      const membersString = sessionStorage.getItem('teamMembers');
       if (membersString) {
         const members: ITeamMember[] = JSON.parse(membersString);
         const member = members.find(m => m.userId === userId && m.teamId === teamId && m.status === 'APPROVED');
@@ -219,13 +205,13 @@ export class Team {
     }
   }
 
-  removeTeamMember(teamId: string, userId: number): Observable<void> {
+  removeTeamMember(teamId: string, userId: string): Observable<void> {
     try {
-      const membersString = localStorage.getItem('teamMembers');
+      const membersString = sessionStorage.getItem('teamMembers');
       if (membersString) {
         const members: ITeamMember[] = JSON.parse(membersString);
         const filteredMembers = members.filter(m => !(m.teamId === teamId && m.userId === userId));
-        localStorage.setItem('teamMembers', JSON.stringify(filteredMembers));
+        sessionStorage.setItem('teamMembers', JSON.stringify(filteredMembers));
       }
       return of(void 0);
     } catch (error) {

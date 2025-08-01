@@ -1,22 +1,24 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule, NgIf, NgFor, DatePipe } from '@angular/common'; 
+import { CommonModule, NgIf, NgFor, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
-import { ITeam, Team, ITeamMember } from '../../../core/services/team';
-import { User, Auth } from '../../../core/services/auth'; 
+import { ITeam, TeamService, ITeamMember } from '../../../core/services/team.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { IUser } from '../../../core/models/iuser.model';
+
 
 @Component({
   selector: 'app-team-details',
-  imports: [CommonModule, ReactiveFormsModule, DatePipe], 
-  templateUrl: './team-details.html', 
-  styleUrls: ['./team-details.css'] 
+  imports: [CommonModule, ReactiveFormsModule, DatePipe],
+  templateUrl: './team-details.html',
+  styleUrls: ['./team-details.css']
 })
-export class TeamDetails implements OnInit, OnDestroy { 
+export class TeamDetails implements OnInit, OnDestroy {
   team: ITeam | undefined;
   teamMembers: ITeamMember[] = [];
-  usersInTeam: User[] = [];
+  usersInTeam: IUser[] = [];
   errorMessage: string | null = null;
   successMessage: string | null = null;
   isOrganizer: boolean = false;
@@ -30,8 +32,8 @@ export class TeamDetails implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private teamService: Team,
-    private authService: Auth,
+    private teamService: TeamService,
+    private authService: AuthService,
     private fb: FormBuilder
   ) { }
 
@@ -99,9 +101,9 @@ export class TeamDetails implements OnInit, OnDestroy {
         console.log('TeamDetailsComponent: Team members loaded:', this.teamMembers);
         // For now, we'll use mock user data since getPlayersByTeamId doesn't exist
         this.usersInTeam = [
-          { id: 1, username: 'admin', email: 'admin@admin.com', password: 'admin1', role: 'ADMIN' },
-          { id: 2, username: 'organizer', email: 'org@org.com', password: 'organizer', role: 'ORGANIZER' },
-          { id: 3, username: 'player', email: 'player@player.com', password: 'player', role: 'PLAYER' }
+          { id: '1', username: 'admin', email: 'admin@admin.com', password: 'admin1', role: 'ADMIN' },
+          { id: '2', username: 'organizer', email: 'org@org.com', password: 'organizer', role: 'ORGANIZER' },
+          { id: '3', username: 'player', email: 'player@player.com', password: 'player', role: 'PLAYER' }
         ];
         console.log('TeamDetailsComponent: Mock user details for members loaded:', this.usersInTeam);
       },
@@ -112,7 +114,7 @@ export class TeamDetails implements OnInit, OnDestroy {
     });
   }
 
-  getUserForTeamMember(userId: number): User | undefined {
+  getUserForTeamMember(userId: string): IUser | undefined {
     return this.usersInTeam.find(user => user.id === userId);
   }
 

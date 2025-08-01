@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { Router } from '@angular/router';
-import { Team, ITeam } from '../../../core/services/team'; 
+import { TeamService, ITeam } from '../../../core/services/team.service';
 import { takeUntil ,Subject} from 'rxjs';
-import { Auth } from '../../../core/services/auth';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-create-team',
@@ -18,8 +18,8 @@ export class CreateTeam implements OnInit {
   errorMessage: string | null = null;
   private destroy$ = new Subject<void>();
 
-  
-  constructor(private fb: FormBuilder, private router: Router, private teamService: Team, private authService: Auth) { }
+
+  constructor(private fb: FormBuilder, private router: Router, private teamService: TeamService, private authService: AuthService) { }
 
   ngOnInit(): void {
     // Initialize the form with validators

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -12,10 +12,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { BookingService, IBooking, ITimeSlot } from '../../../core/services/booking';
-import { Team } from '../../../core/services/team';
-import { Place, PlaceModel } from '../../../core/services/place';
-import { Auth } from '../../../core/services/auth';
+import { BookingService, IBooking, ITimeSlot } from '../../../core/services/booking.service';
+import { TeamService } from '../../../core/services/team.service';
+import { PlaceService } from '../../../core/services/place.service';
+import { IPlace } from '../../../core/models/iplace.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 interface IBookingGroup {
   start_time: string;
@@ -44,17 +47,18 @@ interface IBookingGroup {
   templateUrl: './booking-form.html',
   styleUrls: ['./booking-form.css']
 })
-export class BookingFormComponent implements OnInit {
+export class BookingFormComponent implements OnInit, OnDestroy {
   bookingForm!: FormGroup;
-  places: PlaceModel[] = [];
+  places: IPlace[] = [];
   userTeams: any[] = [];
-  selectedPlace: PlaceModel | null = null;
+  selectedPlace: IPlace | null = null;
   selectedDate: Date = new Date();
   availableTimeSlots: ITimeSlot[] = [];
   selectedTimeSlots: ITimeSlot[] = [];
   bookingGroups: IBookingGroup[] = [];
   currentUser: any;
-  
+  private destroy$ = new Subject<void>();
+
   successMessage: string | null = null;
   errorMessage: string | null = null;
   isLoading: boolean = false;
@@ -64,9 +68,9 @@ export class BookingFormComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private bookingService: BookingService,
-    private teamService: Team,
-    private placeService: Place,
-    private authService: Auth
+    private teamService: TeamService,
+    private placeService: PlaceService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -74,6 +78,11 @@ export class BookingFormComponent implements OnInit {
     this.initForm();
     this.loadPlaces();
     this.loadUserTeams();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private initForm(): void {
@@ -86,7 +95,17 @@ export class BookingFormComponent implements OnInit {
   }
 
   private loadPlaces(): void {
-    this.places = this.placeService.getAllPlaces();
+    this.placeService.getAllPlaces().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (places) => {
+        this.places = places;
+      },
+      error: (error) => {
+        console.error('Failed to load places:', error);
+        this.errorMessage = 'Failed to load places. Please try again.';
+      }
+    });
   }
 
   private loadUserTeams(): void {
@@ -118,7 +137,7 @@ export class BookingFormComponent implements OnInit {
   private loadAvailableTimeSlots(): void {
     const placeId = this.bookingForm.get('place_id')?.value;
     const date = this.bookingForm.get('date')?.value;
-    
+
     if (placeId && date) {
       this.isLoading = true;
       this.bookingService.getAvailableTimeSlots(placeId, date.toISOString()).subscribe({
@@ -140,13 +159,13 @@ export class BookingFormComponent implements OnInit {
 
     const selectedSlots = this.bookingForm.get('time_slots')?.value || [];
     const index = selectedSlots.findIndex((s: ITimeSlot) => s.id === slot.id);
-    
+
     if (index > -1) {
       selectedSlots.splice(index, 1);
     } else {
       selectedSlots.push(slot);
     }
-    
+
     this.bookingForm.patchValue({ time_slots: selectedSlots });
     this.selectedTimeSlots = selectedSlots;
     this.groupConsecutiveSlots();
@@ -159,7 +178,7 @@ export class BookingFormComponent implements OnInit {
     }
 
     // Sort slots by start time
-    const sortedSlots = [...this.selectedTimeSlots].sort((a, b) => 
+    const sortedSlots = [...this.selectedTimeSlots].sort((a, b) =>
       new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
     );
 
@@ -169,10 +188,10 @@ export class BookingFormComponent implements OnInit {
     for (let i = 1; i < sortedSlots.length; i++) {
       const currentSlot = sortedSlots[i];
       const previousSlot = sortedSlots[i - 1];
-      
+
       const currentStart = new Date(currentSlot.start_time);
       const previousEnd = new Date(previousSlot.end_time);
-      
+
       // Check if slots are consecutive (end time of previous = start time of current)
       if (currentStart.getTime() === previousEnd.getTime()) {
         currentGroup.push(currentSlot);
@@ -182,7 +201,7 @@ export class BookingFormComponent implements OnInit {
         currentGroup = [currentSlot];
       }
     }
-    
+
     // Add the last group
     if (currentGroup.length > 0) {
       groups.push(this.createBookingGroup(currentGroup));
@@ -265,7 +284,7 @@ export class BookingFormComponent implements OnInit {
           this.selectedTimeSlots = [];
           this.bookingGroups = [];
           this.availableTimeSlots = [];
-          
+
           setTimeout(() => {
             this.router.navigate(['/dashboard/bookings']);
           }, 2000);
