@@ -8,7 +8,7 @@
   <!-- Users Table -->
   <div class="card shadow-sm border-0">
     <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white rounded-top">
-      <h5 class="mb-0"><i class="fa fa-users me-2"></i>Users ({{ filteredUsers.length }})</h5>
+      <h5 class="mb-0"><i class="fa fa-users me-2"></i>Users ({{ totalUsers }})</h5>
     </div>
 
     <div class="card-body bg-light">
@@ -17,14 +17,14 @@
         <p>Loading users...</p>
       </div>
 
-      <div *ngIf="!isLoading && filteredUsers.length === 0" class="no-users">
+      <div *ngIf="!isLoading && totalUsers === 0" class="no-users">
         <mat-icon>people</mat-icon>
         <h3>No Users Found</h3>
         <p>No users match the current filters.</p>
       </div>
 
-      <div *ngIf="!isLoading && filteredUsers.length > 0" class="table-responsive">
-        <table mat-table [dataSource]="filteredUsers" matSort class="mat-elevation-z2 w-100 table table-hover align-middle rounded-3 overflow-hidden">
+      <div *ngIf="!isLoading && totalUsers > 0" class="table-responsive">
+        <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z2 w-100 table table-hover align-middle rounded-3 overflow-hidden">
 
           <!-- ID Column -->
           <ng-container matColumnDef="id">
@@ -51,11 +51,11 @@
               <span class="badge" [ngClass]="{
                 'bg-danger': user.role === 'ADMIN',
                 'bg-primary': user.role === 'ORGANIZER',
-                'bg-success': user.role === 'PLAYER'
+                'bg-success': user.role === 'USER'
               }">
                 <i class="fa fa-user-shield me-1" *ngIf="user.role === 'ADMIN'"></i>
                 <i class="fa fa-users me-1" *ngIf="user.role === 'ORGANIZER'"></i>
-                <i class="fa fa-user me-1" *ngIf="user.role === 'PLAYER'"></i>
+                <i class="fa fa-user me-1" *ngIf="user.role === 'USER'"></i>
                 {{ user.role }}
               </span>
             </td>
@@ -90,7 +90,7 @@
                   <i class="fa fa-users me-2"></i>
                   Set as Organizer
                 </button> -->
-                <button mat-menu-item (click)="changeUserRole(user.id, 'PLAYER')">
+                <button mat-menu-item (click)="changeUserRole(user.id, 'USER')">
                   <i class="fa fa-user me-2"></i>
                   Set as Player
                 </button>
@@ -118,7 +118,11 @@
       </div>
 
       <mat-paginator
-        [pageSizeOptions]="[5, 10, 25, 50]"
+        [length]="totalUsers"
+        [pageSize]="pageSize"
+        [pageIndex]="currentPage"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPageChange($event)"
         showFirstLastButtons
         class="mt-3">
       </mat-paginator>

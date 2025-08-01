@@ -1,6 +1,6 @@
 import { myUserRole } from '../enums/user-role';
 
-export type UserRole = 'PLAYER' | 'ADMIN' | 'ORGANIZER';
+export type UserRole = 'PLAYER' | 'USER' | 'ADMIN' | 'ORGANIZER';
 
 export interface IUser {
   id: string;
