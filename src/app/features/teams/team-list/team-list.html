@@ -1,5 +1,15 @@
 <section class="container p-2 ">
   <div class="content-wrapper">
+    <!-- Debug Information -->
+    <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;">
+      <strong>Debug Info:</strong><br>
+      Component Loaded: ✓<br>
+      isLoading: {{ isLoading }}<br>
+      teams.length: {{ teams.length }}<br>
+      errorMessage: {{ errorMessage || 'none' }}<br>
+      successMessage: {{ successMessage || 'none' }}
+    </div>
+
     <!-- Header Section -->
     <div class="team-header">
       <div class="header-content">
@@ -38,5 +48,5 @@
       </ng-template>
     </div>
 
-    </div>
+  </div>
 </section>

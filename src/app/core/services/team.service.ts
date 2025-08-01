@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, catchError, map } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 
 export type TeamMemberRole = 'MEMBER' | 'ORGANIZER';
 export type TeamMemberStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -26,13 +27,13 @@ export interface ITeam {
   updatedAt?: string;
 }
 
-
-
-
 @Injectable({
   providedIn: 'root'
 })
 export class TeamService {
+  private apiUrl = 'http://localhost:8080/api/teams'; // Update with your Spring backend URL
+
+  constructor(private http: HttpClient) {}
 
   
   getTeams(): Observable<ITeam[]> {
@@ -77,29 +78,21 @@ export class TeamService {
     }
   }
 
-  createTeam(team: Omit<ITeam, 'id' | 'createdAt'>, creatorId: string, creatorUsername: string, creatorEmail: string): Observable<ITeam> {
-    try {
-      const newTeam: ITeam = {
-        ...team,
-        id: Date.now().toString(),
-        createdBy: creatorId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+  createTeam(teamData: { name: string; description?: string }, creatorId: string, creatorUsername: string, creatorEmail: string): Observable<ITeam> {
+    const teamRequest = {
+      name: teamData.name,
+      description: teamData.description || '',
+      createdBy: creatorId,
+      creatorUsername,
+      creatorEmail
+    };
 
-      const teamsString = sessionStorage.getItem('teams');
-      const teams: ITeam[] = teamsString ? JSON.parse(teamsString) : [];
-      teams.push(newTeam);
-      sessionStorage.setItem('teams', JSON.stringify(teams));
-
-      // Add creator as organizer in team members
-      this.addTeamMember(newTeam.id, creatorId, creatorUsername, creatorEmail, 'ORGANIZER', 'APPROVED');
-
-      return of(newTeam);
-    } catch (error) {
-      console.error('Error creating team:', error);
-      throw new Error('Failed to create team');
-    }
+    return this.http.post<ITeam>(this.apiUrl, teamRequest).pipe(
+      catchError(error => {
+        console.error('Error creating team:', error);
+        throw new Error(error.error?.message || 'Failed to create team. Please try again.');
+      })
+    );
   }
 
   updateTeam(team: ITeam): Observable<ITeam> {
@@ -125,19 +118,14 @@ export class TeamService {
     }
   }
 
-  deleteTeam(id: string): Observable<void> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      if (teamsString) {
-        const teams: ITeam[] = JSON.parse(teamsString);
-        const filteredTeams = teams.filter(t => t.id !== id);
-        sessionStorage.setItem('teams', JSON.stringify(filteredTeams));
-      }
-      return of(void 0);
-    } catch (error) {
-      console.error('Error deleting team:', error);
-      throw new Error('Failed to delete team');
-    }
+  deleteTeam(teamId: string): Observable<void> {
+    const url = `${this.apiUrl}/${teamId}`;
+    return this.http.delete<void>(url).pipe(
+      catchError(error => {
+        console.error('Error deleting team:', error);
+        throw new Error(error.error?.message || 'Failed to delete team. Please try again.');
+      })
+    );
   }
 
   // Team Member Management
@@ -182,27 +170,24 @@ export class TeamService {
     }
   }
 
-  getUserTeams(userId: string): Observable<ITeam[]> {
-    try {
-      const membersString = sessionStorage.getItem('teamMembers');
-      const teamsString = sessionStorage.getItem('teams');
+  getUserTeams(): Observable<ITeam[]> {
+    const url = `${this.apiUrl}/my-teams`;
+    console.log('TeamService: Making request to:', url);
 
-      if (membersString && teamsString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const teams: ITeam[] = JSON.parse(teamsString);
-
-        const userTeamIds = members
-          .filter(m => m.userId === userId && m.status === 'APPROVED')
-          .map(m => m.teamId);
-
-        const userTeams = teams.filter(t => userTeamIds.includes(t.id));
-        return of(userTeams);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading user teams:', error);
-      return of([]);
-    }
+    return this.http.get<{content: ITeam[]}>(url).pipe(
+      map(response => {
+        console.log('TeamService: Received response:', response);
+        // Extract the teams array from the content property
+        return response.content || [];
+      }),
+      catchError(error => {
+        console.error('TeamService: Error loading user teams from backend:', error);
+        console.error('TeamService: Request URL was:', url);
+        console.error('TeamService: Error status:', error.status);
+        console.error('TeamService: Error message:', error.message);
+        return of([]);
+      })
+    );
   }
 
   isUserTeamOrganizer(userId: string, teamId: string): Observable<boolean> {
