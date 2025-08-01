@@ -34,6 +34,7 @@ export interface ITeam {
 })
 export class TeamService {
 
+  
   getTeams(): Observable<ITeam[]> {
     try {
       const teamsString = sessionStorage.getItem('teams');

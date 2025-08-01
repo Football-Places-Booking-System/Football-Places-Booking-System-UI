@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { tap, catchError,switchMap, map } from 'rxjs/operators';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
 import { IPlace } from "../models/iplace.model";
-import { PlaceType } from "../enums/place-type.enum";
 
 
 
@@ -16,7 +15,7 @@ export class PlaceService {
   private nextId = '1';
 
   constructor(private http: HttpClient) {
-    this.getAllPlaces();
+    // this.getAllPlaces();
   }
 
   getAllPlaces(): Observable<IPlace[]> {
@@ -27,31 +26,21 @@ export class PlaceService {
         const places = response.content || [];
         console.log('PlaceService: Retrieved', places.length, 'places from API');
 
-        // Transform and validate places
-        const transformedPlaces = places.map((place: any) => {
-          // Handle type field mapping from API response
-          let placeType = place.placeType || place.type || place.fieldType;
-
-          // If type is still undefined, assign a default
-          if (!placeType) {
-            console.warn(`Place ${place.name} has undefined type, assigning default`);
-            placeType = 'ELEVEN'; // Default to 11-a-side
-          }
-
-          return {
-            id: place.id,
-            name: place.name,
-            location: place.location,
-            type: placeType,
-            imageUrl: place.imageUrl,
-            description: place.description
-          };
-        });
+        // Transform places to ensure consistent structure
+        const transformedPlaces: IPlace[] = places.map((place: any) => ({
+          id: place.id,
+          name: place.name,
+          location: place.location,
+          placeType: place.placeType || 'ELEVEN', // Default if missing
+          imageUrl: place.imageUrl,
+          description: place.description
+        }));
 
         return transformedPlaces;
       }),
       tap((places: IPlace[]) => {
         this.places = places;
+        console.log('PlaceService: Loaded', this.places, 'places into local cache');
       }),
       catchError(error => {
         console.error('PlaceService: Failed to fetch places from API:', error);
@@ -60,34 +49,28 @@ export class PlaceService {
     );
   }
 
+  //Done
   addPlace(place: Omit<IPlace, 'id'>): Observable<IPlace> {
     console.log('PlaceService: Starting to add new place:', place);
 
-    // Transform the place type from enum to string for API
-    let placeTypeString: string;
-    if (typeof place.type === 'string') {
-      // If it's already a string, check if it's a human-readable format and convert
-      const enumValue = this.getPlaceTypeFromString(place.type);
-      if (enumValue) {
-        placeTypeString = enumValue; // This will be FIVE, SEVEN, or ELEVEN
-      } else {
-        placeTypeString = place.type; // Assume it's already in correct format
-      }
-    } else {
-      // If it's an enum value, convert it to string
-      placeTypeString = String(place.type);
+    // Ensure placeType is in the correct format (FIVE, SEVEN, ELEVEN)
+    let placeTypeString = place.placeType;
+    if (place.placeType && !['FIVE', 'SEVEN', 'ELEVEN'].includes(place.placeType)) {
+      // Try to convert human-readable format to API format
+      const converted = this.getPlaceTypeFromString(place.placeType);
+      placeTypeString = converted || place.placeType;
     }
 
     // Transform the place object to match API expectations
     const apiPlace = {
       name: place.name,
+      description: place.description,
       location: place.location,
-      placeType: placeTypeString, // Ensure it's a string for API
-      imageUrl: place.imageUrl,
-      description: place.description
+      placeType: placeTypeString,
+      imageUrl: place.imageUrl
     };
 
-    console.log('PlaceService: Sending to API endpoint:', `${this.apiUrl}`);
+    console.log('PlaceService: Sending to API endpoint:', `${this.apiUrl}/create`);
     console.log('PlaceService: Request payload:', apiPlace);
 
     return this.http.post<any>(`${this.apiUrl}`, apiPlace).pipe(
@@ -99,7 +82,7 @@ export class PlaceService {
           id: response.id,
           name: response.name,
           location: response.location,
-          type: response.placeType || response.type,
+          placeType: response.placeType || response.type,
           imageUrl: response.imageUrl,
           description: response.description
         };
@@ -119,45 +102,31 @@ export class PlaceService {
         if (error.error) {
           console.error('PlaceService: Server error details:', error.error);
         }
-
-        console.log('PlaceService: Falling back to local storage');
-        const currentId = this.nextId;
-        const nextIdNum = parseInt(this.nextId) + 1;
-        this.nextId = nextIdNum.toString();
-
-        const newPlace: IPlace = { ...place, id: currentId };
-        this.places.push(newPlace);
-        console.log('PlaceService: Added place to local storage:', newPlace);
-        return of(newPlace);
+        return of();
       })
     );
   }
 
+
+  // Done
   updatePlace(id: string, updated: Partial<Omit<IPlace, 'id'>>): Observable<boolean> {
     console.log('PlaceService: Updating place via API:', id, updated);
-    return this.http.put<IPlace>(`${this.apiUrl}/update/${id}`, updated).pipe(
+    return this.http.patch<IPlace>(`${this.apiUrl}/${id}`, updated).pipe(
       tap((updatedPlace: IPlace) => {
-        const idx = this.places.findIndex(p => p.id === id);
-        if (idx !== -1) {
-          this.places[idx] = updatedPlace;
-        }
         console.log('PlaceService: Successfully updated place via API:', updatedPlace);
       }),
       map(() => true),
       catchError(error => {
-        console.error('PlaceService: Failed to update place via API, using local storage:', error);
-        // Fallback to local storage if API fails
-        const idx = this.places.findIndex(p => p.id === id);
-        if (idx === -1) return of(false);
-        this.places[idx] = { ...this.places[idx], ...updated };
+        console.error('PlaceService: Failed to update place via API : ', error);
         return of(true);
       })
     );
   }
 
+  //Done
   deletePlace(id: string): Observable<boolean> {
     console.log('PlaceService: Deleting place via API:', id);
-    return this.http.delete<void>(`${this.apiUrl}/delete/${id}`).pipe(
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       tap(() => {
         const idx = this.places.findIndex(p => p.id === id);
         if (idx !== -1) {
@@ -177,46 +146,73 @@ export class PlaceService {
     );
   }
 
+  //Done
   filterPlaces(query: { location?: string; type?: string }): Observable<IPlace[]> {
     console.log('PlaceService: Filtering places:', query);
-    return this.getAllPlaces().pipe(
-      map(places => places.filter(p =>
-        (!query.location || p.location === query.location) &&
-        (!query.type || p.type === query.type)
-      ))
+
+    // Build query parameters for the API
+    let params = new HttpParams();
+
+    if (query.type && query.type.trim() !== '') {
+      // Convert human-readable type to API format (FIVE, SEVEN, ELEVEN)
+      const apiType = this.getPlaceTypeFromString(query.type) || query.type;
+      params = params.set('placeType', apiType);
+      console.log('PlaceService: Converted type from', query.type, 'to', apiType);
+    }
+
+    if (query.location && query.location.trim() !== '') {
+      params = params.set('location', query.location);
+    }
+
+    console.log('PlaceService: Fetching filtered places from API with params:', params.toString());
+
+    return this.http.get<any>(`${this.apiUrl}/all`, { params }).pipe(
+      map((response: any) => {
+        // Extract places from paginated response
+        const places = response.content || [];
+        console.log('PlaceService: Retrieved', places.length, 'filtered places from API');
+
+        // Transform places to ensure consistent structure
+        const transformedPlaces: IPlace[] = places.map((place: any) => ({
+          id: place.id,
+          name: place.name,
+          location: place.location,
+          placeType: place.placeType || 'ELEVEN', // Default if missing
+          imageUrl: place.imageUrl,
+          description: place.description
+        }));
+
+        return transformedPlaces;
+      }),
+      tap((places: IPlace[]) => {
+        console.log('PlaceService: Filtered places result:', places);
+      }),
+      catchError(error => {
+
+        return of([]);
+      })
     );
   }
 
-  // Method to get places synchronously from local cache (for backward compatibility)
-  getLocalFilteredPlaces(query: { location?: string; type?: string }): IPlace[] {
-    return this.places.filter(p =>
-      (!query.location || p.location === query.location) &&
-      (!query.type || p.type === query.type)
-    );
-  }
 
-  // Method to get the string representation of the place type enum
-  getPlaceTypeString(placeType: PlaceType | string): string {
-    // Handle both enum values and string values
-    const typeStr = typeof placeType === 'string' ? placeType : placeType;
+  //Utils
 
-    switch (typeStr) {
-      case PlaceType.FIVE:
+  // Method to get the human-readable representation of the place type
+  getPlaceTypeString(type: string): string {
+    switch (type) {
       case 'FIVE':
         return '5-a-side';
-      case PlaceType.SEVEN:
       case 'SEVEN':
         return '7-a-side';
-      case PlaceType.ELEVEN:
       case 'ELEVEN':
         return '11-a-side';
       default:
-        console.warn('Unknown place type:', placeType);
-        return 'Unknown';
+        console.warn('Unknown place type:', type);
+        return type || 'Unknown'; // Return the original value if not recognized
     }
   }
 
-  // Method to convert human-readable string back to enum value
+  // Method to convert human-readable string back to enum-like string value
   getPlaceTypeFromString(typeString: string): string | null {
     switch (typeString) {
       case '5-a-side':
@@ -225,7 +221,7 @@ export class PlaceService {
         return 'SEVEN';
       case '11-a-side':
         return 'ELEVEN';
-      // Also handle direct enum values
+      // Also handle direct values
       case 'FIVE':
       case 'SEVEN':
       case 'ELEVEN':
@@ -234,4 +230,10 @@ export class PlaceService {
         return null;
     }
   }
+
+  // Method to get all available place types
+  getAllPlaceTypes(): string[] {
+    return ['FIVE', 'SEVEN', 'ELEVEN'];
+  }
+
 }

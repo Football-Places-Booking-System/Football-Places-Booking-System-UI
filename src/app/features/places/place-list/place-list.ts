@@ -6,7 +6,6 @@ import { FilterBar } from '../filter-bar/filter-bar';
 import { PlaceDetails } from '../place-details/place-details';
 import { AuthService } from '../../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
-import { PlaceType } from '../../../core/enums/place-type.enum';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -25,7 +24,7 @@ export class PlaceList implements OnInit, OnDestroy {
   showDetailsModal = false;
   selectedPlace: IPlace | null = null;
   showAddPlaceModal = false;
-  newPlace = { name: '', location: '', type: '' as PlaceType | '', imageUrl: '', description: '' };
+  newPlace = { name: '', location: '', placeType: '', imageUrl: '', description: '' };
   showEditPlaceModal = false;
   editPlaceData: any = null;
   showDeleteConfirmModal = false;
@@ -55,11 +54,11 @@ export class PlaceList implements OnInit, OnDestroy {
         this.locations = Array.from(new Set(this.allPlaces.map(p => p.location).filter(loc => loc)));
 
         // Get unique types and transform them to human-readable strings
-        const uniqueTypes = Array.from(new Set(this.allPlaces.map(p => p.type).filter(type => type)));
+        const uniqueTypes = Array.from(new Set(this.allPlaces.map(p => p.placeType).filter(type => type)));
         this.types = uniqueTypes.map(type => this.getPlaceTypeString(type));
 
         // Debug: Check for any places with undefined type
-        const placesWithUndefinedType = this.allPlaces.filter(p => !p.type);
+        const placesWithUndefinedType = this.allPlaces.filter(p => !p.placeType);
         if (placesWithUndefinedType.length > 0) {
           console.warn('Places with undefined type:', placesWithUndefinedType);
         }
@@ -78,33 +77,19 @@ export class PlaceList implements OnInit, OnDestroy {
   }
 
   get placeTypes() {
-    return Object.values(PlaceType);
+    return this.placeService.getAllPlaceTypes();
   }
 
   // Method to get the human-readable type string
-  getPlaceTypeString(placeType: PlaceType | string): string {
-    return this.placeService.getPlaceTypeString(placeType);
-  }
-
-  // Method to convert human-readable type string back to enum value
-  getPlaceTypeFromString(typeString: string): PlaceType | undefined {
-    switch (typeString) {
-      case '5-a-side':
-        return PlaceType.FIVE;
-      case '7-a-side':
-        return PlaceType.SEVEN;
-      case '11-a-side':
-        return PlaceType.ELEVEN;
-      default:
-        return undefined;
-    }
+  getPlaceTypeString(type: string): string {
+    return this.placeService.getPlaceTypeString(type);
   }
 
   onFilterChange(filter: { location: string; type: string }) {
-    // Convert human-readable type string back to enum value for filtering
+    // Use string type directly for filtering
     const actualFilter = {
       location: filter.location,
-      type: filter.type ? this.getPlaceTypeFromString(filter.type) || filter.type : ''
+      type: filter.type || ''
     };
 
     this.placeService.filterPlaces(actualFilter).pipe(
@@ -115,8 +100,6 @@ export class PlaceList implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Failed to filter places:', error);
-        // Fallback to local filtering if API fails
-        this.places = this.placeService.getLocalFilteredPlaces(actualFilter);
       }
     });
   }
@@ -133,7 +116,7 @@ export class PlaceList implements OnInit, OnDestroy {
 
   openAddPlaceModal() {
     this.showAddPlaceModal = true;
-    this.newPlace = { name: '', location: '', type: '' as PlaceType | '', imageUrl: '', description: '' };
+    this.newPlace = { name: '', location: '', placeType: '', imageUrl: '', description: '' };
   }
 
   closeAddPlaceModal() {
@@ -143,11 +126,11 @@ export class PlaceList implements OnInit, OnDestroy {
   addPlace() {
     console.log('AddPlace called with:', this.newPlace);
 
-    if (!this.newPlace.name || !this.newPlace.location || !this.newPlace.type || !this.newPlace.imageUrl || !this.newPlace.description) {
+    if (!this.newPlace.name || !this.newPlace.location || !this.newPlace.placeType || !this.newPlace.imageUrl || !this.newPlace.description) {
       console.warn('Form validation failed:', {
         name: !!this.newPlace.name,
         location: !!this.newPlace.location,
-        type: !!this.newPlace.type,
+        placeType: !!this.newPlace.placeType,
         imageUrl: !!this.newPlace.imageUrl,
         description: !!this.newPlace.description
       });
@@ -157,7 +140,7 @@ export class PlaceList implements OnInit, OnDestroy {
     console.log('Sending to service:', {
       name: this.newPlace.name,
       location: this.newPlace.location,
-      type: this.newPlace.type as PlaceType,
+      placeType: this.newPlace.placeType,
       imageUrl: this.newPlace.imageUrl,
       description: this.newPlace.description
     });
@@ -165,7 +148,7 @@ export class PlaceList implements OnInit, OnDestroy {
     this.placeService.addPlace({
       name: this.newPlace.name,
       location: this.newPlace.location,
-      type: this.newPlace.type as PlaceType,
+      placeType: this.newPlace.placeType,
       imageUrl: this.newPlace.imageUrl,
       description: this.newPlace.description
     }).pipe(
@@ -188,7 +171,52 @@ export class PlaceList implements OnInit, OnDestroy {
 
   openEditPlaceModal() {
     if (!this.selectedPlace) return;
+
+    // Copy the selected place data
     this.editPlaceData = { ...this.selectedPlace };
+
+    // Debug: Check the current placeType value and available options
+    console.log('Edit modal - Original placeType:', this.editPlaceData.placeType);
+    console.log('Edit modal - Available placeTypes:', this.placeTypes);
+    console.log('Edit modal - Available string values:', ['FIVE', 'SEVEN', 'ELEVEN']);
+
+    // Ensure the placeType value matches exactly with one of the dropdown options
+    // The dropdown expects string values like "FIVE", "SEVEN", "ELEVEN"
+    if (this.editPlaceData.placeType) {
+      const currentType = this.editPlaceData.placeType.toString().toUpperCase();
+
+      // Check if the current type is one of the valid enum values
+      const validTypes = ['FIVE', 'SEVEN', 'ELEVEN'];
+      if (validTypes.includes(currentType)) {
+        this.editPlaceData.placeType = currentType;
+        console.log('Edit modal - Set placeType to:', this.editPlaceData.placeType);
+      } else {
+        console.warn('Edit modal - Invalid placeType value:', this.editPlaceData.placeType);
+        // Try to map common variations
+        switch (currentType) {
+          case '5':
+          case '5-A-SIDE':
+            this.editPlaceData.placeType = 'FIVE';
+            break;
+          case '7':
+          case '7-A-SIDE':
+            this.editPlaceData.placeType = 'SEVEN';
+            break;
+          case '11':
+          case '11-A-SIDE':
+            this.editPlaceData.placeType = 'ELEVEN';
+            break;
+          default:
+            this.editPlaceData.placeType = 'ELEVEN'; // Default fallback
+        }
+        console.log('Edit modal - Corrected placeType to:', this.editPlaceData.placeType);
+      }
+    } else {
+      // If no placeType, set default
+      this.editPlaceData.placeType = 'ELEVEN';
+      console.log('Edit modal - No placeType found, setting default to ELEVEN');
+    }
+
     this.showEditPlaceModal = true;
     this.closeDetails();
   }
@@ -199,28 +227,40 @@ export class PlaceList implements OnInit, OnDestroy {
   }
 
   saveEditPlace() {
+    console.log('SaveEditPlace called with:', this.editPlaceData);
     if (!this.editPlaceData) return;
+
+    // The placeType should already be in the correct enum format (FIVE, SEVEN, ELEVEN)
+    // from the dropdown selection
+    console.log('Saving place with placeType:', this.editPlaceData.placeType);
+
     this.placeService.updatePlace(this.editPlaceData.id, {
       name: this.editPlaceData.name,
       location: this.editPlaceData.location,
-      type: this.editPlaceData.type as PlaceType,
+      placeType: this.editPlaceData.placeType,
       imageUrl: this.editPlaceData.imageUrl,
       description: this.editPlaceData.description
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (success) => {
+        console.log('Update place response - success flag:', success);
         if (success) {
-          this.refreshPlaces();
+          console.log('Place updated successfully:', this.editPlaceData);
+          this.loadPlaces(); // Reload places to refresh the list
           this.closeEditPlaceModal();
           this.successMessage = 'Place updated successfully!';
+          setTimeout(() => this.successMessage = '', 2500);
+        } else {
+          console.error('Update failed - service returned false');
+          this.successMessage = 'Failed to update place. Please try again.';
           setTimeout(() => this.successMessage = '', 2500);
         }
       },
       error: (error) => {
-        console.error('Failed to update place:', error);
-        this.successMessage = '';
-        // You might want to show an error message to the user
+        console.error('Failed to update place - error occurred:', error);
+        this.successMessage = 'Error updating place. Please try again.';
+        setTimeout(() => this.successMessage = '', 2500);
       }
     });
   }

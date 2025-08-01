@@ -23,7 +23,7 @@
         <div class="card-body d-flex flex-column align-items-center">
           <h5 class="card-title fw-bold text-primary">{{ place.name }}</h5>
           <div class="mb-2 d-flex gap-2 align-items-center justify-content-center">
-            <span class="badge bg-primary px-3 py-2"><i class="bi bi-people-fill me-1"></i>{{ getPlaceTypeString(place.type) }}</span>
+            <span class="badge bg-primary px-3 py-2"><i class="bi bi-people-fill me-1"></i>{{ getPlaceTypeString(place.placeType) }}</span>
             <span class="badge bg-secondary px-3 py-2"><i class="bi bi-geo-alt-fill me-1"></i>{{ place.location }}</span>
           </div>
           <p class="card-text text-muted text-center small">{{ place.description }}</p>
@@ -53,7 +53,7 @@
         </div>
         <div class="mb-2">
           <label class="form-label">Type</label>
-          <select class="form-select" [(ngModel)]="newPlace.type" name="type" required #typeField="ngModel">
+          <select class="form-select" [(ngModel)]="newPlace.placeType" name="type" required #typeField="ngModel">
             <option value="">Select type</option>
             <option *ngFor="let type of placeTypes" [value]="type">{{ getPlaceTypeString(type) }}</option>
           </select>
@@ -90,7 +90,7 @@
         </div>
         <div class="mb-2">
           <label class="form-label">Type</label>
-          <select class="form-select" [(ngModel)]="editPlaceData.type" name="editType" required>
+          <select class="form-select" [(ngModel)]="editPlaceData.placeType" name="editType" required>
             <option value="">Select type</option>
             <option *ngFor="let type of placeTypes" [value]="type">{{ getPlaceTypeString(type) }}</option>
           </select>
