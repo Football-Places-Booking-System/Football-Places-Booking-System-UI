@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, catchError, map } from 'rxjs';
+import { Observable, of, catchError, map, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from './auth.service';
 
 export type TeamMemberRole = 'MEMBER' | 'ORGANIZER';
 export type TeamMemberStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -34,7 +35,10 @@ export interface ITeam {
 export class TeamService {
   private apiUrl = 'http://localhost:8080/api/teams'; // Update with your Spring backend URL
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
 
   getTeams(): Observable<ITeam[]> {
@@ -248,6 +252,38 @@ export class TeamService {
       console.error('Error checking if user is team organizer:', error);
       return of(false);
     }
+  }
+
+  /**
+   * Invite a user to a team by email
+   * @param teamId The ID of the team to invite the user to
+   * @param email The email of the user to invite
+   * @param role The role to assign to the user in the team
+   * @returns Observable with the invitation result
+   */
+  inviteUserByEmail(teamId: string, email: string, role: TeamMemberRole = 'MEMBER'): Observable<ITeamMember> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
+    const inviteData = {
+      email,
+      role,
+      invitedBy: currentUser.id
+    };
+
+    // Updated endpoint to match the backend API
+    const inviteUrl = `http://localhost:8080/api/team-members/invite/${teamId}`;
+    
+    console.log(`Sending invitation to ${email} for team ${teamId}`);
+    
+    return this.http.post<ITeamMember>(inviteUrl, inviteData).pipe(
+      catchError(error => {
+        console.error('Error inviting user by email:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to send invitation'));
+      })
+    );
   }
 
   removeTeamMember(teamId: string, userId: string): Observable<void> {
