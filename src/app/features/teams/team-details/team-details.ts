@@ -224,12 +224,23 @@ export class TeamDetails implements OnInit, OnDestroy {
   removeTeamMember(teamMemberId: string): void {
     if (confirm('Are you sure you want to remove this member from the team?')) {
       console.log(`TeamDetailsComponent: Initiating removal of team member ${teamMemberId}`);
-      // For now, we'll just remove from the local array since removeTeamMember doesn't exist
-      this.teamMembers = this.teamMembers.filter(member => member.id !== teamMemberId);
-      this.successMessage = 'Member removed successfully!';
-      this.errorMessage = null;
-      setTimeout(() => this.successMessage = null, 3000);
-      console.log(`TeamDetailsComponent: Team member ${teamMemberId} removed from local array.`);
+
+      this.teamMemberService.removeTeamMember(teamMemberId).subscribe({
+        next: () => {
+          // Only update the UI after successful backend removal
+          this.teamMembers = this.teamMembers.filter(member => member.id !== teamMemberId);
+          this.successMessage = 'Member removed successfully!';
+          this.errorMessage = null;
+          setTimeout(() => this.successMessage = null, 3000);
+          console.log(`TeamDetailsComponent: Team member ${teamMemberId} removed successfully.`);
+        },
+        error: (error) => {
+          console.error('Error removing team member:', error);
+          this.errorMessage = error.message || 'Failed to remove team member';
+          this.successMessage = null;
+          setTimeout(() => this.errorMessage = null, 5000);
+        }
+      });
     }
   }
 
