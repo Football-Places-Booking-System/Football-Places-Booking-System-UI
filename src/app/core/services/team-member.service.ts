@@ -69,19 +69,18 @@ export class TeamMemberService {
     );
   }
 
-  removeTeamMember(teamId: string, userId: string): Observable<void> {
-    try {
-      const membersString = sessionStorage.getItem('teamMembers');
-      if (membersString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const filteredMembers = members.filter(m => !(m.teamId === teamId && m.userId === userId));
-        sessionStorage.setItem('teamMembers', JSON.stringify(filteredMembers));
-      }
-      return of(void 0);
-    } catch (error) {
-      console.error('Error removing team member:', error);
-      throw new Error('Failed to remove team member');
+  removeTeamMember(teamMemberId: string): Observable<void> {
+    if (!teamMemberId) {
+      return throwError(() => new Error('Team member ID is required'));
     }
+    console.log(`TeamService: Removing team member with ID: ${teamMemberId}`);
+
+    return this.http.delete<void>(`${this.apiUrl}/${teamMemberId}`).pipe(
+      catchError(error => {
+        console.error('Error removing team member:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to remove team member'));
+      })
+    );
   }
 
   // Team Member Management

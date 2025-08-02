@@ -155,8 +155,8 @@
       <div *ngIf="teamMembers.length === 0" class="no-members-message">No members in this team yet.</div>
       <div *ngFor="let member of teamMembers" class="member-card">
         <div class="member-info">
-          <p><strong>Name:</strong> {{ getUserForTeamMember(member.userId)?.username || 'Unknown User' }}</p>
-          <p><strong>Email:</strong> {{ getUserForTeamMember(member.userId)?.email || 'N/A' }}</p>
+          <p><strong>Name:</strong> {{ member.username || 'Unknown User' }}</p>
+          <p><strong>Email:</strong> {{ member.email || 'N/A' }}</p>
           <p><strong>Role:</strong> {{ member.role }}</p>
           <p><strong>Status:</strong> {{ member.status }}</p>
         </div>

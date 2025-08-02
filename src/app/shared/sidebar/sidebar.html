@@ -13,8 +13,16 @@
     <mat-icon class="me-2">group</mat-icon>
     Users
   </a>
+<!-- 
 
-  <a *ngIf="canAccessTeams && role !== 'ADMIN'" mat-list-item routerLink="/dashboard/teams" routerLinkActive="active-link">
+  My Teams (Created and Joined)
+  <a *ngIf=" role !== 'ADMIN'" mat-list-item routerLink="/dashboard/all-teams" routerLinkActive="active-link">
+    <mat-icon class="me-2">groups</mat-icon>
+    Teams
+  </a> -->
+
+    <!-- All Teams that I May ask to join them  -->
+  <a *ngIf=" role !== 'ADMIN'" mat-list-item routerLink="/dashboard/teams" routerLinkActive="active-link">
     <mat-icon class="me-2">groups</mat-icon>
     Teams
   </a>
