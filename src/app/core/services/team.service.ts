@@ -162,23 +162,8 @@ export class TeamService {
     }
   }
 
-  // getTeamMembers(teamId: string): Observable<ITeamMember[]> {
-  //   try {
-  //     const membersString = sessionStorage.getItem('teamMembers');
-  //     if (membersString) {
-  //       const members: ITeamMember[] = JSON.parse(membersString);
-  //       const teamMembers = members.filter(m => m.teamId === teamId);
-  //       return of(teamMembers);
-  //     }
-  //     return of([]);
-  //   } catch (error) {
-  //     console.error('Error loading team members:', error);
-  //     return of([]);
-  //   }
-  // }
 
   // Done (Need Optimization)
-
   getTeamMembers(teamId: string): Observable<ITeamMember[]> {
     console.log('TeamService: Fetching team members for teamId:', teamId);
 
@@ -219,6 +204,7 @@ export class TeamService {
     );
   }
 
+  // Done
   getUserTeams(): Observable<ITeam[]> {
     const url = `${this.apiUrl}/my-teams`;
     console.log('TeamService: Making request to:', url);
@@ -254,50 +240,5 @@ export class TeamService {
     }
   }
 
-  /**
-   * Invite a user to a team by email
-   * @param teamId The ID of the team to invite the user to
-   * @param email The email of the user to invite
-   * @param role The role to assign to the user in the team
-   * @returns Observable with the invitation result
-   */
-  inviteUserByEmail(teamId: string, email: string, role: TeamMemberRole = 'MEMBER'): Observable<ITeamMember> {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      return throwError(() => new Error('User not authenticated'));
-    }
 
-    const inviteData = {
-      email,
-      role,
-      invitedBy: currentUser.id
-    };
-
-    // Updated endpoint to match the backend API
-    const inviteUrl = `http://localhost:8080/api/team-members/invite/${teamId}`;
-    
-    console.log(`Sending invitation to ${email} for team ${teamId}`);
-    
-    return this.http.post<ITeamMember>(inviteUrl, inviteData).pipe(
-      catchError(error => {
-        console.error('Error inviting user by email:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to send invitation'));
-      })
-    );
-  }
-
-  removeTeamMember(teamId: string, userId: string): Observable<void> {
-    try {
-      const membersString = sessionStorage.getItem('teamMembers');
-      if (membersString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const filteredMembers = members.filter(m => !(m.teamId === teamId && m.userId === userId));
-        sessionStorage.setItem('teamMembers', JSON.stringify(filteredMembers));
-      }
-      return of(void 0);
-    } catch (error) {
-      console.error('Error removing team member:', error);
-      throw new Error('Failed to remove team member');
-    }
-  }
 }

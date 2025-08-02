@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService, TeamMemberRole } from '../../../core/services/team.service';
+import { TeamMemberService } from '../../../core/services/team-member.service';
 
 
 
@@ -26,6 +27,7 @@ export class InvitePlayer implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private teamService: TeamService,
+    private teamMemberService: TeamMemberService,
     private authService: AuthService
   ) {
     // Initialize the form with email validation
@@ -60,20 +62,20 @@ export class InvitePlayer implements OnInit, OnDestroy {
     if (this.inviteForm.valid && this.teamId) {
       const { email } = this.inviteForm.value;
       const role: TeamMemberRole = 'MEMBER';
-      
+
       console.log(`InvitePlayerComponent: Attempting to invite user with email: ${email} to team ${this.teamId} as ${role}`);
 
       // Show loading state
       this.inviteForm.disable();
-      
+
       // Call the new inviteUserByEmail method
-      this.teamService.inviteUserByEmail(this.teamId, email, role)
+      this.teamMemberService.inviteUserByEmail(this.teamId, email)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (member) => {
             this.successMessage = `Invitation sent successfully to ${email}!`;
             console.log('InvitePlayerComponent: Invitation successful:', member);
-            
+
             // Reset form and navigate back after a delay
             this.inviteForm.reset();
             setTimeout(() => {
