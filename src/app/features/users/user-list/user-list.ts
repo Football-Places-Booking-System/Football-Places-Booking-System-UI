@@ -15,6 +15,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { Router } from '@angular/router';
@@ -50,7 +51,8 @@ import { IUser } from '../../../core/models/iuser.model';
     MatMenuModule,
     MatDialogModule,
     MatProgressSpinnerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSnackBarModule
   ],
   templateUrl: './user-list.html',
   styleUrls: ['./user-list.css']
@@ -86,7 +88,8 @@ export class UserList implements OnInit, AfterViewInit {
   constructor(
     private authService: AuthService,
     private userService: UserService,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
@@ -160,20 +163,63 @@ export class UserList implements OnInit, AfterViewInit {
 
 
   changeUserRole(userId: string, newRole: 'ADMIN' | 'USER'): void {
-    const user = this.allUsers.find(u => u.id === userId);
-    if (user) {
-      user.role = newRole;
-      sessionStorage.setItem('users', JSON.stringify(this.allUsers));
-      // this.applyFilters();
+    // Prevent user from changing their own role
+    if (this.currentUser && this.currentUser.id === userId) {
+      console.warn('Cannot change your own role');
+      this.snackBar.open('You cannot change your own role!', 'Close', {
+        duration: 3000,
+        panelClass: ['error-snackbar'],
+        horizontalPosition: 'center',
+        verticalPosition: 'top'
+      });
+      return;
     }
+
+    this.userService.updateUser(userId, { role: newRole }).subscribe({
+      next: () => {
+        console.log(`User role updated successfully: ${userId} to ${newRole}`);
+        this.snackBar.open(`User role updated to ${newRole} successfully!`, 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar'],
+          horizontalPosition: 'center',
+          verticalPosition: 'top'
+        });
+        this.loadUsers(); // Reload users to reflect changes
+      },
+      error: (err) => {
+        console.error('Error updating user role:', err);
+        this.snackBar.open('Failed to update user role. Please try again.', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar'],
+          horizontalPosition: 'center',
+          verticalPosition: 'top'
+        });
+      }
+    });
   }
 
   changeUserStatus(userId: string, newStatus: 'ACTIVE' | 'INACTIVE'): void {
-    const user = this.allUsers.find(u => u.id === userId);
-    if (user) {
-      user.status = newStatus;
-      sessionStorage.setItem('users', JSON.stringify(this.allUsers));
-    }
+    this.userService.updateUser(userId, { status: newStatus }).subscribe({
+      next: () => {
+        console.log(`User status updated successfully: ${userId} to ${newStatus}`);
+        this.snackBar.open(`User status updated to ${newStatus} successfully!`, 'Close', {
+          duration: 3000,
+          panelClass: ['success-snackbar'],
+          horizontalPosition: 'center',
+          verticalPosition: 'top'
+        });
+        this.loadUsers(); // Reload users to reflect changes
+      },
+      error: (err) => {
+        console.error('Error updating user status:', err);
+        this.snackBar.open('Failed to update user status. Please try again.', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar'],
+          horizontalPosition: 'center',
+          verticalPosition: 'top'
+        });
+      }
+    });
   }
 
 
@@ -193,5 +239,10 @@ export class UserList implements OnInit, AfterViewInit {
 
   get isAdmin(): boolean {
     return this.currentUser?.role === 'ADMIN';
+  }
+
+  // // Add a helper method to check if user can modify another user
+  canModifyUser(userId: string): boolean {
+    return this.currentUser && this.currentUser.id !== userId;
   }
 }
