@@ -111,7 +111,7 @@ export class BookingFormComponent implements OnInit, OnDestroy {
 private loadUserTeams(): void {
   this.teamService.getTeamsByCreator().subscribe({
     next: (response: any) => {
-      const teams = response?.content || []; // Access content array
+      const teams = response?.content || [];
       this.userTeams = teams.filter((team: any) =>
         team.members?.some((m: any) => m.role === 'ORGANIZER')
       );
@@ -144,7 +144,7 @@ private loadUserTeams(): void {
   if (placeId && date) {
     this.isLoading = true;
 
-    // ✅ Format date as YYYY-MM-DD (no timezone shift)
+    // Format date as YYYY-MM-DD (no timezone shift)
     const localDateString = date.toLocaleDateString('en-CA'); // e.g., "2025-08-02"
 
     this.bookingService.getAvailableTimeSlots(placeId, localDateString).subscribe({
@@ -162,7 +162,7 @@ private loadUserTeams(): void {
           return true;
         });
 
-        console.log("✅ Filtered availableTimeSlots for UI:", this.availableTimeSlots);
+        console.log("Filtered availableTimeSlots for UI:", this.availableTimeSlots);
         this.isLoading = false;
       },
       error: (error: any) => {

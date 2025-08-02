@@ -39,7 +39,7 @@ export class BookingService {
   // Get all bookings (Admin or Organizer)
   getBookings(): Observable<IBooking[]> {
     return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}`).pipe(
-      map(res => res.content || []),
+      map(res => res.content || []),  
       catchError(err => {
         console.error('Error fetching all bookings:', err);
         return of([]);
@@ -150,7 +150,7 @@ getPlaceBookings(placeId: string): Observable<IBooking[]> {
 getAvailableTimeSlots(placeId: string, date: string): Observable<ITimeSlot[]> {
   return this.getPlaceBookings(placeId).pipe(
     map(bookings => {
-      console.log("📌 Raw bookings from backend:", bookings);
+      console.log("Raw bookings from backend:", bookings);
 
       const selectedDate = new Date(date);
       const today = new Date();
@@ -210,11 +210,11 @@ getAvailableTimeSlots(placeId: string, date: string): Observable<ITimeSlot[]> {
         });
       }
 
-      console.log("✅ Final generated slots:", timeSlots);
+      console.log("Final generated slots:", timeSlots);
       return timeSlots;
     }),
     catchError(err => {
-      console.error('❌ Error calculating available time slots:', err);
+      console.error('Error calculating available time slots:', err);
       return of([]);
     })
   );
