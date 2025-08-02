@@ -1,20 +1,22 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING' | 'PENDING_PAYMENT';
 
 export interface IBooking {
   id: string;
-  place_id: string;
-  user_id: string;
-  team_id: string;
-  start_time: string;
-  end_time: string;
+  placeId: string;
+  userId: string;
+  teamId: string;
+  startTime: string;
+  endTime: string;
   status: BookingStatus;
-  created_at: string;
-  place_name?: string;
-  team_name?: string;
-  user_name?: string;
+  createdAt?: string;
+  placeName?: string;
+  teamName?: string;
+  userName?: string;
 }
 
 export interface ITimeSlot {
@@ -30,293 +32,235 @@ export interface ITimeSlot {
   providedIn: 'root'
 })
 export class BookingService {
+  private apiUrl = 'http://localhost:8080/api/booking-matches';
 
-  // Get all bookings
+  constructor(private http: HttpClient) {}
+
+  // Get all bookings (Admin or Organizer)
   getBookings(): Observable<IBooking[]> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      const bookings = bookingsString ? JSON.parse(bookingsString) : [];
-      return of(bookings);
-    } catch (error) {
-      console.error('Error loading bookings from sessionStorage:', error);
-      return of([]);
-    }
+    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}`).pipe(
+      map(res => res.content || []),
+      catchError(err => {
+        console.error('Error fetching all bookings:', err);
+        return of([]);
+      })
+    );
   }
 
-  // Get bookings by user
+  // Get bookings for a specific user
   getUserBookings(userId: string): Observable<IBooking[]> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const userBookings = bookings.filter(booking => booking.user_id === userId);
-        return of(userBookings);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading user bookings from sessionStorage:', error);
-      return of([]);
-    }
+    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/user/${userId}`).pipe(
+      map(res => res.content || []),
+      catchError(err => {
+        console.error('Error fetching user bookings:', err);
+        return of([]);
+      })
+    );
   }
 
-  // Get bookings by team
+  // Get bookings for a specific team
   getTeamBookings(teamId: string): Observable<IBooking[]> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const teamBookings = bookings.filter(booking => booking.team_id === teamId);
-        return of(teamBookings);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading team bookings from sessionStorage:', error);
-      return of([]);
-    }
+    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/team/${teamId}`).pipe(
+      map(res => res.content || []),
+      catchError(err => {
+        console.error('Error fetching team bookings:', err);
+        return of([]);
+      })
+    );
   }
 
-  // Get bookings by place
-  getPlaceBookings(placeId: string): Observable<IBooking[]> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const placeBookings = bookings.filter(booking => booking.place_id === placeId);
-        return of(placeBookings);
-      }
+  // Get bookings for a specific place
+getPlaceBookings(placeId: string): Observable<IBooking[]> {
+  return this.http.get<IBooking[]>(`${this.apiUrl}/place/${placeId}`).pipe(
+    map(res => {
+      console.log("Raw response from backend:", res);
+      // Backend returns an array directly, no 'content' wrapper
+      return Array.isArray(res) ? res : [];
+    }),
+    catchError(err => {
+      console.error('Error fetching place bookings:', err);
       return of([]);
-    } catch (error) {
-      console.error('Error loading place bookings from sessionStorage:', error);
-      return of([]);
-    }
-  }
+    })
+  );
+}
 
-  // Get booking by ID
+
+  // Get a booking by its ID
   getBookingById(id: string): Observable<IBooking | null> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const booking = bookings.find(b => b.id === id);
-        return of(booking || null);
-      }
-      return of(null);
-    } catch (error) {
-      console.error('Error loading booking by ID from sessionStorage:', error);
-      return of(null);
-    }
+    return this.http.get<IBooking>(`${this.apiUrl}/${id}`).pipe(
+      catchError(err => {
+        console.error('Error fetching booking by ID:', err);
+        return of(null);
+      })
+    );
   }
 
-  // Create new booking
+  // Create a new booking
   createBooking(booking: Omit<IBooking, 'id' | 'created_at'>): Observable<IBooking> {
-    try {
-      const newBooking: IBooking = {
-        ...booking,
-        id: Date.now().toString(),
-        created_at: new Date().toISOString(),
-        status: 'PENDING_PAYMENT' // Set initial status to PENDING_PAYMENT
-      };
-
-      const bookingsString = sessionStorage.getItem('bookings');
-      const bookings: IBooking[] = bookingsString ? JSON.parse(bookingsString) : [];
-      bookings.push(newBooking);
-      sessionStorage.setItem('bookings', JSON.stringify(bookings));
-
-      return of(newBooking);
-    } catch (error) {
-      console.error('Error creating booking:', error);
-      throw new Error('Failed to create booking');
-    }
+    return this.http.post<IBooking>(`${this.apiUrl}`, booking).pipe(
+      catchError(err => {
+        console.error('Error creating booking:', err);
+        throw err;
+      })
+    );
   }
 
-  // Update booking
+  // Update a booking
   updateBooking(booking: IBooking): Observable<IBooking> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const index = bookings.findIndex(b => b.id === booking.id);
-        if (index !== -1) {
-          bookings[index] = booking;
-          sessionStorage.setItem('bookings', JSON.stringify(bookings));
-          return of(booking);
-        }
-      }
-      throw new Error('Booking not found');
-    } catch (error) {
-      console.error('Error updating booking:', error);
-      throw new Error('Failed to update booking');
-    }
+    return this.http.put<IBooking>(`${this.apiUrl}/${booking.id}`, booking).pipe(
+      catchError(err => {
+        console.error('Error updating booking:', err);
+        throw err;
+      })
+    );
   }
 
-  // Cancel booking
+  // Cancel a booking
   cancelBooking(id: string): Observable<IBooking> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const index = bookings.findIndex(b => b.id === id);
-        if (index !== -1) {
-          bookings[index].status = 'CANCELLED';
-          sessionStorage.setItem('bookings', JSON.stringify(bookings));
-          return of(bookings[index]);
-        }
-      }
-      throw new Error('Booking not found');
-    } catch (error) {
-      console.error('Error cancelling booking:', error);
-      throw new Error('Failed to cancel booking');
-    }
+    return this.http.patch<IBooking>(`${this.apiUrl}/${id}/cancel`, {}).pipe(
+      catchError(err => {
+        console.error('Error cancelling booking:', err);
+        throw err;
+      })
+    );
   }
 
-  // Approve booking (Admin only) - Change from PENDING_PAYMENT to CONFIRMED
+  // Approve a booking (Admin only)
   approveBooking(id: string): Observable<IBooking> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const index = bookings.findIndex(b => b.id === id);
-        if (index !== -1) {
-          bookings[index].status = 'CONFIRMED';
-          sessionStorage.setItem('bookings', JSON.stringify(bookings));
-          return of(bookings[index]);
-        }
-      }
-      throw new Error('Booking not found');
-    } catch (error) {
-      console.error('Error approving booking:', error);
-      throw new Error('Failed to approve booking');
-    }
+    return this.http.patch<IBooking>(`${this.apiUrl}/${id}/approve`, {}).pipe(
+      catchError(err => {
+        console.error('Error approving booking:', err);
+        throw err;
+      })
+    );
   }
 
-  // Get bookings with PENDING_PAYMENT status (for admin)
+  // Get all bookings with PENDING_PAYMENT status
   getPendingPaymentBookings(): Observable<IBooking[]> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const pendingBookings = bookings.filter(booking => booking.status === 'PENDING_PAYMENT');
-        return of(pendingBookings);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading pending payment bookings:', error);
-      return of([]);
-    }
+    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/pending`).pipe(
+      map(res => res.content || []),
+      catchError(err => {
+        console.error('Error fetching pending payment bookings:', err);
+        return of([]);
+      })
+    );
   }
 
-  // Get available time slots for a place
-  getAvailableTimeSlots(placeId: string, date: string): Observable<ITimeSlot[]> {
-    try {
-      // Generate time slots for the given date
+  // Get available time slots for a place & date
+getAvailableTimeSlots(placeId: string, date: string): Observable<ITimeSlot[]> {
+  return this.getPlaceBookings(placeId).pipe(
+    map(bookings => {
+      console.log("📌 Raw bookings from backend:", bookings);
+
+      const selectedDate = new Date(date);
+      const today = new Date();
+
+      const startHour = 8;
+      const endHour = 24;
       const timeSlots: ITimeSlot[] = [];
-      const startHour = 8; // 8 AM
-      const endHour = 22; // 10 PM
+
+      const sameDayBookings = bookings.filter(b => {
+        const bookingDate = this.parseLocalDateTime(b.startTime);
+        return (
+          bookingDate.getFullYear() === selectedDate.getFullYear() &&
+          bookingDate.getMonth() === selectedDate.getMonth() &&
+          bookingDate.getDate() === selectedDate.getDate() &&
+          b.status !== 'CANCELLED'
+        );
+      });
 
       for (let hour = startHour; hour < endHour; hour++) {
-        const startTime = new Date(date);
+        const startTime = new Date(selectedDate);
         startTime.setHours(hour, 0, 0, 0);
 
-        const endTime = new Date(date);
+        const endTime = new Date(selectedDate);
         endTime.setHours(hour + 1, 0, 0, 0);
 
+        if (
+          selectedDate.toDateString() === today.toDateString() &&
+          startTime.getTime() <= today.getTime()
+        ) {
+          continue;
+        }
+
+        let isAvailable = true;
+        let bookingId: string | undefined;
+
+        sameDayBookings.forEach(booking => {
+          const bookingStart = this.parseLocalDateTime(booking.startTime);
+          const bookingEnd = this.parseLocalDateTime(booking.endTime);
+
+          const overlap =
+            startTime.getTime() < bookingEnd.getTime() &&
+            endTime.getTime() > bookingStart.getTime();
+
+          if (overlap) {
+            isAvailable = false;
+            bookingId = booking.id;
+          }
+        });
+
         timeSlots.push({
-          id: `${placeId}-${date}-${hour}`,
+          id: `${placeId}-${hour}`,
           place_id: placeId,
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
-          is_available: true
+          is_available: isAvailable,
+          booking_id: bookingId
         });
       }
 
-      // Check existing bookings for this place and date
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const placeBookings = bookings.filter(b =>
-          b.place_id === placeId &&
-          b.status !== 'CANCELLED' &&
-          new Date(b.start_time).toDateString() === new Date(date).toDateString()
-        );
-
-        // Mark booked slots as unavailable
-        placeBookings.forEach(booking => {
-          const bookingStart = new Date(booking.start_time);
-          const bookingEnd = new Date(booking.end_time);
-
-          timeSlots.forEach(slot => {
-            const slotStart = new Date(slot.start_time);
-            const slotEnd = new Date(slot.end_time);
-
-            if (slotStart < bookingEnd && slotEnd > bookingStart) {
-              slot.is_available = false;
-              slot.booking_id = booking.id;
-            }
-          });
-        });
-      }
-
-      return of(timeSlots);
-    } catch (error) {
-      console.error('Error loading available time slots:', error);
+      console.log("✅ Final generated slots:", timeSlots);
+      return timeSlots;
+    }),
+    catchError(err => {
+      console.error('❌ Error calculating available time slots:', err);
       return of([]);
-    }
-  }
+    })
+  );
+}
 
-  // Delete booking
+
+//Helper function to parse the date and time
+private parseLocalDateTime(dateTime: string): Date {
+  const [datePart, timePart] = dateTime.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute, second] = timePart.split(':').map(Number);
+  return new Date(year, month - 1, day, hour, minute, second || 0);
+}
+
+
+
+
+  // Delete a booking
   deleteBooking(id: string): Observable<void> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const filteredBookings = bookings.filter(b => b.id !== id);
-        sessionStorage.setItem('bookings', JSON.stringify(filteredBookings));
-      }
-      return of(void 0);
-    } catch (error) {
-      console.error('Error deleting booking:', error);
-      throw new Error('Failed to delete booking');
-    }
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      catchError(err => {
+        console.error('Error deleting booking:', err);
+        throw err;
+      })
+    );
   }
 
-  // Get upcoming bookings for user
+  // Get upcoming bookings for a user
   getUpcomingBookings(userId: string): Observable<IBooking[]> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const now = new Date();
-        const upcomingBookings = bookings.filter(booking =>
-          booking.user_id === userId &&
-          new Date(booking.start_time) > now &&
-          booking.status !== 'CANCELLED'
-        );
-        return of(upcomingBookings);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading upcoming bookings:', error);
-      return of([]);
-    }
+    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/user/${userId}/upcoming`).pipe(
+      map(res => res.content || []),
+      catchError(err => {
+        console.error('Error fetching upcoming bookings:', err);
+        return of([]);
+      })
+    );
   }
 
-  // Get past bookings for user
+  // Get past bookings for a user
   getPastBookings(userId: string): Observable<IBooking[]> {
-    try {
-      const bookingsString = sessionStorage.getItem('bookings');
-      if (bookingsString) {
-        const bookings: IBooking[] = JSON.parse(bookingsString);
-        const now = new Date();
-        const pastBookings = bookings.filter(booking =>
-          booking.user_id === userId &&
-          new Date(booking.start_time) < now
-        );
-        return of(pastBookings);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading past bookings:', error);
-      return of([]);
-    }
+    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/user/${userId}/past`).pipe(
+      map(res => res.content || []),
+      catchError(err => {
+        console.error('Error fetching past bookings:', err);
+        return of([]);
+      })
+    );
   }
 }

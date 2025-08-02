@@ -133,7 +133,7 @@ export class BookingListComponent implements OnInit {
   }
 
   cancelBooking(booking: IBooking): void {
-    if (confirm(`Are you sure you want to cancel this booking for ${booking.place_name}?`)) {
+    if (confirm(`Are you sure you want to cancel this booking for ${booking.placeName}?`)) {
       this.bookingService.cancelBooking(booking.id).subscribe({
         next: () => {
           this.successMessage = 'Booking cancelled successfully!';
@@ -163,11 +163,11 @@ export class BookingListComponent implements OnInit {
 
   canCancelBooking(booking: IBooking): boolean {
     if (!this.currentUser) return false;
-    return booking.user_id === this.currentUser.id && booking.status !== 'CANCELLED';
+    return booking.userId === this.currentUser.id && booking.status !== 'CANCELLED';
   }
 
   isUpcoming(booking: IBooking): boolean {
-    return new Date(booking.start_time) > new Date();
+    return new Date(booking.startTime) > new Date();
   }
 
   getBookingCardClass(booking: IBooking): string {
@@ -189,25 +189,25 @@ export class BookingListComponent implements OnInit {
 
         // Find matches that match the booking criteria (same place, team, and similar date/time)
         const relatedMatches = matches.filter(match => {
-          const bookingDate = new Date(booking.start_time);
+          const bookingDate = new Date(booking.startTime);
           const matchDate = new Date(match.matchDate);
 
           console.log('Comparing booking vs match:', {
-            bookingPlaceId: booking.place_id,
+            bookingPlaceId: booking.placeId,
             matchPlaceId: match.placeId,
-            bookingTeamId: booking.team_id,
+            bookingTeamId: booking.teamId,
             matchTeamId: match.teamId,
             bookingDate: bookingDate.toDateString(),
             matchDate: matchDate.toDateString(),
-            bookingStartTime: booking.start_time,
+            bookingStartTime: booking.startTime,
             matchStartTime: match.startTime,
-            bookingEndTime: booking.end_time,
+            bookingEndTime: booking.endTime,
             matchEndTime: match.endTime
           });
 
           // Check if place, team, and date match
-          const placeMatch = match.placeId.toString() === booking.place_id.toString();
-          const teamMatch = match.teamId.toString() === booking.team_id.toString();
+          const placeMatch = match.placeId.toString() === booking.placeId.toString();
+          const teamMatch = match.teamId.toString() === booking.teamId.toString();
           const dateMatch = bookingDate.toDateString() === matchDate.toDateString();
 
           // Also check if times are similar (within 1 hour)
@@ -233,12 +233,12 @@ export class BookingListComponent implements OnInit {
           // If no related match found, show a message with more details
           console.log('No matches found. Available matches:', matches);
           console.log('Booking details for debugging:', {
-            place_id: booking.place_id,
-            team_id: booking.team_id,
-            start_time: booking.start_time,
-            end_time: booking.end_time,
-            place_name: booking.place_name,
-            team_name: booking.team_name
+            place_id: booking.placeId,
+            team_id: booking.teamId,
+            start_time: booking.startTime,
+            end_time: booking.endTime,
+            place_name: booking.placeName,
+            team_name: booking.teamName
           });
           this.errorMessage = `No related match found for this booking. Found ${matches.length} total matches in system.`;
           setTimeout(() => {

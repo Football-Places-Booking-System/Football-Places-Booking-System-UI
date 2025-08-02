@@ -44,21 +44,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.loadUserTeams();
   }
 
-  private loadUserTeams(): void {
-    const currentUser = this.auth.getCurrentUser();
-    if (currentUser) {
-      // Load teams created by the current user
-      this.teamService.getTeamsByCreator().subscribe({
-        next: (teams) => {
-          this.userTeams = teams;
-          this.checkIfUserIsOrganizer(currentUser.id);
-        },
-        error: (error) => {
-          console.error('Error loading user teams:', error);
-        }
-      });
+private loadUserTeams(): void {
+  this.teamService.getTeamsByCreator().subscribe({
+    next: (response: any) => {
+      const teams = response?.content || []; // Access content array
+      this.userTeams = teams.filter((team: any) =>
+        team.members?.some((m: any) => m.role === 'ORGANIZER')
+      );
+      console.log('Organizer teams:', this.userTeams);
+    },
+    error: (error: any) => {
+      console.error('Error loading user teams:', error);
     }
-  }
+  });
+}
 
   private checkIfUserIsOrganizer(userId: string): void {
     // Check if user is organizer in any team
