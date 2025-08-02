@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -55,7 +55,7 @@ import { IUser } from '../../../core/models/iuser.model';
   templateUrl: './user-list.html',
   styleUrls: ['./user-list.css']
 })
-export class UserList implements OnInit {
+export class UserList implements OnInit, AfterViewInit {
 
   dataSource = new MatTableDataSource<IUser>([]);
 
@@ -95,8 +95,12 @@ export class UserList implements OnInit {
   }
 
   ngAfterViewInit(): void {
-    // Disable client-side pagination since we're using server-side pagination
-    this.dataSource.paginator = null;
+    // Configure paginator for server-side pagination
+    if (this.paginator) {
+      this.paginator.length = this.totalUsers;
+      this.paginator.pageSize = this.pageSize;
+      this.paginator.pageIndex = this.currentPage;
+    }
   }
 
 
@@ -139,6 +143,11 @@ export class UserList implements OnInit {
         // Update the data source
         this.dataSource.data = users;
         this.isLoading = false;
+
+        // Update paginator after data is loaded
+        if (this.paginator) {
+          this.paginator.length = this.totalUsers;
+        }
       },
       error: (err) => {
         this.error = 'Failed to load users';
