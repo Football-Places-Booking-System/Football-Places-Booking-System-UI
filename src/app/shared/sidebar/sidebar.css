@@ -110,3 +110,50 @@ mat-nav-list a[mat-list-item]:hover mat-icon {
     transform: none !important;
   }
 }
+
+/* Notification Badge Styles */
+.notification-link {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  background: #f44336;
+  color: white;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Responsive adjustments for notification badge */
+@media (max-width: 768px) {
+  .notification-badge {
+    top: 6px;
+    right: 12px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+}

@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { map, catchError } from 'rxjs/operators';
 
 export type NotificationType =
   | 'BOOKING_CONFIRMATION'
@@ -10,9 +12,10 @@ export type NotificationType =
   | 'REJECTION'
   | 'MATCH_PARTICIPATION_REQUEST'
   | 'MATCH_PARTICIPATION_APPROVED'
-  | 'MATCH_PARTICIPATION_REJECTED';
+  | 'MATCH_PARTICIPATION_REJECTED'
+  | 'JOIN_TEAM_INVITATION';
 
-export type NotificationStatus = 'UNREAD' | 'READ';
+export type NotificationStatus = 'UNREAD' | 'READ' | 'PENDING';
 
 export interface INotification {
   id: string;
@@ -30,13 +33,43 @@ export interface INotification {
     teamId?: string;
     fromUserId?: number;
     fromUsername?: string;
+    senderId?: string;
+    receiverId?: string;
+    joker_id?: string;
   };
+}
+
+// Interface for the backend request data
+export interface IBackendRequest {
+  id: string;
+  sendTime: string;
+  responseTime?: string;
+  requestType: string;
+  status: string;
+  requestMessage: string;
+  responseMessage?: string;
+  sender: {
+    id: string;
+    username: string;
+    email: string;
+    userName: string;
+  };
+  receiver: {
+    id: string;
+    username: string;
+    email: string;
+    userName: string;
+  };
+  joker_id: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
+  private apiUrl = '/api/requests'; // Using proxy config
+
+  constructor(private http: HttpClient) {}
 
   // Create notification
   createNotification(notification: Omit<INotification, 'id' | 'createdAt'>): Observable<INotification> {
@@ -59,36 +92,103 @@ export class NotificationService {
     }
   }
 
-  // Get notifications for a user
-  getUserNotifications(userId: number): Observable<INotification[]> {
-    try {
-      const notificationsString = localStorage.getItem('notifications');
-      if (notificationsString) {
-        const notifications: INotification[] = JSON.parse(notificationsString);
-        const userNotifications = notifications.filter(n => n.userId === userId);
-        return of(userNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading user notifications:', error);
-      return of([]);
-    }
+  // Get notifications for a user using the new API
+  getUserNotifications(): Observable<INotification[]> {
+    console.log('NotificationService: Fetching user notifications from API');
+
+    return this.http.get<IBackendRequest[]>(`${this.apiUrl}/received`).pipe(
+      map(requests => {
+        console.log('NotificationService: Raw requests from API:', requests);
+
+        // Map backend requests to notification format
+        const notifications: INotification[] = requests.map(request => ({
+          id: request.id,
+          userId: 0, // We'll use the receiver ID if needed
+          type: this.mapRequestTypeToNotificationType(request.requestType),
+          title: this.generateNotificationTitle(request.requestType),
+          message: request.requestMessage,
+          status: this.mapRequestStatusToNotificationStatus(request.status),
+          relatedId: request.joker_id,
+          createdAt: request.sendTime,
+          readAt: request.responseTime || undefined,
+          metadata: {
+            senderId: request.sender.id,
+            fromUsername: request.sender.userName,
+            receiverId: request.receiver.id,
+            joker_id: request.joker_id
+          }
+        }));
+
+        console.log('NotificationService: Mapped notifications:', notifications);
+
+        // Sort by creation date (newest first)
+        return notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }),
+      catchError(error => {
+        console.error('NotificationService: Error fetching notifications from API:', error);
+
+        // Fallback to localStorage if API fails
+        try {
+          const notificationsString = localStorage.getItem('notifications');
+          if (notificationsString) {
+            const notifications: INotification[] = JSON.parse(notificationsString);
+            return of(notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+          }
+        } catch (localError) {
+          console.error('Error loading notifications from localStorage:', localError);
+        }
+
+        return of([]);
+      })
+    );
+  }
+
+  // Helper method to map request type to notification type
+  private mapRequestTypeToNotificationType(requestType: string): NotificationType {
+    const typeMap: Record<string, NotificationType> = {
+      'JOIN_TEAM_INVITATION': 'JOIN_TEAM_INVITATION',
+      'TEAM_JOIN_REQUEST': 'TEAM_JOIN_REQUEST',
+      'MATCH_INVITATION': 'MATCH_INVITATION',
+      'TEAM_INVITATION': 'TEAM_INVITATION',
+      'MATCH_PARTICIPATION_REQUEST': 'MATCH_PARTICIPATION_REQUEST',
+      'BOOKING_CONFIRMATION': 'BOOKING_CONFIRMATION'
+    };
+    return typeMap[requestType] || 'TEAM_JOIN_REQUEST';
+  }
+
+  // Helper method to map request status to notification status
+  private mapRequestStatusToNotificationStatus(status: string): NotificationStatus {
+    const statusMap: Record<string, NotificationStatus> = {
+      'PENDING': 'PENDING',
+      'APPROVED': 'READ',
+      'REJECTED': 'READ',
+      'UNREAD': 'UNREAD'
+    };
+    return statusMap[status] || 'UNREAD';
+  }
+
+  // Helper method to generate notification title
+  private generateNotificationTitle(requestType: string): string {
+    const titleMap: Record<string, string> = {
+      'JOIN_TEAM_INVITATION': 'Team Invitation',
+      'TEAM_JOIN_REQUEST': 'Team Join Request',
+      'MATCH_INVITATION': 'Match Invitation',
+      'TEAM_INVITATION': 'Team Invitation',
+      'MATCH_PARTICIPATION_REQUEST': 'Match Participation Request',
+      'BOOKING_CONFIRMATION': 'Booking Confirmation'
+    };
+    return titleMap[requestType] || 'Notification';
   }
 
   // Get unread notifications count
-  getUnreadCount(userId: number): Observable<number> {
-    try {
-      const notificationsString = localStorage.getItem('notifications');
-      if (notificationsString) {
-        const notifications: INotification[] = JSON.parse(notificationsString);
-        const unreadCount = notifications.filter(n => n.userId === userId && n.status === 'UNREAD').length;
-        return of(unreadCount);
-      }
-      return of(0);
-    } catch (error) {
-      console.error('Error getting unread count:', error);
-      return of(0);
-    }
+  getUnreadCount(userId: string): Observable<number> {
+    return this.getUserNotifications().pipe(
+      map(notifications => notifications.filter(n => n.status === 'UNREAD' || n.status === 'PENDING').length),
+      catchError(error => {
+        console.error('Error getting unread count:', error);
+        return of(0);
+      })
+    );
   }
 
   // Mark notification as read
@@ -112,24 +212,25 @@ export class NotificationService {
   }
 
   // Mark all notifications as read for a user
-  markAllAsRead(userId: number): Observable<void> {
-    try {
-      const notificationsString = localStorage.getItem('notifications');
-      if (notificationsString) {
-        const notifications: INotification[] = JSON.parse(notificationsString);
-        const updatedNotifications = notifications.map(n => {
-          if (n.userId === userId && n.status === 'UNREAD') {
-            return { ...n, status: 'READ' as NotificationStatus, readAt: new Date().toISOString() };
-          }
-          return n;
-        });
-        localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
-      }
-      return of(void 0);
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-      throw new Error('Failed to mark all notifications as read');
-    }
+  markAllAsRead(userId: string): Observable<void> {
+    // try {
+    //   const notificationsString = localStorage.getItem('notifications');
+    //   if (notificationsString) {
+    //     const notifications: INotification[] = JSON.parse(notificationsString);
+    //     const updatedNotifications = notifications.map(n => {
+    //       if (n.userId === userId && n.status === 'UNREAD') {
+    //         return { ...n, status: 'READ' as NotificationStatus, readAt: new Date().toISOString() };
+    //       }
+    //       return n;
+    //     });
+    //     localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
+    //   }
+    //   return of(void 0);
+    // } catch (error) {
+    //   console.error('Error marking all notifications as read:', error);
+    //   throw new Error('Failed to mark all notifications as read');
+    // }
+    return of(void 0);
   }
 
   // Delete notification

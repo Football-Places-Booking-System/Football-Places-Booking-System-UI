@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, catchError, map, throwError } from 'rxjs';
+import { Observable, of, catchError, map, tap, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 
@@ -40,16 +40,60 @@ export class TeamService {
     private authService: AuthService
   ) {}
 
+  /**
+   * Fetches all teams without pagination
+   */
+  getAllTeams(): Observable<ITeam[]> {
+    const url = `${this.apiUrl}/all`;
+    console.log('TeamService: Fetching all teams from:', url);
+    
+    return this.http.get<ITeam[]>(url).pipe(
+      tap(teams => {
+        console.log('TeamService: Received teams from server:', teams);
+        console.log('TeamService: Number of teams received:', teams?.length || 0);
+      }),
+      catchError(error => {
+        console.error('TeamService: Error loading all teams:', error);
+        return of([]);
+      })
+    );
+  }
 
-  getTeams(): Observable<ITeam[]> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      const teams = teamsString ? JSON.parse(teamsString) : [];
-      return of(teams);
-    } catch (error) {
-      console.error('Error loading teams from sessionStorage:', error);
-      return of([]);
+
+  getPaginatedTeams(page: number = 0, size: number = 10): Observable<ITeam[]> {
+    const url = `${this.apiUrl}/all-filtered?page=${page}&size=${size}`;
+    console.log('TeamService: Making request to:', url);
+
+    interface PaginatedResponse {
+      content: ITeam[];
+      totalElements: number;
+      totalPages: number;
+      // Add other pagination properties if needed
     }
+
+    return this.http.get<PaginatedResponse>(url).pipe(
+      tap(response => {
+        console.log('TeamService: Raw response from server:', response);
+        console.log('TeamService: Response content type:', typeof response.content);
+        console.log('TeamService: Response content is array?', Array.isArray(response.content));
+        console.log('TeamService: Response content length:', response.content?.length);
+      }),
+      map(response => {
+        if (!response || !response.content) {
+          console.warn('TeamService: No content in response');
+          return [];
+        }
+
+        // Ensure we're returning a proper array
+        const teams = Array.isArray(response.content) ? response.content : [];
+        console.log('TeamService: Returning teams:', teams);
+        return teams;
+      }),
+      catchError(error => {
+        console.error('TeamService: Error loading teams:', error);
+        return of([]);
+      })
+    );
   }
 
   // Done

@@ -5,7 +5,10 @@ import { RouterModule, Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AuthService } from '../../core/services/auth.service';
 import { TeamService } from '../../core/services/team.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { CommonModule } from '@angular/common';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-sidebar',
@@ -18,16 +21,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
   role: string | undefined;
   isOrganizerInAnyTeam: boolean = false;
   userTeams: any[] = [];
+  unreadNotificationCount: number = 0;
+  private destroy$ = new Subject<void>();
 
   constructor(
-    private auth: AuthService,
+    private authService: AuthService,
     private teamService: TeamService,
+    private notificationService: NotificationService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.role = this.auth.getCurrentUser()?.role;
+    this.role = this.authService.getCurrentUser()?.role;
     this.loadUserTeams();
+    this.loadNotificationCount();
 
     // Listen for team creation events to refresh sidebar state
     window.addEventListener('teamCreated', this.handleTeamCreated.bind(this) as EventListener);
@@ -36,6 +43,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Clean up event listener
     window.removeEventListener('teamCreated', this.handleTeamCreated.bind(this) as EventListener);
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private handleTeamCreated(event: Event): void {
@@ -59,6 +68,22 @@ private loadUserTeams(): void {
   });
 }
 
+  private loadNotificationCount(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.notificationService.getUnreadCount(currentUser.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (count) => {
+            this.unreadNotificationCount = count;
+          },
+          error: (err) => {
+            console.error('Error loading notification count:', err);
+          }
+        });
+    }
+  }
+
   private checkIfUserIsOrganizer(userId: string): void {
     // Check if user is organizer in any team
     const checkPromises = this.userTeams.map(team =>
@@ -77,37 +102,13 @@ private loadUserTeams(): void {
   get effectiveRole(): string {
     if (this.role === 'ADMIN') return 'ADMIN';
     if (this.role === 'ORGANIZER' || this.isOrganizerInAnyTeam) return 'ORGANIZER';
-    return 'PLAYER';
+    return 'USER';
   }
 
-  // Check if user can access teams
-  get canAccessTeams(): boolean {
-    return this.effectiveRole === 'ORGANIZER' || this.effectiveRole === 'ADMIN';
-  }
-
-  // Check if user can access matches
-  get canAccessMatches(): boolean {
-    return this.effectiveRole === 'ORGANIZER' || this.effectiveRole === 'PLAYER' || this.effectiveRole === 'ADMIN';
-  }
-
-  // Check if user can access places
-  get canAccessPlaces(): boolean {
-    return this.effectiveRole === 'ORGANIZER' || this.effectiveRole === 'PLAYER' || this.effectiveRole === 'ADMIN';
-  }
-
-  // Check if user can access bookings
-  get canAccessBookings(): boolean {
-    return this.effectiveRole === 'ORGANIZER' || this.effectiveRole === 'PLAYER' || this.effectiveRole === 'ADMIN';
-  }
-
-  // Check if user can access profile
-  get canAccessProfile(): boolean {
-    return this.effectiveRole === 'ORGANIZER' || this.effectiveRole === 'PLAYER' || this.effectiveRole === 'ADMIN';
-  }
 
   // Logout method
   logout(): void {
-    this.auth.logout();
+    this.authService.logout();
     this.router.navigate(['/']);
   }
 }

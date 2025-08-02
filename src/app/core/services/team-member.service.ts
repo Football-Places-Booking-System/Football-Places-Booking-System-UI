@@ -85,26 +85,96 @@ export class TeamMemberService {
 
   // Team Member Management
   askToJoinTeam(teamId: string): Observable<ITeamMember> {
-    // try {
-    //   const newMember: ITeamMember = {
-    //     id: Date.now().toString(),
-
-    //     createdAt: new Date().toISOString()
-    //   };
-
-    //   const membersString = sessionStorage.getItem('teamMembers');
-    //   const members: ITeamMember[] = membersString ? JSON.parse(membersString) : [];
-    //   members.push(newMember);
-    //   sessionStorage.setItem('teamMembers', JSON.stringify(members));
-
-    //   return of(newMember);
-    // } catch (error) {
-    //   console.error('Error adding team member:', error);
-    //   throw new Error('Failed to add team member');
-    // }
-    return this.http.post<ITeamMember>(`${this.apiUrl}/ask-to-join/${teamId}`, {});
+    return this.requestToJoinTeam(teamId);
   }
 
+  /**
+   * Request to join a team
+   * @param teamId The ID of the team to join
+   * @returns Observable with the join request response
+   */
+  requestToJoinTeam(teamId: string): Observable<ITeamMember> {
+    if (!teamId) {
+      return throwError(() => new Error('Team ID is required'));
+    }
 
+    console.log(`Sending join request for team ${teamId}`);
 
+    return this.http.post<ITeamMember>(
+      `${this.apiUrl}/join-request/${teamId}`,
+      {}
+    ).pipe(
+      catchError(error => {
+        console.error('Error sending join request:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to send join request'));
+      })
+    );
+  }
+
+  /**
+   * Get pending join requests for a team
+   * @param teamId The ID of the team
+   * @returns Observable with the list of pending join requests
+   */
+  getPendingJoinRequests(teamId: string): Observable<ITeamMember[]> {
+    if (!teamId) {
+      return throwError(() => new Error('Team ID is required'));
+    }
+
+    console.log(`Fetching pending join requests for team ${teamId}`);
+
+    return this.http.get<ITeamMember[]>(`${this.apiUrl}/join-requests/${teamId}`).pipe(
+      catchError(error => {
+        console.error('Error fetching pending join requests:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to fetch join requests'));
+      })
+    );
+  }
+
+  /**
+   * Respond to a join request
+   * @param teamMemberId The ID of the team member request
+   * @param status The new status (APPROVED/REJECTED)
+   * @param organizerId The ID of the organizer responding to the request
+   * @returns Observable with the updated team member
+   */
+  respondToJoinRequest(teamMemberId: string, status: TeamMemberStatus, organizerId: string): Observable<ITeamMember> {
+    if (!teamMemberId || !status || !organizerId) {
+      return throwError(() => new Error('Team member ID, status, and organizer ID are required'));
+    }
+
+    console.log(`Updating join request ${teamMemberId} to status ${status}`);
+
+    return this.http.patch<ITeamMember>(
+      `${this.apiUrl}/join-request/respond?teamMemberId=${teamMemberId}&status=${status}`,
+      {}
+    ).pipe(
+      catchError(error => {
+        console.error('Error responding to join request:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to respond to join request'));
+      })
+    );
+  }
+
+  /**
+   * Check if a user is an organizer of a team
+   * @param userId The ID of the user to check
+   * @param teamId The ID of the team
+   * @returns Observable with boolean indicating if the user is an organizer
+   */
+  isOrganizer(userId: string, teamId: string): Observable<boolean> {
+    if (!userId || !teamId) {
+      return throwError(() => new Error('User ID and Team ID are required'));
+    }
+
+    return this.http.get<{ isOrganizer: boolean }>(
+      `${this.apiUrl}/is-organizer?userId=${userId}&teamId=${teamId}`
+    ).pipe(
+      map(response => response.isOrganizer),
+      catchError(error => {
+        console.error('Error checking organizer status:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to check organizer status'));
+      })
+    );
+  }
 }

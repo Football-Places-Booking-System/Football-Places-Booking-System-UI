@@ -3,7 +3,13 @@
   <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
 
   <div *ngIf="team; else loadingOrNotFound">
-    <h2>Team Details: {{ team.name }}</h2>
+    <div class="header-section">
+      <button (click)="goBackToList()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+        Back to List
+      </button>
+      <h2>Team Details: {{ team.name }}</h2>
+    </div>
 
     <!-- Display mode -->
     <div *ngIf="!isEditing" class="details-card">
@@ -17,14 +23,11 @@
           <mat-icon>edit</mat-icon>
           Edit Team
         </button>
-        <button class="navigate-button" (click)="navigateToMatchParticipants('sample-match-id')">
+        <!-- <button class="navigate-button" (click)="navigateToMatchParticipants('sample-match-id')">
           <mat-icon>sports_soccer</mat-icon>
           View Match Participants (Sample)
-        </button>
-        <button (click)="goBackToList()" class="back-button">
-          <mat-icon>arrow_back</mat-icon>
-          Back to List
-        </button>
+        </button> -->
+
       </div>
     </div>
 
