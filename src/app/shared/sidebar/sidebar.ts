@@ -71,23 +71,16 @@ private loadUserTeams(): void {
   private loadNotificationCount(): void {
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
-      this.notificationService.getUnreadCount(currentUser.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (count) => {
-            this.unreadNotificationCount = count;
-          },
-          error: (err) => {
-            console.error('Error loading notification count:', err);
-          }
-        });
+      this.notificationService.getNotificationCount(currentUser.id).subscribe(count => {
+        this.unreadNotificationCount = count;
+      });
     }
   }
 
   private checkIfUserIsOrganizer(userId: string): void {
     // Check if user is organizer in any team
     const checkPromises = this.userTeams.map(team =>
-      this.teamService.isUserTeamOrganizer(userId, team.id).toPromise()
+      this.teamService.isUserTeamOrganizer(team.id).toPromise()
     );
 
     Promise.all(checkPromises).then(results => {

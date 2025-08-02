@@ -7,7 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { NotificationService, INotification, NotificationType } from '../../../core/services/notification.service';
+import { NotificationService, INotification, RequestType } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -70,132 +70,33 @@ export class NotificationList implements OnInit, OnDestroy {
   }
 
   loadUnreadCount(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) return;
-
-    this.notificationService.getUnreadCount(currentUser.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (count) => {
-          this.unreadCount = count;
-        },
-        error: (err) => {
-          console.error('Failed to load unread count', err);
-        }
-      });
+    // Count unread notifications locally
+    this.unreadCount = this.notifications.filter(n => n.status === 'PENDING').length;
   }
 
-  markAsRead(notificationId: string): void {
-    this.notificationService.markAsRead(notificationId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          // Update local state
-          const notification = this.notifications.find(n => n.id === notificationId);
-          if (notification && notification.status === 'UNREAD') {
-            notification.status = 'READ';
-            notification.readAt = new Date().toISOString();
-            this.unreadCount = Math.max(0, this.unreadCount - 1);
-          }
-        },
-        error: (err) => {
-          console.error('Failed to mark notification as read', err);
-          this.errorMessage = 'Failed to mark notification as read';
-        }
-      });
-  }
-
-  markAllAsRead(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) return;
-
-    this.notificationService.markAllAsRead(currentUser.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          // Update local state
-          this.notifications.forEach(n => {
-            if (n.status === 'UNREAD') {
-              n.status = 'READ';
-              n.readAt = new Date().toISOString();
-            }
-          });
-          this.unreadCount = 0;
-          this.successMessage = 'All notifications marked as read';
-          setTimeout(() => this.successMessage = null, 3000);
-        },
-        error: (err) => {
-          console.error('Failed to mark all notifications as read', err);
-          this.errorMessage = 'Failed to mark all notifications as read';
-        }
-      });
-  }
-
-  deleteNotification(notificationId: string): void {
-    this.notificationService.deleteNotification(notificationId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          // Update local state
-          const deletedNotification = this.notifications.find(n => n.id === notificationId);
-          if (deletedNotification && deletedNotification.status === 'UNREAD') {
-            this.unreadCount = Math.max(0, this.unreadCount - 1);
-          }
-          this.notifications = this.notifications.filter(n => n.id !== notificationId);
-          this.successMessage = 'Notification deleted';
-          setTimeout(() => this.successMessage = null, 3000);
-        },
-        error: (err) => {
-          console.error('Failed to delete notification', err);
-          this.errorMessage = 'Failed to delete notification';
-        }
-      });
-  }
-
-  getNotificationIcon(type: NotificationType): string {
-    const iconMap: Record<NotificationType, string> = {
-      'BOOKING_CONFIRMATION': 'event_available',
+  getNotificationIcon(type: RequestType): string {
+    const iconMap: Record<RequestType, string> = {
       'MATCH_INVITATION': 'sports_soccer',
-      'TEAM_JOIN_REQUEST': 'group_add',
-      'TEAM_INVITATION': 'group',
-      'JOIN_TEAM_INVITATION': 'group',
-      'APPROVAL': 'check_circle',
-      'REJECTION': 'cancel',
-      'MATCH_PARTICIPATION_REQUEST': 'person_add',
-      'MATCH_PARTICIPATION_APPROVED': 'thumb_up',
-      'MATCH_PARTICIPATION_REJECTED': 'thumb_down'
+      'JOIN_TEAM_REQUEST': 'group_add',
+      'JOIN_TEAM_INVITATION': 'group'
     };
     return iconMap[type] || 'notifications';
   }
 
-  getNotificationIconClass(type: NotificationType): string {
-    const classMap: Record<NotificationType, string> = {
-      'BOOKING_CONFIRMATION': 'icon-success',
+  getNotificationIconClass(type: RequestType): string {
+    const classMap: Record<RequestType, string> = {
       'MATCH_INVITATION': 'icon-primary',
-      'TEAM_JOIN_REQUEST': 'icon-warning',
-      'TEAM_INVITATION': 'icon-info',
-      'JOIN_TEAM_INVITATION': 'icon-info',
-      'APPROVAL': 'icon-success',
-      'REJECTION': 'icon-danger',
-      'MATCH_PARTICIPATION_REQUEST': 'icon-warning',
-      'MATCH_PARTICIPATION_APPROVED': 'icon-success',
-      'MATCH_PARTICIPATION_REJECTED': 'icon-danger'
+      'JOIN_TEAM_REQUEST': 'icon-warning',
+      'JOIN_TEAM_INVITATION': 'icon-info'
     };
     return classMap[type] || 'icon-default';
   }
 
-  getNotificationTypeLabel(type: NotificationType): string {
-    const labelMap: Record<NotificationType, string> = {
-      'BOOKING_CONFIRMATION': 'Booking',
-      'MATCH_INVITATION': 'Match',
-      'TEAM_JOIN_REQUEST': 'Team Request',
-      'TEAM_INVITATION': 'Team Invite',
-      'JOIN_TEAM_INVITATION': 'Team Invite',
-      'APPROVAL': 'Approval',
-      'REJECTION': 'Rejection',
-      'MATCH_PARTICIPATION_REQUEST': 'Participation',
-      'MATCH_PARTICIPATION_APPROVED': 'Approved',
-      'MATCH_PARTICIPATION_REJECTED': 'Rejected'
+  getNotificationTypeLabel(type: RequestType): string {
+    const labelMap: Record<RequestType, string> = {
+      'MATCH_INVITATION': 'Match Invitation',
+      'JOIN_TEAM_REQUEST': 'Join Request',
+      'JOIN_TEAM_INVITATION': 'Team Invitation'
     };
     return labelMap[type] || 'Notification';
   }
@@ -217,47 +118,35 @@ export class NotificationList implements OnInit, OnDestroy {
   }
 
   hasAction(notification: INotification): boolean {
-    return ['MATCH_INVITATION', 'TEAM_INVITATION', 'JOIN_TEAM_INVITATION', 'TEAM_JOIN_REQUEST', 'MATCH_PARTICIPATION_REQUEST'].includes(notification.type);
+    return ['MATCH_INVITATION', 'JOIN_TEAM_INVITATION', 'JOIN_TEAM_REQUEST'].includes(notification.requestType);
   }
 
   getActionLabel(notification: INotification): string {
-    const actionMap: Record<NotificationType, string> = {
+    const actionMap: Record<RequestType, string> = {
       'MATCH_INVITATION': 'View Match',
-      'TEAM_INVITATION': 'View Team',
       'JOIN_TEAM_INVITATION': 'View Team',
-      'TEAM_JOIN_REQUEST': 'Manage Request',
-      'MATCH_PARTICIPATION_REQUEST': 'Manage Request',
-      'BOOKING_CONFIRMATION': '',
-      'APPROVAL': '',
-      'REJECTION': '',
-      'MATCH_PARTICIPATION_APPROVED': '',
-      'MATCH_PARTICIPATION_REJECTED': ''
+      'JOIN_TEAM_REQUEST': 'Manage Request',
     };
-    return actionMap[notification.type] || '';
+    return actionMap[notification.requestType] || '';
   }
 
   handleNotificationAction(notification: INotification): void {
-    switch (notification.type) {
+    switch (notification.requestType) {
       case 'MATCH_INVITATION':
-        if (notification.metadata?.matchId) {
-          this.router.navigate(['/dashboard/matches', notification.metadata.matchId]);
+        // Navigate to match details using joker_id
+        if (notification.joker_id) {
+          this.router.navigate(['/dashboard/matches', notification.joker_id]);
         }
         break;
-      case 'TEAM_INVITATION':
       case 'JOIN_TEAM_INVITATION':
-        if (notification.metadata?.teamId) {
-          this.router.navigate(['/dashboard/teams', notification.metadata.teamId]);
+        // Navigate to team details using joker_id
+        if (notification.joker_id) {
+          this.router.navigate(['/dashboard/teams', notification.joker_id]);
         }
         break;
-      case 'TEAM_JOIN_REQUEST':
-        if (notification.metadata?.teamId) {
-          this.router.navigate(['/dashboard/teams/requests']);
-        }
-        break;
-      case 'MATCH_PARTICIPATION_REQUEST':
-        if (notification.metadata?.matchId) {
-          this.router.navigate(['/dashboard/matches', notification.metadata.matchId, 'participants']);
-        }
+      case 'JOIN_TEAM_REQUEST':
+        // Navigate to team requests page
+        this.router.navigate(['/dashboard/teams/requests']);
         break;
     }
   }

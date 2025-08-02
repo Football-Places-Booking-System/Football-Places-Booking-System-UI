@@ -56,7 +56,7 @@ export class OverviewComponent implements OnInit {
   private checkIfUserIsOrganizer(userId: string): void {
     // Check if user is organizer in any team
     const checkPromises = this.userTeams.map(team =>
-      this.teamService.isUserTeamOrganizer(userId, team.id).toPromise()
+      this.teamService.isUserTeamOrganizer(team.id).toPromise()
     );
 
     Promise.all(checkPromises).then(results => {

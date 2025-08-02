@@ -243,19 +243,15 @@ export class TeamService {
     );
   }
 
-  isUserTeamOrganizer(userId: string, teamId: string): Observable<boolean> {
-    try {
-      const membersString = sessionStorage.getItem('teamMembers');
-      if (membersString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const member = members.find(m => m.userId === userId && m.teamId === teamId && m.status === 'APPROVED');
-        return of(member?.role === 'ORGANIZER');
-      }
-      return of(false);
-    } catch (error) {
-      console.error('Error checking if user is team organizer:', error);
-      return of(false);
-    }
+  isUserTeamOrganizer(teamId: string): Observable<boolean> {
+    console.log('TeamService: Checking if user is team organizer for team:', teamId);
+    const url = `${this.apiUrl}/isOrganizer/${teamId}`;
+    return this.http.get<boolean>(url).pipe(
+      catchError(error => {
+        console.error('TeamService: Error checking if user is team organizer:', error);
+        return of(false);
+      })
+    );
   }
 
 

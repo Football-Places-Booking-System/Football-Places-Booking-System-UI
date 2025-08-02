@@ -86,6 +86,7 @@ export class TeamDetails implements OnInit, OnDestroy {
 
           // Check if current user is the team organizer (creator)
           this.checkIfUserIsTeamOrganizer(team);
+          console.log('TeamDetailsComponent: Checking if current user is team organizer:', this.isOrganizer);
         } else {
           this.errorMessage = 'Team not found.';
           console.warn(`TeamDetailsComponent: Team with ID "${id}" not found. Redirecting to team list.`);
@@ -101,14 +102,19 @@ export class TeamDetails implements OnInit, OnDestroy {
   }
 
   checkIfUserIsTeamOrganizer(team: ITeam): void {
+    // call is organizer service
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser) return;
 
-    // Check if current user is the team creator
-    this.isOrganizer = currentUser.id === team.createdBy;
-    console.log('TeamDetailsComponent: Current user is team organizer?', this.isOrganizer);
-    console.log('TeamDetailsComponent: Current user ID:', currentUser.id);
-    console.log('TeamDetailsComponent: Team creator ID:', team.createdBy);
+    this.teamService.isUserTeamOrganizer(team.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (isOrganizer) => {
+        this.isOrganizer = isOrganizer;
+        console.log('TeamDetailsComponent: Current user is team organizer?', this.isOrganizer);
+      },
+      error: (err) => {
+        console.error('TeamDetailsComponent: Error checking if user is team organizer:', err);
+      }
+    });
   }
 
   loadTeamMembers(teamId: string): void {
