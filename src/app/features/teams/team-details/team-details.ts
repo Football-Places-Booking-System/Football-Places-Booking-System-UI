@@ -6,6 +6,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ITeam, ITeamMember, TeamService } from '../../../core/services/team.service';
+import { TeamMemberService } from '../../../core/services/team-member.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
@@ -36,6 +37,7 @@ export class TeamDetails implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private teamService: TeamService,
+    private teamMemberService: TeamMemberService,
     private authService: AuthService,
     private notificationService: NotificationService,
     private fb: FormBuilder
@@ -152,23 +154,12 @@ export class TeamDetails implements OnInit, OnDestroy {
     console.log('Sending join request for team:', this.team.id);
     console.log('Current user:', currentUser);
 
-    this.teamService.addTeamMember(
-      this.team.id,
-      currentUser.id,
-      currentUser.username,
-      currentUser.email,
-      'MEMBER',
-      'PENDING'
-    ).pipe(takeUntil(this.destroy$)).subscribe({
+    this.teamMemberService.askToJoinTeam( this.team.id, ).pipe(takeUntil(this.destroy$)).subscribe({
       next: (member) => {
         console.log('Join request created successfully:', member);
         this.hasRequestedJoin = true;
         this.teamMembers.push(member);
 
-        // Debug: Check if member was saved to localStorage
-        const membersString = localStorage.getItem('teamMembers');
-        const members = membersString ? JSON.parse(membersString) : [];
-        console.log('All team members after adding request:', members);
 
         // // Create notification for team organizer
         // this.notificationService.createTeamJoinRequestNotification(

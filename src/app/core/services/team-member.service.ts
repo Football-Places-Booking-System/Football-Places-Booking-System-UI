@@ -83,4 +83,29 @@ export class TeamMemberService {
       throw new Error('Failed to remove team member');
     }
   }
+
+  // Team Member Management
+  askToJoinTeam(teamId: string): Observable<ITeamMember> {
+    // try {
+    //   const newMember: ITeamMember = {
+    //     id: Date.now().toString(),
+
+    //     createdAt: new Date().toISOString()
+    //   };
+
+    //   const membersString = sessionStorage.getItem('teamMembers');
+    //   const members: ITeamMember[] = membersString ? JSON.parse(membersString) : [];
+    //   members.push(newMember);
+    //   sessionStorage.setItem('teamMembers', JSON.stringify(members));
+
+    //   return of(newMember);
+    // } catch (error) {
+    //   console.error('Error adding team member:', error);
+    //   throw new Error('Failed to add team member');
+    // }
+    return this.http.post<ITeamMember>(`${this.apiUrl}/ask-to-join/${teamId}`, {});
+  }
+
+
+
 }

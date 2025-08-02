@@ -135,32 +135,6 @@ export class TeamService {
     );
   }
 
-  // Team Member Management
-  addTeamMember(teamId: string, userId: string, username: string, email: string, role: TeamMemberRole, status: TeamMemberStatus = 'PENDING', invitedBy?: string): Observable<ITeamMember> {
-    try {
-      const newMember: ITeamMember = {
-        id: Date.now().toString(),
-        teamId,
-        userId,
-        username,
-        email,
-        role,
-        status,
-        invitedBy,
-        createdAt: new Date().toISOString()
-      };
-
-      const membersString = sessionStorage.getItem('teamMembers');
-      const members: ITeamMember[] = membersString ? JSON.parse(membersString) : [];
-      members.push(newMember);
-      sessionStorage.setItem('teamMembers', JSON.stringify(members));
-
-      return of(newMember);
-    } catch (error) {
-      console.error('Error adding team member:', error);
-      throw new Error('Failed to add team member');
-    }
-  }
 
 
   // Done (Need Optimization)
