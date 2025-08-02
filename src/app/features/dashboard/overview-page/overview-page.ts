@@ -40,7 +40,7 @@ export class OverviewComponent implements OnInit {
     const currentUser = this.auth.getCurrentUser();
     if (currentUser) {
       // Load teams created by the current user
-      this.teamService.getTeamsByCreator(currentUser.id).subscribe({
+      this.teamService.getTeamsByCreator().subscribe({
         next: (teams) => {
           this.userTeams = teams;
           // Check if user is organizer in any team

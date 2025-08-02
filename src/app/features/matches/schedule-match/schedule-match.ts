@@ -129,7 +129,7 @@ export class ScheduleMatch implements OnInit, OnDestroy {
     }
 
     // Load teams where user is organizer
-    this.teamService.getTeamsByCreator(this.currentUser.id).pipe(takeUntil(this.destroy$)).subscribe({
+    this.teamService.getTeamsByCreator().pipe(takeUntil(this.destroy$)).subscribe({
       next: (teams) => {
         this.userTeams = teams;
         this.successMessage = null;

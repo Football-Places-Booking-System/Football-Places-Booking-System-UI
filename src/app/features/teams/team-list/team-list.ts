@@ -9,7 +9,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-team-list',
@@ -32,7 +31,6 @@ export class TeamList implements OnInit, OnDestroy {
 
   constructor(
     private teamService: TeamService,
-    private authService: AuthService,
     private router: Router
   ) {
     console.log('TeamList: Constructor called');
@@ -50,7 +48,6 @@ export class TeamList implements OnInit, OnDestroy {
 
   loadUserTeams(): void {
     console.log('TeamList: loadUserTeams() called');
-    console.log('TeamList: isLoading set to true');
     this.isLoading = true;
 
     this.teamService.getUserTeams().pipe(takeUntil(this.destroy$)).subscribe({

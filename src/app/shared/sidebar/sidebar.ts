@@ -48,7 +48,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const currentUser = this.auth.getCurrentUser();
     if (currentUser) {
       // Load teams created by the current user
-      this.teamService.getTeamsByCreator(currentUser.id).subscribe({
+      this.teamService.getTeamsByCreator().subscribe({
         next: (teams) => {
           this.userTeams = teams;
           this.checkIfUserIsOrganizer(currentUser.id);

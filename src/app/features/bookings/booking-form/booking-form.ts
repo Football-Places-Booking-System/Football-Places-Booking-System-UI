@@ -110,7 +110,7 @@ export class BookingFormComponent implements OnInit, OnDestroy {
 
   private loadUserTeams(): void {
     if (this.currentUser) {
-      this.teamService.getTeamsByCreator(this.currentUser.id).subscribe({
+      this.teamService.getTeamsByCreator().subscribe({
         next: (teams) => {
           this.userTeams = teams;
         },

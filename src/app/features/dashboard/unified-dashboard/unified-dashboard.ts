@@ -29,7 +29,7 @@ export class UnifiedDashboardComponent implements OnInit {
   private loadUserTeams(): void {
     if (this.currentUser) {
       // Load teams created by the current user
-      this.teamService.getTeamsByCreator(this.currentUser.id).subscribe({
+      this.teamService.getTeamsByCreator().subscribe({
         next: (teams) => {
           this.userTeams = teams;
           this.checkIfUserIsOrganizer();

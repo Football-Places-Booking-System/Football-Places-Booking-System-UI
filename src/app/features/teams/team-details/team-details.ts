@@ -5,10 +5,11 @@ import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angula
 import { Subject, takeUntil } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 
-import { ITeam, Team, ITeamMember } from '../../../core/services/teamService';
-import { User, Auth } from '../../../core/services/auth';
-import { Notification } from '../../../core/services/notification';
+import { ITeam, ITeamMember, TeamService } from '../../../core/services/team.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
+import { IUser } from '../../../core/models/iuser.model';
 @Component({
   selector: 'app-team-details',
   imports: [CommonModule, ReactiveFormsModule, DatePipe, MatIconModule],
@@ -18,7 +19,7 @@ import { Notification } from '../../../core/services/notification';
 export class TeamDetails implements OnInit, OnDestroy {
   team: ITeam | undefined;
   teamMembers: ITeamMember[] = [];
-  usersInTeam: User[] = [];
+  usersInTeam: IUser[] = [];
   errorMessage: string | null = null;
   successMessage: string | null = null;
   isOrganizer: boolean = false;
@@ -28,15 +29,15 @@ export class TeamDetails implements OnInit, OnDestroy {
   editTeamForm!: FormGroup;
 
   private destroy$ = new Subject<void>();
-  private mockMatchIdToLink: string = 'match_for_dynamic_team';
+  // private mockMatchIdToLink: string = 'match_for_dynamic_team';
   teamId!: string;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private teamService: Team,
-    private authService: Auth,
-    private notificationService: Notification,
+    private teamService: TeamService,
+    private authService: AuthService,
+    private notificationService: NotificationService,
     private fb: FormBuilder
   ) { }
 
@@ -114,13 +115,7 @@ export class TeamDetails implements OnInit, OnDestroy {
       next: (members) => {
         this.teamMembers = members;
         console.log('TeamDetailsComponent: Team members loaded:', this.teamMembers);
-        // For now, we'll use mock user data since getPlayersByTeamId doesn't exist
-        this.usersInTeam = [
-          { id: 1, username: 'admin', email: 'admin@admin.com', password: 'admin1', role: 'ADMIN', status: 'ACTIVE' },
-          { id: 2, username: 'organizer', email: 'org@org.com', password: 'organizer', role: 'ORGANIZER', status: 'ACTIVE' },
-          { id: 3, username: 'player', email: 'player@player.com', password: 'player', role: 'USER', status: 'ACTIVE' }
-        ];
-        console.log('TeamDetailsComponent: Mock user details for members loaded:', this.usersInTeam);
+
       },
       error: (err: any) => {
         console.error('TeamDetailsComponent: Error loading team members:', err);
@@ -175,13 +170,13 @@ export class TeamDetails implements OnInit, OnDestroy {
         const members = membersString ? JSON.parse(membersString) : [];
         console.log('All team members after adding request:', members);
 
-        // Create notification for team organizer
-        this.notificationService.createTeamJoinRequestNotification(
-          this.team!.createdBy,
-          this.team!.id,
-          this.team!.name,
-          currentUser.username
-        ).subscribe();
+        // // Create notification for team organizer
+        // this.notificationService.createTeamJoinRequestNotification(
+        //   this.team!.createdBy,
+        //   this.team!.id,
+        //   this.team!.name,
+        //   currentUser.username
+        // ).subscribe();
 
         this.successMessage = 'Join request sent successfully! The team organizer will review your request.';
         setTimeout(() => this.successMessage = null, 5000);
@@ -193,7 +188,7 @@ export class TeamDetails implements OnInit, OnDestroy {
     });
   }
 
-  getUserForTeamMember(userId: number): User | undefined {
+  getUserForTeamMember(userId: string): IUser | undefined {
     return this.usersInTeam.find(user => user.id === userId);
   }
 

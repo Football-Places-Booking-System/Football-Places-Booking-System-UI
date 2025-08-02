@@ -25,6 +25,7 @@ export interface ITeam {
   createdBy: string; // FK to User(id)
   createdAt: string;
   updatedAt?: string;
+  members?: any[]; // Add members property to handle team members from backend
 }
 
 @Injectable({
@@ -35,7 +36,7 @@ export class TeamService {
 
   constructor(private http: HttpClient) {}
 
-  
+
   getTeams(): Observable<ITeam[]> {
     try {
       const teamsString = sessionStorage.getItem('teams');
@@ -47,37 +48,39 @@ export class TeamService {
     }
   }
 
-  // Get teams created by a specific user
-  getTeamsByCreator(userId: string): Observable<ITeam[]> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      if (teamsString) {
-        const teams: ITeam[] = JSON.parse(teamsString);
-        const userTeams = teams.filter(team => team.createdBy === userId);
-        return of(userTeams);
-      }
+  // Done
+  getTeamsByCreator(): Observable<ITeam[]> {
+    return this.http.get<ITeam[]>(`${this.apiUrl}/my-teams`).pipe(
+      map(response => {
+        console.log('Teams fetched from backend:', response);
+        return response || [];
+      }),
+      catchError(error => {
+      console.error('Error fetching teams from backend:', error);
       return of([]);
-    } catch (error) {
-      console.error('Error loading teams by creator from sessionStorage:', error);
-      return of([]);
-    }
-  }
+  })
+  );
+}
 
+  // Done
   getTeamById(id: string): Observable<ITeam | null> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      if (teamsString) {
-        const teams: ITeam[] = JSON.parse(teamsString);
-        const team = teams.find(t => t.id === id);
-        return of(team || null);
-      }
-      return of(null);
-    } catch (error) {
-      console.error('Error loading team by ID from sessionStorage:', error);
-      return of(null);
-    }
+    const url = `${this.apiUrl}/${id}`;
+    console.log('TeamService: Fetching team by ID from:', url);
+
+    return this.http.get<ITeam>(url).pipe(
+      map(team => {
+        console.log('TeamService: Successfully fetched team:', team);
+        return team;
+      }),
+      catchError(error => {
+        console.error('TeamService: Error fetching team by ID:', error);
+        return of(null);
+      })
+    );
   }
 
+
+  // Done
   createTeam(teamData: { name: string; description?: string }, creatorId: string, creatorUsername: string, creatorEmail: string): Observable<ITeam> {
     const teamRequest = {
       name: teamData.name,
@@ -155,19 +158,61 @@ export class TeamService {
     }
   }
 
+  // getTeamMembers(teamId: string): Observable<ITeamMember[]> {
+  //   try {
+  //     const membersString = sessionStorage.getItem('teamMembers');
+  //     if (membersString) {
+  //       const members: ITeamMember[] = JSON.parse(membersString);
+  //       const teamMembers = members.filter(m => m.teamId === teamId);
+  //       return of(teamMembers);
+  //     }
+  //     return of([]);
+  //   } catch (error) {
+  //     console.error('Error loading team members:', error);
+  //     return of([]);
+  //   }
+  // }
+
+  // Done (Need Optimization)
+
   getTeamMembers(teamId: string): Observable<ITeamMember[]> {
-    try {
-      const membersString = sessionStorage.getItem('teamMembers');
-      if (membersString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const teamMembers = members.filter(m => m.teamId === teamId);
-        return of(teamMembers);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading team members:', error);
-      return of([]);
-    }
+    console.log('TeamService: Fetching team members for teamId:', teamId);
+
+    return this.getTeamById(teamId).pipe(
+      map(team => {
+        if (!team) {
+          console.warn('TeamService: Team not found for ID:', teamId);
+          return [];
+        }
+
+        console.log('TeamService: Team found, extracting members:', team);
+
+        // Extract members array from team object
+        const members = team.members || [];
+        console.log('TeamService: Raw members from team:', members);
+
+        // Map the members to match ITeamMember interface structure
+        const teamMembers: ITeamMember[] = members.map((member: any) => ({
+          id: member.id || `${member.userId}-${teamId}`, // Generate ID if not present
+          teamId: member.teamId || teamId,
+          userId: member.userId,
+          username: member.userName || member.username, // Handle both possible field names
+          email: member.email || '', // Default empty if not present
+          role: member.role as TeamMemberRole,
+          status: member.status as TeamMemberStatus,
+          invitedBy: member.invitedBy,
+          createdAt: member.createdAt || new Date().toISOString(),
+          respondedAt: member.respondedAt
+        }));
+
+        console.log('TeamService: Mapped team members:', teamMembers);
+        return teamMembers;
+      }),
+      catchError(error => {
+        console.error('TeamService: Error fetching team members via getTeamById:', error);
+        return of([]);
+      })
+    );
   }
 
   getUserTeams(): Observable<ITeam[]> {
