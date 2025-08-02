@@ -1,3 +1,5 @@
+import { PlaceType } from "../enums/place-type.enum";
+
   // Method to convert human-readable string back to enum value
   export function getPlaceTypeFromString(typeString: string): string | null {
     switch (typeString) {
@@ -18,13 +20,17 @@
   }
 
 
-  export function getPlaceTypeString(type: string): string {
-    // Handle string values
-    switch (type) {
+  export function getPlaceTypeString(type: PlaceType | string): string {
+    // Handle both enum values and string values
+    const typeStr = typeof type === 'string' ? type : type;
+    switch (typeStr) {
+      case PlaceType.FIVE:
       case 'FIVE':
         return '5-a-side';
+      case PlaceType.SEVEN:
       case 'SEVEN':
         return '7-a-side';
+      case PlaceType.ELEVEN:
       case 'ELEVEN':
         return '11-a-side';
       default:

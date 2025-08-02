@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams} from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { IUser } from '../models/iuser.model';
@@ -18,23 +18,15 @@ export class UserService {
    * @returns Observable containing user data
    */
   getUserById(userId: string): Observable<IUser> {
+    const token = sessionStorage.getItem('jwt_token');
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
     console.log("Inside getUserById method of UserService");
-    return this.http.get<IUser>(`${this.apiUrl}/${userId}`);
+
+    return this.http.get<IUser>(`${this.apiUrl}/${userId}`, { headers });
   }
-
-  getAllUsers(page?: number, size?: number): Observable<any> {
-    console.log("Inside getAllUsers method of UserService");
-    const params = new HttpParams()
-      .set('page', page?.toString() || '0')
-      .set('size', size?.toString() || '5');
-    return this.http.get<IUser[]>(`${this.apiUrl}/all`, { params });
-  }
-
-  updateUser(user: IUser): Observable<IUser> {
-    console.log("Inside updateUser method of UserService");
-    return this.http.put<IUser>(`${this.apiUrl}/${user.id}`, user);
-  }
-
-
-
 }
