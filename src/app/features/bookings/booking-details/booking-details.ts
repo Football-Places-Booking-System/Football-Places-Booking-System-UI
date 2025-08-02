@@ -123,7 +123,7 @@ export class BookingDetailsComponent implements OnInit {
   cancelBooking(): void {
     if (!this.booking) return;
 
-    if (confirm(`Are you sure you want to cancel this booking for ${this.booking.place_name}?`)) {
+    if (confirm(`Are you sure you want to cancel this booking for ${this.booking.placeName}?`)) {
       this.bookingService.cancelBooking(this.booking.id).subscribe({
         next: () => {
           this.successMessage = 'Booking cancelled successfully!';
@@ -145,7 +145,7 @@ export class BookingDetailsComponent implements OnInit {
 
   canCancelBooking(): boolean {
     if (!this.booking || !this.currentUser) return false;
-    return this.booking.user_id === this.currentUser.id && this.booking.status !== 'CANCELLED';
+    return this.booking.userId === this.currentUser.id && this.booking.status !== 'CANCELLED';
   }
 
   goBack(): void {
@@ -159,11 +159,11 @@ export class BookingDetailsComponent implements OnInit {
 
   isUpcoming(): boolean {
     if (!this.booking) return false;
-    return new Date(this.booking.start_time) > new Date();
+    return new Date(this.booking.startTime) > new Date();
   }
 
   isPast(): boolean {
     if (!this.booking) return false;
-    return new Date(this.booking.start_time) < new Date();
+    return new Date(this.booking.startTime) < new Date();
   }
 }

@@ -45,7 +45,7 @@
         <!-- Date Selection -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Select Date</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="date" (dateChange)="onDateChange()">
+          <input matInput [matDatepicker]="picker" formControlName="date" [min]="minDate" (dateChange)="onDateChange()">
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
           <mat-error *ngIf="bookingForm.get('date')?.hasError('required')">
@@ -53,17 +53,15 @@
           </mat-error>
         </mat-form-field>
 
+
         <!-- Available Time Slots -->
         <div *ngIf="selectedPlace && availableTimeSlots.length > 0" class="time-slots-section">
           <h3>Available Time Slots</h3>
           <p class="time-slots-info">Click on time slots to select them for booking. Consecutive slots will be grouped into a single booking.</p>
 
           <div class="time-slots-grid">
-            <mat-chip
-              *ngFor="let slot of availableTimeSlots"
-              [class.selected]="isSlotSelected(slot)"
-              [class.unavailable]="!slot.is_available"
-              (click)="toggleTimeSlot(slot)"
+            <mat-chip *ngFor="let slot of availableTimeSlots" [class.selected]="isSlotSelected(slot)"
+              [class.unavailable]="!slot.is_available" [disabled]="!slot.is_available" (click)="toggleTimeSlot(slot)"
               class="time-slot-chip">
               {{ formatTime(slot.start_time) }} - {{ formatTime(slot.end_time) }}
               <span *ngIf="!slot.is_available" class="unavailable-text">(Booked)</span>

@@ -50,7 +50,8 @@ export class CreateTeam implements OnInit {
       const teamData: Omit<ITeam, 'id' | 'createdAt'> = {
         name: this.createTeamForm.value.name,
         description: this.createTeamForm.value.description,
-        createdBy: currentUser.id
+        createdBy: currentUser.id,
+        members: []
       };
 
       // Call the createTeam method from the service

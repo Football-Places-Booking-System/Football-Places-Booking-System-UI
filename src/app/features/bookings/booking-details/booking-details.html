@@ -25,8 +25,8 @@
   <div *ngIf="!isLoading && booking" class="booking-content">
     <mat-card class="booking-card">
       <mat-card-header>
-        <mat-card-title>{{ booking.place_name }}</mat-card-title>
-        <mat-card-subtitle>{{ booking.team_name }}</mat-card-subtitle>
+        <mat-card-title>{{ booking.placeName }}</mat-card-title>
+        <mat-card-subtitle>{{ booking.teamName }}</mat-card-subtitle>
         <mat-chip [color]="getStatusColor(booking.status)" selected class="status-chip">
           {{ getStatusText(booking.status) }}
         </mat-chip>
@@ -41,7 +41,7 @@
                 <mat-icon>event</mat-icon>
                 <div class="info-content">
                   <span class="info-label">Date</span>
-                  <span class="info-value">{{ formatDate(booking.start_time) }}</span>
+                  <span class="info-value">{{ formatDate(booking.startTime) }}</span>
                 </div>
               </div>
 
@@ -49,7 +49,7 @@
                 <mat-icon>schedule</mat-icon>
                 <div class="info-content">
                   <span class="info-label">Time</span>
-                  <span class="info-value">{{ formatDateTime(booking.start_time, booking.end_time) }}</span>
+                  <span class="info-value">{{ formatDateTime(booking.startTime, booking.endTime) }}</span>
                 </div>
               </div>
 
@@ -57,7 +57,7 @@
                 <mat-icon>location_on</mat-icon>
                 <div class="info-content">
                   <span class="info-label">Place</span>
-                  <span class="info-value">{{ booking.place_name }}</span>
+                  <span class="info-value">{{ booking.placeName }}</span>
                 </div>
               </div>
 
@@ -65,7 +65,7 @@
                 <mat-icon>groups</mat-icon>
                 <div class="info-content">
                   <span class="info-label">Team</span>
-                  <span class="info-value">{{ booking.team_name }}</span>
+                  <span class="info-value">{{ booking.teamName }}</span>
                 </div>
               </div>
 
@@ -73,7 +73,7 @@
                 <mat-icon>person</mat-icon>
                 <div class="info-content">
                   <span class="info-label">Booked By</span>
-                  <span class="info-value">{{ booking.user_name }}</span>
+                  <span class="info-value">{{ booking.userName }}</span>
                 </div>
               </div>
 
@@ -81,7 +81,7 @@
                 <mat-icon>calendar_today</mat-icon>
                 <div class="info-content">
                   <span class="info-label">Created</span>
-                  <span class="info-value">{{ formatDate(booking.created_at) }}</span>
+                  <span class="info-value">{{ formatDate(booking.createdAt || '') }}</span>
                 </div>
               </div>
             </div>
@@ -117,7 +117,7 @@
                 </div>
                 <div class="timeline-content">
                   <h4>Scheduled</h4>
-                  <p>{{ formatDate(booking.start_time) }} at {{ formatTime(booking.start_time) }}</p>
+                  <p>{{ formatDate(booking.startTime) }} at {{ formatTime(booking.startTime) }}</p>
                 </div>
               </div>
             </div>

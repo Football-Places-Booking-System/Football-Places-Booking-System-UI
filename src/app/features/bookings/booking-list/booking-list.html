@@ -32,16 +32,16 @@
         <mat-icon>event_busy</mat-icon>
         <h3>No Upcoming Bookings</h3>
         <p>You don't have any upcoming bookings. Create a new booking to get started!</p>
-        <button mat-raised-button color="primary" (click)="createNewBooking()">
+        <!-- <button mat-raised-button color="primary" (click)="createNewBooking()">
           Create Booking
-        </button>
+        </button> -->
       </div>
 
       <div *ngIf="upcomingBookings.length > 0" class="bookings-grid">
         <mat-card *ngFor="let booking of upcomingBookings" [class]="getBookingCardClass(booking)" class="booking-card">
           <mat-card-header>
-            <mat-card-title>{{ booking.place_name }}</mat-card-title>
-            <mat-card-subtitle>{{ booking.team_name }}</mat-card-subtitle>
+            <mat-card-title>{{ booking.placeName }}</mat-card-title>
+            <mat-card-subtitle>{{ booking.teamName }}</mat-card-subtitle>
             <mat-chip [color]="getStatusColor(booking.status)" selected class="status-chip">
               {{ getStatusText(booking.status) }}
             </mat-chip>
@@ -51,15 +51,15 @@
             <div class="booking-details">
               <div class="detail-item">
                 <mat-icon>event</mat-icon>
-                <span>{{ formatDate(booking.start_time) }}</span>
+                <span>{{ formatDate(booking.startTime) }}</span>
               </div>
               <div class="detail-item">
                 <mat-icon>schedule</mat-icon>
-                <span>{{ formatDateTime(booking.start_time, booking.end_time) }}</span>
+                <span>{{ formatDateTime(booking.startTime, booking.endTime) }}</span>
               </div>
               <div class="detail-item">
                 <mat-icon>location_on</mat-icon>
-                <span>{{ booking.place_name }}</span>
+                <span>{{ booking.placeName }}</span>
               </div>
             </div>
           </mat-card-content>
