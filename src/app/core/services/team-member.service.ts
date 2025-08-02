@@ -110,4 +110,71 @@ export class TeamMemberService {
       })
     );
   }
+
+  /**
+   * Get pending join requests for a team
+   * @param teamId The ID of the team
+   * @returns Observable with the list of pending join requests
+   */
+  getPendingJoinRequests(teamId: string): Observable<ITeamMember[]> {
+    if (!teamId) {
+      return throwError(() => new Error('Team ID is required'));
+    }
+
+    console.log(`Fetching pending join requests for team ${teamId}`);
+
+    return this.http.get<ITeamMember[]>(`${this.apiUrl}/join-requests/${teamId}`).pipe(
+      catchError(error => {
+        console.error('Error fetching pending join requests:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to fetch join requests'));
+      })
+    );
+  }
+
+  /**
+   * Respond to a join request
+   * @param teamMemberId The ID of the team member request
+   * @param status The new status (APPROVED/REJECTED)
+   * @param organizerId The ID of the organizer responding to the request
+   * @returns Observable with the updated team member
+   */
+  respondToJoinRequest(teamMemberId: string, status: TeamMemberStatus, organizerId: string): Observable<ITeamMember> {
+    if (!teamMemberId || !status || !organizerId) {
+      return throwError(() => new Error('Team member ID, status, and organizer ID are required'));
+    }
+
+    console.log(`Updating join request ${teamMemberId} to status ${status}`);
+
+    return this.http.patch<ITeamMember>(
+      `${this.apiUrl}/join-request/respond?teamMemberId=${teamMemberId}&status=${status}`,
+      {}
+    ).pipe(
+      catchError(error => {
+        console.error('Error responding to join request:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to respond to join request'));
+      })
+    );
+  }
+
+  /**
+   * Check if a user is an organizer of a team
+   * @param userId The ID of the user to check
+   * @param teamId The ID of the team
+   * @returns Observable with boolean indicating if the user is an organizer
+   */
+  isOrganizer(userId: string, teamId: string): Observable<boolean> {
+    if (!userId || !teamId) {
+      return throwError(() => new Error('User ID and Team ID are required'));
+    }
+
+    return this.http.get<{ isOrganizer: boolean }>(
+      `${this.apiUrl}/is-organizer?userId=${userId}&teamId=${teamId}`
+    ).pipe(
+      map(response => response.isOrganizer),
+      catchError(error => {
+        console.error('Error checking organizer status:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to check organizer status'));
+      })
+    );
+  }
 }
