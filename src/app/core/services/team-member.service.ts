@@ -73,11 +73,9 @@ export class TeamMemberService {
     if (!teamMemberId) {
       return throwError(() => new Error('Team member ID is required'));
     }
-
-    const url = `http://localhost:8080/api/team-members/${teamMemberId}`;
     console.log(`TeamService: Removing team member with ID: ${teamMemberId}`);
 
-    return this.http.delete<void>(url).pipe(
+    return this.http.delete<void>(`${this.apiUrl}/${teamMemberId}`).pipe(
       catchError(error => {
         console.error('Error removing team member:', error);
         return throwError(() => new Error(error.error?.message || 'Failed to remove team member'));
