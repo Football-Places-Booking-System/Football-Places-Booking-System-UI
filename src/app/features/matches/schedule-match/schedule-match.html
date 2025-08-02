@@ -30,7 +30,7 @@
                 <mat-label>Select Place</mat-label>
                 <mat-select formControlName="placeId" required>
                   <mat-option *ngFor="let place of availablePlaces" [value]="place.id">
-                    {{ place.name }} - {{ place.location }} ({{ place.type }})
+                    {{ place.name }} - {{ place.location }} ({{ place.placeType }})
                   </mat-option>
                 </mat-select>
                 <mat-error *ngIf="scheduleForm.get('placeId')?.hasError('required')">
@@ -58,9 +58,9 @@
             <div class="form-field">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Match Date</mat-label>
-                <input 
-                  matInput 
-                  [matDatepicker]="datePicker" 
+                <input
+                  matInput
+                  [matDatepicker]="datePicker"
                   formControlName="matchDate"
                   (dateChange)="onDateChange()"
                   placeholder="Choose a date"
@@ -109,9 +109,9 @@
             <div class="form-field">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Minimum Participants</mat-label>
-                <input 
-                  matInput 
-                  type="number" 
+                <input
+                  matInput
+                  type="number"
                   formControlName="minParticipants"
                   (input)="validateParticipants()"
                   placeholder="Minimum number of players"
@@ -128,9 +128,9 @@
             <div class="form-field">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Maximum Participants</mat-label>
-                <input 
-                  matInput 
-                  type="number" 
+                <input
+                  matInput
+                  type="number"
                   formControlName="maxParticipants"
                   (input)="validateParticipants()"
                   placeholder="Maximum number of players"
@@ -151,9 +151,9 @@
           <div class="form-field">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Description (Optional)</mat-label>
-              <textarea 
-                matInput 
-                formControlName="description" 
+              <textarea
+                matInput
+                formControlName="description"
                 placeholder="Add any additional details about the match"
                 rows="4">
               </textarea>
@@ -164,18 +164,18 @@
           </div>
 
           <div class="form-actions">
-            <button 
-              type="submit" 
-              mat-raised-button 
-              color="primary" 
+            <button
+              type="submit"
+              mat-raised-button
+              color="primary"
               [disabled]="scheduleForm.invalid || isLoading">
               <mat-icon *ngIf="!isLoading">schedule</mat-icon>
               <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
               {{ isLoading ? 'Scheduling...' : 'Schedule Match' }}
             </button>
-            <button 
-              type="button" 
-              mat-button 
+            <button
+              type="button"
+              mat-button
               (click)="goToMatches()">
               <mat-icon>list</mat-icon>
               View Matches
