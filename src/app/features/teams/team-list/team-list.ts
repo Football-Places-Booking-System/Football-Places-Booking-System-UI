@@ -38,7 +38,7 @@ export class TeamList implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     console.log('TeamList: ngOnInit called');
-    this.loadUserTeams();
+    this.loadTeams();
   }
 
   ngOnDestroy(): void {
@@ -46,29 +46,25 @@ export class TeamList implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadUserTeams(): void {
-    console.log('TeamList: loadUserTeams() called');
+  loadTeams(): void {
+    console.log('TeamList: loadTeams() called');
     this.isLoading = true;
+    this.teams = []; // Clear existing teams
 
-    this.teamService.getUserTeams().pipe(takeUntil(this.destroy$)).subscribe({
+    this.teamService.getAllTeams().pipe(takeUntil(this.destroy$)).subscribe({
       next: (teams) => {
         console.log('TeamList: Received teams from service:', teams);
-        console.log('TeamList: Number of teams:', teams.length);
+        console.log('TeamList: Number of teams received:', teams.length);
         this.teams = teams;
         this.successMessage = null;
         this.errorMessage = null;
         this.isLoading = false;
-        console.log('TeamList: isLoading set to false');
       },
       error: (err) => {
-        console.error('TeamList: Failed to load user teams', err);
-        console.error('TeamList: Error type:', typeof err);
-        console.error('TeamList: Error status:', err.status);
-        console.error('TeamList: Error message:', err.message);
-        this.errorMessage = 'Failed to load your teams. Please try again.';
+        console.error('TeamList: Error loading teams:', err);
+        this.errorMessage = 'Failed to load teams. Please try again.';
         this.successMessage = null;
         this.isLoading = false;
-        console.log('TeamList: isLoading set to false (error case)');
       }
     });
   }
@@ -93,7 +89,7 @@ export class TeamList implements OnInit, OnDestroy {
         next: () => {
           this.successMessage = 'Team deleted successfully!';
           this.errorMessage = null;
-          this.loadUserTeams();
+          this.loadTeams();
         },
         error: (err) => {
           console.error('Failed to delete team', err);

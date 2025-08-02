@@ -5,7 +5,7 @@ import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angula
 import { Subject, takeUntil } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 
-import { ITeam, ITeamMember, TeamService } from '../../../core/services/team.service';
+import { ITeam, ITeamMember, TeamMemberRole, TeamMemberStatus, TeamService } from '../../../core/services/team.service';
 import { TeamMemberService } from '../../../core/services/team-member.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -148,33 +148,51 @@ export class TeamDetails implements OnInit, OnDestroy {
   }
 
   requestToJoinTeam(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser || !this.team) return;
+    if (!this.team) return;
+
+    // Clear any previous messages
+    this.errorMessage = null;
+    this.successMessage = null;
 
     console.log('Sending join request for team:', this.team.id);
-    console.log('Current user:', currentUser);
 
-    this.teamMemberService.askToJoinTeam( this.team.id, ).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (member) => {
-        console.log('Join request created successfully:', member);
+    this.teamMemberService.requestToJoinTeam(this.team.id).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        console.log('Join request successful:', response);
         this.hasRequestedJoin = true;
-        this.teamMembers.push(member);
+        this.successMessage = 'Your request to join the team has been sent successfully!';
 
+        // Update the team members list to include the pending request
+        if (response) {
+          const newMember: ITeamMember = {
+            id: response.id,
+            teamId: response.teamId,
+            userId: response.userId,
+            username: this.authService.getCurrentUser()?.username || '',
+            email: this.authService.getCurrentUser()?.email || '',
+            role: response.role as TeamMemberRole,
+            status: response.status as TeamMemberStatus,
+            createdAt: response.createdAt,
+            respondedAt: response.respondedAt
+          };
+          this.teamMembers = [...this.teamMembers, newMember];
+        }
 
-        // // Create notification for team organizer
-        // this.notificationService.createTeamJoinRequestNotification(
-        //   this.team!.createdBy,
-        //   this.team!.id,
-        //   this.team!.name,
-        //   currentUser.username
-        // ).subscribe();
-
-        this.successMessage = 'Join request sent successfully! The team organizer will review your request.';
-        setTimeout(() => this.successMessage = null, 5000);
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          this.successMessage = null;
+        }, 5000);
       },
-      error: (err: any) => {
-        console.error('Failed to send join request:', err);
-        this.errorMessage = 'Failed to send join request. Please try again.';
+      error: (error) => {
+        console.error('Failed to send join request:', error);
+        this.errorMessage = error.message || 'Failed to send join request. Please try again.';
+
+        // Clear error message after 5 seconds
+        setTimeout(() => {
+          this.errorMessage = null;
+        }, 5000);
       }
     });
   }

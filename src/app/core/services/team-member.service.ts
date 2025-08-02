@@ -85,26 +85,29 @@ export class TeamMemberService {
 
   // Team Member Management
   askToJoinTeam(teamId: string): Observable<ITeamMember> {
-    // try {
-    //   const newMember: ITeamMember = {
-    //     id: Date.now().toString(),
-
-    //     createdAt: new Date().toISOString()
-    //   };
-
-    //   const membersString = sessionStorage.getItem('teamMembers');
-    //   const members: ITeamMember[] = membersString ? JSON.parse(membersString) : [];
-    //   members.push(newMember);
-    //   sessionStorage.setItem('teamMembers', JSON.stringify(members));
-
-    //   return of(newMember);
-    // } catch (error) {
-    //   console.error('Error adding team member:', error);
-    //   throw new Error('Failed to add team member');
-    // }
-    return this.http.post<ITeamMember>(`${this.apiUrl}/ask-to-join/${teamId}`, {});
+    return this.requestToJoinTeam(teamId);
   }
 
+  /**
+   * Request to join a team
+   * @param teamId The ID of the team to join
+   * @returns Observable with the join request response
+   */
+  requestToJoinTeam(teamId: string): Observable<ITeamMember> {
+    if (!teamId) {
+      return throwError(() => new Error('Team ID is required'));
+    }
 
+    console.log(`Sending join request for team ${teamId}`);
 
+    return this.http.post<ITeamMember>(
+      `${this.apiUrl}/join-request/${teamId}`,
+      {}
+    ).pipe(
+      catchError(error => {
+        console.error('Error sending join request:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to send join request'));
+      })
+    );
+  }
 }
