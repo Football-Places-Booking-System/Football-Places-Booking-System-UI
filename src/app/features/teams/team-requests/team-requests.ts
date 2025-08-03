@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TeamService, ITeamMember, TeamMemberStatus } from '../../../core/services/team.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { NotificationService, INotification } from '../../../core/services/notification.service';
+import { NotificationService,INotification } from '../../../core/services/notification.service';
 
 interface PendingInvitation {
   id: string;
