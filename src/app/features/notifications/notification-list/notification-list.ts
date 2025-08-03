@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NotificationService, INotification, RequestType } from '../../../core/services/notification.service';
 import { TeamMemberService, TeamMemberStatus } from '../../../core/services/team-member.service';
+import { MatchParticipantService } from '../../../core/services/match-participant.service';
 import { AuthService } from '../../../core/services/auth.service';
 // TODO: Add imports for other services when they become available
 // import { MatchService } from '../../../core/services/match.service';
@@ -37,6 +38,7 @@ export class NotificationList implements OnInit, OnDestroy {
   constructor(
     private notificationService: NotificationService,
     private teamMemberService: TeamMemberService,
+    private matchParticipantService: MatchParticipantService,
     private authService: AuthService,
     private router: Router
     // TODO: Add other services when available
@@ -235,28 +237,21 @@ export class NotificationList implements OnInit, OnDestroy {
   }
 
   private handleMatchInvitation(notification: INotification, status: 'APPROVED' | 'REJECTED'): void {
-    // TODO: Implement match invitation service when available
-    console.log('Handling match invitation:', notification.jokerId, status);
+    // Convert APPROVED/REJECTED to ACCEPTED/DECLINED for match participant service
+    const participantStatus = status === 'APPROVED' ? 'ACCEPTED' : 'DECLINED';
     
-    // Placeholder implementation - replace with actual service call
-    setTimeout(() => {
-      // Simulate API call
-      console.log('Match invitation response finished (placeholder)');
-      this.handleSuccessResponse(status, 'match invitation');
-    }, 1000);
-
-    // When actual service is available, use this pattern:
-    // this.matchService.respondToInvitation(notification.jokerId, status)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: () => {
-    //       console.log('Match invitation response finished');
-    //       this.handleSuccessResponse(status, 'match invitation');
-    //     },
-    //     error: (err) => {
-    //       this.handleErrorResponse(err, 'match invitation');
-    //     }
-    //   });
+    // Use MatchParticipantService for match invitations
+    this.matchParticipantService.respondToMatchInvitation(notification.jokerId, participantStatus)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('✅ Match invitation response finished:', response);
+          this.handleSuccessResponse(status, 'match invitation');
+        },
+        error: (err) => {
+          this.handleErrorResponse(err, 'match invitation');
+        }
+      });
   }
 
   private handleSuccessResponse(status: 'APPROVED' | 'REJECTED', requestType: string): void {

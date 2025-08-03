@@ -88,6 +88,26 @@ export class MatchParticipantService {
   }
 
   /**
+   * Respond to a match invitation by participant ID
+   * @param matchParticipantId The ID of the match participant
+   * @param status The response status (ACCEPTED or DECLINED)
+   * @returns Observable with the updated match participant response
+   */
+  respondToMatchInvitation(matchParticipantId: string, status: 'ACCEPTED' | 'DECLINED'): Observable<IMatchParticipant | null> {
+    return this.http
+      .patch<IMatchParticipant>(`${this.API_URL}/respond/${matchParticipantId}`, null, {
+        headers: this.getAuthHeaders(),
+        params: { status },
+      })
+      .pipe(
+        catchError((err) => {
+          console.error('Error responding to match invitation:', err);
+          return of(null);
+        })
+      );
+  }
+
+  /**
    * Get all participants for a specific match
    */
   getParticipantsByMatch(matchId: string): Observable<IMatchParticipant[]> {
