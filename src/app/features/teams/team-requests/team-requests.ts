@@ -117,16 +117,16 @@ respondToJoinRequest(teamMemberId: string, status: 'APPROVED' | 'REJECTED'): voi
   this.teamMemberService.respondToJoinRequestByPath(teamMemberId, status as TeamMemberStatus)
     .pipe(takeUntil(this.destroy$))
     .subscribe({
-      next: (response) => {
-        console.log('Join request response:', response);
+      next: () => {
+        console.log('Join Response Finished:');
         
-        this.successMessage = status === 'APPROVED' 
-          ? `Successfully approved ${response.userName}'s request to join the team!` 
-          : `Rejected ${response.userName}'s request to join the team`;
+        // this.successMessage = status === 'APPROVED' 
+        //   // ? `Successfully approved ${response.userName}'s request to join the team!` 
+        //   // : `Rejected ${response.userName}'s request to join the team`;
 
       
         // Clear success message after 3 seconds
-        setTimeout(() => this.successMessage = null, 3000);
+        // setTimeout(() => this.successMessage = null, 3000);
         
         this.loading = false;
         this.loadRequests();
