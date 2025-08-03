@@ -24,6 +24,7 @@ export interface ITeam {
   name: string;
   description?: string;
   createdBy: string; // FK to User(id)
+  createdByUsername: string;
   createdAt: string;
   updatedAt?: string;
   members?: any[]; // Add members property to handle team members from backend
