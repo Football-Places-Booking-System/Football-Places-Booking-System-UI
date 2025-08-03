@@ -12,6 +12,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { IUser } from '../../../core/models/iuser.model';
 
 import { TeamService } from '../../../core/services/team.service';
+import { UserService } from '../../../core/services/user.service';
 
 
 @Component({
@@ -50,6 +51,7 @@ export class Profile implements OnInit {
   constructor(
     private authService: AuthService,
     private teamService: TeamService,
+    private userService: UserService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -169,44 +171,57 @@ export class Profile implements OnInit {
       }
 
       // Validate current password
-      if (this.editForm.currentPassword !== this.currentUser.password) {
-        this.snackBar.open('Current password is incorrect', 'Close', { duration: 3000 });
-        return;
-      }
+      const isValidPassword = this.userService.checkPassword(this.editForm.currentPassword);
+      isValidPassword.subscribe({
+        next: (isValid) => {
+          if (!isValid) {
+            this.snackBar.open('Current password is incorrect', 'Close', { duration: 3000 });
+            return;
+          }
+        },
+        error: (error) => {
+          console.error('Error checking password:', error);
+          this.snackBar.open('Error checking current password', 'Close', { duration: 3000 });
+        }
+      });
     }
 
     this.isSaving = true;
 
-    // Simulate API call to update profile
-    setTimeout(() => {
-      if (this.currentUser) {
-        // Update user data
-        this.currentUser.username = this.editForm.username;
+    if (this.currentUser) {
+      const updates: Record<string, any> = {};
 
-        // Update password if provided
-        if (this.editForm.newPassword) {
-          this.currentUser.password = this.editForm.newPassword;
-        }
-
-        // Update in sessionStorage (simulating database update)
-        const users = JSON.parse(sessionStorage.getItem('users') || '[]');
-        const userIndex = users.findIndex((u: any) => u.id === this.currentUser?.id);
-        if (userIndex !== -1) {
-          users[userIndex].username = this.editForm.username;
-          if (this.editForm.newPassword) {
-            users[userIndex].password = this.editForm.newPassword;
-          }
-          sessionStorage.setItem('users', JSON.stringify(users));
-        }
-
-        // Update current user in sessionStorage
-        sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-
-        this.isEditing = false;
-        this.isSaving = false;
-        this.snackBar.open('Profile updated successfully', 'Close', { duration: 2000 });
+      // Only include username if it changed
+      if (this.editForm.username && this.editForm.username !== this.currentUser.username) {
+        updates['username'] = this.editForm.username;
       }
-    }, 1000);
+
+      // Only include password if a new password is provided
+      if (this.editForm.newPassword) {
+        updates['password'] = this.editForm.newPassword;
+      }
+
+      // Only make the API call if there’s something to update
+      if (Object.keys(updates).length > 0) {
+        this.userService.updateUser(this.currentUser.id, updates).subscribe(() => {
+          // Update current user in sessionStorage with new username if changed
+          if (updates['username']) {
+            if (this.currentUser) {
+              this.currentUser.username = updates['username'];
+              this.authService.setCurrentUser(this.currentUser);
+            }
+          }
+          this.snackBar.open('Profile updated successfully', 'Close', { duration: 2000 });
+        });
+      } else {
+        this.snackBar.open('No changes to update', 'Close', { duration: 2000 });
+        this.isSaving = false;
+        return;
+      }
+
+      this.isEditing = false;
+      this.isSaving = false;
+    }
   }
 
   getRoleDisplayName(role: string): string {

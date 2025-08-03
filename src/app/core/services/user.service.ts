@@ -81,7 +81,6 @@ export class UserService {
 //   );
 // }
 
-
   getAllUsers(page?: number, size?: number): Observable<any> {
     console.log("Inside getAllUsers method of UserService");
     const params = new HttpParams()
@@ -90,11 +89,14 @@ export class UserService {
     return this.http.get<IUser[]>(`${this.apiUrl}/all`, { params });
   }
 
-  updateUser(id: string, user: Partial<Omit<IUser, 'id'>>): Observable<IUser> {
+  checkPassword(password: string): Observable<boolean> {
+    console.log("Checking password via API");
+    const valid: Observable<boolean> = this.http.post<boolean>(`${this.apiUrl}/check-password`, { password });
+    return valid;
+  }
+
+  updateUser(id: string, user: Record<string, any>): Observable<IUser> {
     console.log("Updating User via API : ", id, user);
     return this.http.patch<IUser>(`${this.apiUrl}/${id}`, user);
   }
-
-
-
 }

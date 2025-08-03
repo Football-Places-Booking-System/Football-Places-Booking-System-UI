@@ -3,39 +3,21 @@ import { UserService as UserService } from './user.service';
 
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { myUserRole } from '../enums/user-role';
-
 
 import { Observable, throwError, of } from 'rxjs';
 import { tap, catchError, switchMap, map } from 'rxjs/operators';
 
-import { IUser, UserRole, IRegisterUser, ILoginUser, IRegisterResponseUser } from '../models/iuser.model';
-
-
+import { IUser, UserRole, UserStatus, IRegisterUser, IRegisterResponseUser } from '../models/iuser.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-
-
   // private apiUrl = '/api/auth';
-
   private apiUrl = 'http://localhost:8080/api/auth';
 
-  private loggedIn = false;
-  private currentUserRole: string | null = null;
-  private currentUser: IUser | null = null;
-
-
   constructor(private router: Router, private http: HttpClient, private userService: UserService) {
-    // Attempt to load login state and role from sessionStorage on service initialization
-    if (typeof sessionStorage !== 'undefined') {
-      this.loggedIn = !!sessionStorage.getItem('isLoggedIn');
-      this.currentUserRole = sessionStorage.getItem('currentUserRole');
-    }
   }
-
 
   /**
    * Handles user registration by sending user details to the backend.
@@ -52,8 +34,6 @@ export class AuthService {
       .pipe(
         tap((response: IRegisterResponseUser) => {
           if (response && response.token && response.role) {
-            this.loggedIn = true;
-            this.currentUserRole = response.role;
             if (typeof sessionStorage !== 'undefined') {
               sessionStorage.setItem('isLoggedIn', 'true');
               sessionStorage.setItem('jwt_token', response.token);
@@ -74,13 +54,11 @@ export class AuthService {
                   id: userProfile.id,
                   username: userProfile.username,
                   email: userProfile.email,
-                  password: '', // Don't store password
                   role: userProfile.role as UserRole,
-                  createdAt: userProfile.createdAt,
-                  updatedAt: userProfile.updatedAt
+                  status: userProfile.status as UserStatus,
+                  createdAt: userProfile.createdAt
                 };
 
-                this.currentUser = userObject;
                 if (typeof sessionStorage !== 'undefined') {
                   sessionStorage.setItem('currentUser', JSON.stringify(userObject));
                 }
@@ -96,8 +74,6 @@ export class AuthService {
           }
         }),
         catchError(error => {
-          this.loggedIn = false;
-          this.currentUserRole = null;
           if (typeof sessionStorage !== 'undefined') {
             sessionStorage.removeItem('isLoggedIn');
             sessionStorage.removeItem('jwt_token');
@@ -108,8 +84,6 @@ export class AuthService {
         })
       );
   }
-
-
 
   /**
 //    * Handles user login by sending credentials to the backend.
@@ -125,8 +99,6 @@ export class AuthService {
     return this.http.post<IRegisterResponseUser>(`${this.apiUrl}/login`, { email, password }).pipe(
       tap((response: IRegisterResponseUser) => {
         if (response && response.token && response.role) {
-          this.loggedIn = true;
-          this.currentUserRole = response.role;
           if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem('isLoggedIn', 'true');
             sessionStorage.setItem('jwt_token', response.token);
@@ -147,11 +119,11 @@ export class AuthService {
                 id: userProfile.id,
                 username: userProfile.username,
                 email: userProfile.email,
-                password: '', // Don't store password
-                role: userProfile.role as UserRole
+                role: userProfile.role as UserRole,
+                status: userProfile.status as UserStatus,
+                createdAt: userProfile.createdAt
               };
 
-              this.currentUser = userObject;
               if (typeof sessionStorage !== 'undefined') {
                 sessionStorage.setItem('currentUser', JSON.stringify(userObject));
               }
@@ -161,21 +133,11 @@ export class AuthService {
             map(() => response) // Return the original response
           );
         } else {
-          // If no user ID, create basic user object
-          const userObject: IUser = {
-            id: Date.now().toString(),
-            username: email.split('@')[0],
-            email: email,
-            password: '',
-            role: response.role as UserRole
-          };
-
-          return of(response);
+          console.log('AuthService: No user ID found in login response. Unable to fetch user profile.');
+          return of(response); 
         }
       }),
       catchError(error => {
-        this.loggedIn = false;
-        this.currentUserRole = null;
         if (typeof sessionStorage !== 'undefined') {
           sessionStorage.removeItem('isLoggedIn');
           sessionStorage.removeItem('jwt_token');
@@ -187,13 +149,10 @@ export class AuthService {
     );
   }
 
-
   /**
    * Logs out the user by clearing local storage and redirecting to the login page.
    */
   logout(): void {
-    this.loggedIn = false;
-    this.currentUserRole = null;
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem('isLoggedIn');
       sessionStorage.removeItem('jwt_token'); // Clear the JWT token
@@ -204,28 +163,26 @@ export class AuthService {
     this.router.navigate(['/login']); // Redirect to the login page
   }
 
-
   getCurrentUser(): IUser | null {
-    if (this.currentUser) {
-      return this.currentUser;
-    }
-    // If currentUser is not set, try to load it from sessionStorage
     const userString = sessionStorage.getItem('currentUser');
     if (userString) {
-      this.currentUser = JSON.parse(userString);
-      return this.currentUser;
+      return JSON.parse(userString);
     }
     return null;
   }
 
-
+  setCurrentUser(user: IUser | null): void {
+    if (user != null && typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+    }
+  }
 
   /**
    * Checks if the user is currently logged in.
    * @returns True if logged in, false otherwise.
    */
   isLoggedIn(): boolean {
-    return this.loggedIn;
+    return sessionStorage.getItem('isLoggedIn') === 'true';
   }
 
   /**
@@ -233,7 +190,7 @@ export class AuthService {
    * @returns The user's role string, or null if not logged in.
    */
   getUserRole(): string | null {
-    return this.currentUserRole;
+    return sessionStorage.getItem('currentUserRole');
   }
 
   /**
@@ -241,7 +198,6 @@ export class AuthService {
    * @returns True if the user is logged in and has the 'organizer' role, false otherwise.
    */
   isOrganizer(): boolean {
-    return this.loggedIn && this.currentUserRole === 'organizer';
+    return sessionStorage.getItem('currentUserRole') === 'organizer';
   }
-
 }
