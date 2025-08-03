@@ -128,7 +128,7 @@ export class TeamList implements OnInit, OnDestroy {
     // Choose service method based on filter
     const teamsObservable = this.teamViewFilter === 'MY_TEAMS' 
       ? this.teamService.getUserTeams()
-      : this.teamService.getAllTeams();
+      : this.teamService.getOtherTeams();
 
     teamsObservable.pipe(takeUntil(this.destroy$)).subscribe({
       next: (teams: ITeam[]) => {

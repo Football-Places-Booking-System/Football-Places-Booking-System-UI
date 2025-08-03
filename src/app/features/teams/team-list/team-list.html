@@ -1,14 +1,14 @@
 <section class="container p-2 ">
   <div class="content-wrapper">
     <!-- Debug Information -->
-    <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;">
+    <!-- <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;">
       <strong>Debug Info:</strong><br>
       Component Loaded: ✓<br>
       isLoading: {{ isLoading }}<br>
       teams.length: {{ teams.length }}<br>
       errorMessage: {{ errorMessage || 'none' }}<br>
       successMessage: {{ successMessage || 'none' }}
-    </div>
+    </div> -->
 
     <!-- Header Section -->
     <div class="team-header">
@@ -17,17 +17,6 @@
         <p>{{ teamViewFilter === 'MY_TEAMS' ? 'Create and manage your football teams' : 'Discover and join football teams' }}</p>
       </div>
       <div class="header-actions">
-        <!-- Team View Filter -->
-        <mat-form-field appearance="outline" class="team-filter">
-          <mat-label>View</mat-label>
-          <mat-select 
-            [value]="teamViewFilter" 
-            (selectionChange)="onTeamViewFilterChange($event.value)">
-            <mat-option value="MY_TEAMS">My Teams</mat-option>
-            <mat-option value="OTHER_TEAMS">Other Teams</mat-option>
-          </mat-select>
-        </mat-form-field>
-        
         <!-- Create Team Button (only for My Teams view) -->
         <button 
           *ngIf="teamViewFilter === 'MY_TEAMS'"
@@ -38,6 +27,16 @@
           <mat-icon>add</mat-icon>
           Create Team
         </button>
+        <!-- Team View Filter -->
+        <mat-form-field appearance="outline" class="team-filter">
+          <mat-label>View</mat-label>
+          <mat-select 
+            [value]="teamViewFilter" 
+            (selectionChange)="onTeamViewFilterChange($event.value)">
+            <mat-option value="MY_TEAMS">My Teams</mat-option>
+            <mat-option value="OTHER_TEAMS">Other Teams</mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
     </div>
 
@@ -50,6 +49,7 @@
       </div>
 
       <div *ngIf="teams.length === 0; else teamListContent" class="no-teams-message">
+        <mat-icon class="no-teams-icon">groups</mat-icon>
         <p *ngIf="teamViewFilter === 'MY_TEAMS'">You haven't created any teams yet. Click the plus icon to create your first team!</p>
         <p *ngIf="teamViewFilter === 'OTHER_TEAMS'">No other teams are currently available to join.</p>
         <p class="team-count">Teams found: {{ teams.length }}</p>

@@ -104,11 +104,11 @@ export class TeamService {
         return response || [];
       }),
       catchError(error => {
-      console.error('Error fetching teams from backend:', error);
-      return of([]);
-  })
-  );
-}
+        console.error('Error fetching teams from backend:', error);
+        return of([]);
+      })
+    );
+  }
 
   // Done
   getTeamById(id: string): Observable<ITeam | null> {
@@ -180,8 +180,6 @@ export class TeamService {
     );
   }
 
-
-
   // Done (Need Optimization)
   getTeamMembers(teamId: string): Observable<ITeamMember[]> {
     console.log('TeamService: Fetching team members for teamId:', teamId);
@@ -232,13 +230,39 @@ export class TeamService {
       map(response => {
         console.log('TeamService: Received response:', response);
         // Extract the teams array from the content property
-        return response.content || [];
+        if (response) {
+          console.log('TeamService: No content in response');
+          return response.content;
+        }
+        else {
+          console.log('TeamService: Response is null or undefined');
+          return [];
+        }
       }),
       catchError(error => {
         console.error('TeamService: Error loading user teams from backend:', error);
         console.error('TeamService: Request URL was:', url);
         console.error('TeamService: Error status:', error.status);
         console.error('TeamService: Error message:', error.message);
+        return of([]);
+      })
+    );
+  }
+
+  getOtherTeams(): Observable<ITeam[]> {
+    return this.http.get<{content: ITeam[]}>(`${this.apiUrl}/other-teams`).pipe(
+      map(response => {
+        if (response) {
+          console.log('TeamService: No content in response');
+          return response.content;
+        }
+        else {
+          console.log('TeamService: Response is null or undefined');
+          return [];
+        }
+      }),
+      catchError(error => {
+        console.error('Error fetching other teams from backend:', error);
         return of([]);
       })
     );

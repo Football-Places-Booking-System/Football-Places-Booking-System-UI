@@ -229,12 +229,43 @@
 
 /* No teams message */
 .no-teams-message {
-    text-align: center;
-    padding: 2rem;
-    color: var(--text-medium);
-    background-color: var(--card-bg);
-    border-radius: 1.5rem;
-    box-shadow: 0 5px 15px var(--shadow-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  padding: 3rem 2rem;
+
+  background-color: var(--card-bg);
+  border: 2px dashed var(--primary-teal); /* Subtle border style */
+  border-radius: 1.5rem;
+
+  box-shadow: 0 8px 20px var(--shadow-light);
+  animation: fadeIn 0.4s ease-out;
+
+  color: var(--text-dark);
+}
+
+.no-teams-message p {
+  margin: 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.no-teams-message .team-count {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  color: var(--text-light);
+}
+
+.no-teams-icon {
+  font-size: 48px; /* or 3rem */
+  width: 48px;     /* makes sure the icon box fits the glyph */
+  height: 48px;
+  line-height: 1;
+  color: var(--primary-teal);
+  margin-bottom: 1rem;
 }
 
 /* Success and Error message styles */
