@@ -58,6 +58,28 @@ export class BookingService {
     );
   }
 
+  // Get bookings where current user is an organizer in any team
+getMyMatchesAsOrganizer(): Observable<IBooking[]> {
+  return this.http.get<IBooking[]>(`${this.apiUrl}/my/organizer`).pipe(
+    catchError(err => {
+      console.error('Error fetching organizer bookings:', err);
+      return of([]);
+    })
+  );
+}
+
+// New method
+getBookingDetailsById(bookingId: string): Observable<IBooking | null> {
+  return this.http.get<IBooking>(`${this.apiUrl}/details/${bookingId}`).pipe(
+    catchError(err => {
+      console.error(`Error fetching booking details for ID: ${bookingId}`, err);
+      return of(null);
+    })
+  );
+}
+
+
+
   // Get bookings for a specific team
   getTeamBookings(teamId: string): Observable<IBooking[]> {
     return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/team/${teamId}`).pipe(
@@ -117,7 +139,7 @@ getPlaceBookings(placeId: string): Observable<IBooking[]> {
 
   // Cancel a booking
   cancelBooking(id: string): Observable<IBooking> {
-    return this.http.patch<IBooking>(`${this.apiUrl}/${id}/cancel`, {}).pipe(
+    return this.http.patch<IBooking>(`${this.apiUrl}/cancel/${id}`, {}).pipe(
       catchError(err => {
         console.error('Error cancelling booking:', err);
         throw err;
