@@ -146,27 +146,28 @@ export class TeamService {
     );
   }
 
-  updateTeam(team: ITeam): Observable<ITeam> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      if (teamsString) {
-        const teams: ITeam[] = JSON.parse(teamsString);
-        const index = teams.findIndex(t => t.id === team.id);
-        if (index !== -1) {
-          const updatedTeam: ITeam = {
-            ...team,
-            updatedAt: new Date().toISOString()
-          };
-          teams[index] = updatedTeam;
-          sessionStorage.setItem('teams', JSON.stringify(teams));
-          return of(updatedTeam);
-        }
-      }
-      throw new Error('Team not found');
-    } catch (error) {
-      console.error('Error updating team:', error);
-      throw new Error('Failed to update team');
+  updateTeam(teamId: string, teamData: { name: string; description?: string }): Observable<ITeam> {
+    if (!teamId) {
+      return throwError(() => new Error('Team ID is required'));
     }
+
+    const teamRequest = {
+      name: teamData.name,
+      description: teamData.description || ''
+    };
+
+    const url = `${this.apiUrl}/${teamId}`;
+    console.log('TeamService: Updating team at:', url, 'with data:', teamRequest);
+
+    return this.http.patch<ITeam>(url, teamRequest).pipe(
+      tap(response => {
+        console.log('TeamService: Successfully updated team:', response);
+      }),
+      catchError(error => {
+        console.error('TeamService: Error updating team:', error);
+        throw new Error(error.error?.message || 'Failed to update team. Please try again.');
+      })
+    );
   }
 
   deleteTeam(teamId: string): Observable<void> {

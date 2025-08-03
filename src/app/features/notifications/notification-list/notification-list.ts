@@ -8,7 +8,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NotificationService, INotification, RequestType } from '../../../core/services/notification.service';
+import { TeamMemberService, TeamMemberStatus } from '../../../core/services/team-member.service';
 import { AuthService } from '../../../core/services/auth.service';
+// TODO: Add imports for other services when they become available
+// import { MatchService } from '../../../core/services/match.service';
+// import { TeamInvitationService } from '../../../core/services/team-invitation.service';
 
 @Component({
   selector: 'app-notification-list',
@@ -32,8 +36,12 @@ export class NotificationList implements OnInit, OnDestroy {
 
   constructor(
     private notificationService: NotificationService,
+    private teamMemberService: TeamMemberService,
     private authService: AuthService,
     private router: Router
+    // TODO: Add other services when available
+    // private matchService: MatchService,
+    // private teamInvitationService: TeamInvitationService
   ) {}
 
   ngOnInit(): void {
@@ -57,7 +65,8 @@ export class NotificationList implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (notifications) => {
-          this.notifications = notifications;
+          // Filter to show only pending notifications
+          this.notifications = notifications.filter(n => n.status === 'PENDING');
           this.loading = false;
           this.loadUnreadCount();
         },
@@ -70,8 +79,8 @@ export class NotificationList implements OnInit, OnDestroy {
   }
 
   loadUnreadCount(): void {
-    // Count unread notifications locally
-    this.unreadCount = this.notifications.filter(n => n.status === 'PENDING').length;
+    // Since we only show pending notifications, unread count equals total count
+    this.unreadCount = this.notifications.length;
   }
 
   getNotificationIcon(type: RequestType): string {
@@ -149,5 +158,127 @@ export class NotificationList implements OnInit, OnDestroy {
         this.router.navigate(['/dashboard/teams/requests']);
         break;
     }
+  }
+
+  approveRequest(notification: INotification): void {
+    this.respondToRequest(notification, 'APPROVED');
+  }
+
+  rejectRequest(notification: INotification): void {
+    this.respondToRequest(notification, 'REJECTED');
+  }
+
+  private respondToRequest(notification: INotification, status: 'APPROVED' | 'REJECTED'): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      this.errorMessage = 'User not authenticated';
+      return;
+    }
+
+    if (!notification.jokerId || !status) {
+      this.errorMessage = 'Invalid request data';
+      return;
+    }
+
+    console.log('Responding to notification request:', notification.id, 'with status:', status, 'type:', notification.requestType);
+
+    // Show loading state
+    this.loading = true;
+
+    // Route to different services based on request type
+    switch (notification.requestType) {
+      case 'JOIN_TEAM_REQUEST':
+        this.handleJoinTeamRequest(notification, status);
+        break;
+      case 'JOIN_TEAM_INVITATION':
+        this.handleJoinTeamInvitation(notification, status);
+        break;
+      case 'MATCH_INVITATION':
+        this.handleMatchInvitation(notification, status);
+        break;
+      default:
+        console.error('Unknown request type:', notification.requestType);
+        this.errorMessage = 'Unknown request type';
+        this.loading = false;
+        break;
+    }
+  }
+
+  private handleJoinTeamRequest(notification: INotification, status: 'APPROVED' | 'REJECTED'): void {
+    // Use TeamMemberService for join team requests
+    this.teamMemberService.respondToJoinRequestByPath(notification.jokerId, status as TeamMemberStatus)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          console.log('Join team request response finished');
+          this.handleSuccessResponse(status, 'join request');
+        },
+        error: (err) => {
+          this.handleErrorResponse(err, 'join request');
+        }
+      });
+  }
+
+  private handleJoinTeamInvitation(notification: INotification, status: 'APPROVED' | 'REJECTED'): void {
+    // Use TeamMemberService for team invitations
+    this.teamMemberService.respondToInvitation(notification.jokerId, status as TeamMemberStatus)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('✅ Team invitation response finished:', response);
+          this.handleSuccessResponse(status, 'team invitation');
+        },
+        error: (err) => {
+          this.handleErrorResponse(err, 'team invitation');
+        }
+      });
+  }
+
+  private handleMatchInvitation(notification: INotification, status: 'APPROVED' | 'REJECTED'): void {
+    // TODO: Implement match invitation service when available
+    console.log('Handling match invitation:', notification.jokerId, status);
+    
+    // Placeholder implementation - replace with actual service call
+    setTimeout(() => {
+      // Simulate API call
+      console.log('Match invitation response finished (placeholder)');
+      this.handleSuccessResponse(status, 'match invitation');
+    }, 1000);
+
+    // When actual service is available, use this pattern:
+    // this.matchService.respondToInvitation(notification.jokerId, status)
+    //   .pipe(takeUntil(this.destroy$))
+    //   .subscribe({
+    //     next: () => {
+    //       console.log('Match invitation response finished');
+    //       this.handleSuccessResponse(status, 'match invitation');
+    //     },
+    //     error: (err) => {
+    //       this.handleErrorResponse(err, 'match invitation');
+    //     }
+    //   });
+  }
+
+  private handleSuccessResponse(status: 'APPROVED' | 'REJECTED', requestType: string): void {
+    this.successMessage = status === 'APPROVED' 
+      ? `Successfully approved the ${requestType}!` 
+      : `Rejected the ${requestType}`;
+
+    // Remove the notification from the list or reload notifications
+    this.loadNotifications();
+
+    // Clear success message after 3 seconds
+    setTimeout(() => this.successMessage = null, 3000);
+    
+    this.loading = false;
+  }
+
+  private handleErrorResponse(error: any, requestType: string): void {
+    console.error(`Failed to respond to ${requestType}`, error);
+    this.errorMessage = error.message || `Failed to respond to ${requestType}`;
+    this.loading = false;
+    
+    // Clear error message after 5 seconds
+    setTimeout(() => this.errorMessage = null, 5000);
   }
 }

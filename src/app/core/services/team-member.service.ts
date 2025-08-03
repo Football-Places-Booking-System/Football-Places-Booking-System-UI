@@ -218,5 +218,32 @@ export class TeamMemberService {
     );
   }
 
+  /**
+   * Respond to a team member invitation
+   * @param teamMemberId The ID of the team member invitation
+   * @param status The status to set for the invitation (APPROVED/REJECTED)
+   * @returns Observable with the invitation response
+   */
+  respondToInvitation(teamMemberId: string, status: TeamMemberStatus): Observable<any> {
+    if (!teamMemberId || !status) {
+      return throwError(() => new Error('Team member ID and status are required'));
+    }
+
+    console.log(`Responding to team invitation ${teamMemberId} with status ${status}`);
+
+    return this.http.patch<any>(
+      `${this.apiUrl}/respond/${teamMemberId}?status=${status}`,
+      {}
+    ).pipe(
+      tap((response) => {
+        console.log('✅ Team invitation response finished successfully:', response);
+      }),
+      catchError(error => {
+        console.error('Error responding to team invitation:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to respond to team invitation'));
+      })
+    );
+  }
+
   
 }

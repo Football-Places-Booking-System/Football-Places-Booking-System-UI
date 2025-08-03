@@ -219,13 +219,12 @@ export class TeamDetails implements OnInit, OnDestroy {
 
   saveTeamChanges(): void {
     if (this.editTeamForm.valid && this.team) {
-      const updatedTeam: ITeam = {
-        ...this.team,
+      const teamData = {
         name: this.editTeamForm.value.name,
         description: this.editTeamForm.value.description
       };
 
-      this.teamService.updateTeam(updatedTeam).pipe(takeUntil(this.destroy$)).subscribe({
+      this.teamService.updateTeam(this.team.id, teamData).pipe(takeUntil(this.destroy$)).subscribe({
         next: (responseTeam: ITeam) => {
           this.team = responseTeam;
           this.successMessage = 'Team updated successfully!';
