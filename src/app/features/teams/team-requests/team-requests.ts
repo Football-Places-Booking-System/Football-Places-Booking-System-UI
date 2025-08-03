@@ -11,24 +11,6 @@ import { TeamService, ITeamMember, TeamMemberStatus } from '../../../core/servic
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService,INotification } from '../../../core/services/notification.service';
 
-interface PendingInvitation {
-  id: string;
-  teamId: string;
-  teamName: string;
-  role: string;
-  invitedBy: string;
-  createdAt: string;
-}
-
-interface JoinRequest {
-  id: string;
-  teamId: string;
-  teamName: string;
-  userId: number;
-  username: string;
-  email: string;
-  createdAt: string;
-}
 
 @Component({
   selector: 'app-team-requests',
@@ -43,8 +25,8 @@ interface JoinRequest {
   ]
 })
 export class TeamRequests implements OnInit, OnDestroy {
-  pendingInvitations: PendingInvitation[] = [];
-  joinRequests: JoinRequest[] = [];
+  joinRequests: INotification[] = [];
+  requestsCount: number = 0;
   loading: boolean = true;
   successMessage: string | null = null;
   errorMessage: string | null = null;
@@ -81,16 +63,19 @@ export class TeamRequests implements OnInit, OnDestroy {
           for (let i = 0; i < notifications.length; i++) {
             const notification = notifications[i];
             if (notification.requestType === 'JOIN_TEAM_REQUEST' && notification.status === 'PENDING') {
-              const joinRequest: JoinRequest = {
+              const joinRequest: INotification = {
                 id: notification.id,
-                teamId: notification.joker_id, // Using joker_id as teamId
-                teamName: 'Team', // Extract from message or use default
-                userId: parseInt(notification.senderId), // Convert sender to userId
-                username: notification.requestMessage.split(' ')[0] || 'Unknown', // Extract username from message
-                email: 'user@example.com', // Default email since not available in notification
-                createdAt: notification.sendTime || new Date().toISOString()
+                requestType: notification.requestType,
+                sendTime: notification.sendTime,
+                status: notification.status,
+                requestMessage: notification.requestMessage,
+                senderId: notification.senderId,
+                receiverId: notification.receiverId,
+                joker_id: notification.joker_id,
+                senderEmail: notification.senderEmail
               };
               this.joinRequests.push(joinRequest);
+              this.requestsCount = this.joinRequests.length;
             }
           }
         },
@@ -101,91 +86,6 @@ export class TeamRequests implements OnInit, OnDestroy {
         }
       });
   }
-
-  loadPendingInvitations(userId: string): void {
-  // console.log('Loading pending invitations for user ID:', userId);
-
-  // this.teamService.getAllTeamMembers().pipe(takeUntil(this.destroy$)).subscribe({
-  //   next: (allMembers) => {
-  //     console.log('All team members for invitations:', allMembers);
-  //     const userInvitations = allMembers.filter(member => 
-  //       member.userId === userId && member.status === 'PENDING'
-  //     );
-  //     console.log('User invitations:', userInvitations);
-
-  //     // Get team details for each invitation
-  //     const invitationPromises = userInvitations.map(invitation => 
-  //       this.teamService.getTeamById(invitation.teamId).toPromise()
-  //     );
-
-  //     Promise.all(invitationPromises).then(teams => {
-  //       console.log('Teams for invitations:', teams);
-  //       this.pendingInvitations = userInvitations.map(invitation => {
-  //         const team = teams.find(t => t?.id === invitation.teamId);
-  //         return {
-  //           id: invitation.id,
-  //           teamId: invitation.teamId,
-  //           teamName: team?.name || 'Unknown Team',
-  //           role: invitation.role,
-  //           invitedBy: invitation.invitedBy?.toString() || 'Unknown',
-  //           createdAt: invitation.createdAt
-  //         };
-  //       });
-  //       console.log('Final pending invitations:', this.pendingInvitations);
-  //     });
-  //   },
-  //   error: (err) => {
-  //     console.error('Failed to load pending invitations', err);
-  //   }
-  // });
-}
-
-loadJoinRequests(userId: string): void {
-  // console.log('Loading join requests for user ID:', userId);
-
-  // // Get teams where current user is organizer
-  // this.teamService.getTeamsByCreator().pipe(takeUntil(this.destroy$)).subscribe({
-  //   next: (userTeams) => {
-  //     console.log('User teams (as creator):', userTeams);
-  //     const teamIds = userTeams.map(team => team.id);
-  //     console.log('Team IDs where user is creator:', teamIds);
-
-  //     // Get all team members for these teams
-  //     this.teamService.getAllTeamMembers().pipe(takeUntil(this.destroy$)).subscribe({
-  //       next: (allMembers) => {
-  //         console.log('All team members:', allMembers);
-  //         const joinRequests = allMembers.filter(member => 
-  //           teamIds.includes(member.teamId) && 
-  //           member.status === 'PENDING' && 
-  //           member.userId !== userId
-  //         );
-  //         console.log('Filtered join requests:', joinRequests);
-
-  //         this.joinRequests = joinRequests.map(request => ({
-  //           id: request.id,
-  //           teamId: request.teamId,
-  //           teamName: userTeams.find(team => team.id === request.teamId)?.name || 'Unknown Team',
-  //           userId: request.userId,
-  //           username: request.username,
-  //           email: request.email,
-  //           createdAt: request.createdAt
-  //         }));
-
-  //         console.log('Final join requests:', this.joinRequests);
-  //         this.loading = false;
-  //       },
-  //       error: (err) => {
-  //         console.error('Failed to load join requests', err);
-  //         this.loading = false;
-  //       }
-  //     });
-  //   },
-  //   error: (err) => {
-  //     console.error('Failed to load user teams', err);
-  //     this.loading = false;
-  //   }
-  // });
-}
 
 respondToInvitation(invitationId: string, status: 'APPROVED' | 'REJECTED'): void {
   // const currentUser = this.authService.getCurrentUser();

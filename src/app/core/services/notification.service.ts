@@ -16,6 +16,7 @@ export interface INotification {
   senderId : string;
   receiverId : string;
   joker_id: string;
+  senderEmail: string
   };
 
 @Injectable({
