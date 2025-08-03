@@ -133,15 +133,15 @@ export class NotificationList implements OnInit, OnDestroy {
   handleNotificationAction(notification: INotification): void {
     switch (notification.requestType) {
       case 'MATCH_INVITATION':
-        // Navigate to match details using joker_id
-        if (notification.joker_id) {
-          this.router.navigate(['/dashboard/matches', notification.joker_id]);
+        // Navigate to match details using jokerId
+        if (notification.jokerId) {
+          this.router.navigate(['/dashboard/matches', notification.jokerId]);
         }
         break;
       case 'JOIN_TEAM_INVITATION':
-        // Navigate to team details using joker_id
-        if (notification.joker_id) {
-          this.router.navigate(['/dashboard/teams', notification.joker_id]);
+        // Navigate to team details using jokerId
+        if (notification.jokerId) {
+          this.router.navigate(['/dashboard/teams', notification.jokerId]);
         }
         break;
       case 'JOIN_TEAM_REQUEST':

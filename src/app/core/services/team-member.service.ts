@@ -29,6 +29,17 @@ export interface ITeam {
   members?: any[]; // Add members property to handle team members from backend
 }
 
+export interface IResponseToJoinRequest {
+  id: string;
+    userId: string;
+    userName: string;
+    email: string;
+    role: TeamMemberRole;
+    status: TeamMemberStatus;
+    teamId: string;
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -179,6 +190,29 @@ export class TeamMemberService {
   }
 
 
+
+  /**
+   * Respond to a join request (alternative endpoint)
+   * @param teamMemberId The ID of the team member request
+   * @param status The status to set for the join request (APPROVED/REJECTED)
+   * @returns Observable with the team member response details
+   */
+  respondToJoinRequestByPath(teamMemberId: string, status: TeamMemberStatus): Observable<IResponseToJoinRequest> {
+    if (!teamMemberId || !status) {
+      return throwError(() => new Error('Team member ID and status are required'));
+    }
+
+    console.log(`Responding to join request ${teamMemberId} with status ${status}`);
+
+    return this.http.get<IResponseToJoinRequest>(
+      `${this.apiUrl}/join-request/respond/${teamMemberId}?status=${status}`
+    ).pipe(
+      catchError(error => {
+        console.error('Error responding to join request:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to respond to join request'));
+      })
+    );
+  }
 
   
 }

@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TeamService, ITeamMember, TeamMemberStatus } from '../../../core/services/team.service';
+import { TeamMemberService } from '../../../core/services/team-member.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService,INotification } from '../../../core/services/notification.service';
 
@@ -34,6 +35,7 @@ export class TeamRequests implements OnInit, OnDestroy {
 
   constructor(
     private teamService: TeamService,
+    private teamMemberService: TeamMemberService,
     private authService: AuthService,
     private notificationService: NotificationService,
     private router: Router
@@ -71,11 +73,13 @@ export class TeamRequests implements OnInit, OnDestroy {
                 requestMessage: notification.requestMessage,
                 senderId: notification.senderId,
                 receiverId: notification.receiverId,
-                joker_id: notification.joker_id,
+                jokerId: notification.jokerId,
                 senderEmail: notification.senderEmail
               };
               this.joinRequests.push(joinRequest);
               this.requestsCount = this.joinRequests.length;
+              // print the request to console for debugging
+              console.log('Join Request:', joinRequest);
             }
           }
         },
@@ -87,106 +91,58 @@ export class TeamRequests implements OnInit, OnDestroy {
       });
   }
 
-respondToInvitation(invitationId: string, status: 'APPROVED' | 'REJECTED'): void {
-  // const currentUser = this.authService.getCurrentUser();
-  // if (!currentUser) return;
-
-  // // Find the invitation
-  // const invitation = this.pendingInvitations.find(inv => inv.id === invitationId);
-  // if (!invitation) return;
-
-  // console.log('Responding to invitation:', invitation);
-  // console.log('New status:', status);
-
-  // // Update team member status
-  // this.teamService.getAllTeamMembers().pipe(takeUntil(this.destroy$)).subscribe({
-  //   next: (allMembers) => {
-  //     const member = allMembers.find(m => m.id === invitationId);
-  //     if (member) {
-  //       console.log('Found member to update:', member);
-  //       member.status = status;
-  //       member.respondedAt = new Date().toISOString();
-
-  //       // Update in localStorage
-  //       localStorage.setItem('teamMembers', JSON.stringify(allMembers));
-  //       console.log('Updated team members in localStorage');
-
-  //       // Create notification for team organizer
-  //       this.notificationService.createApprovalNotification(
-  //         member.invitedBy || 0,
-  //         'team invitation',
-  //         invitation.teamName
-  //       ).subscribe();
-
-  //       this.successMessage = status === 'APPROVED' 
-  //         ? `Successfully joined ${invitation.teamName}!` 
-  //         : `Declined invitation to ${invitation.teamName}`;
-
-  //       // Remove from pending invitations
-  //       this.pendingInvitations = this.pendingInvitations.filter(inv => inv.id !== invitationId);
-
-  //       setTimeout(() => this.successMessage = null, 3000);
-  //     } else {
-  //       console.error('Member not found for invitation ID:', invitationId);
-  //       this.errorMessage = 'Invitation not found';
-  //     }
-  //   },
-  //   error: (err) => {
-  //     console.error('Failed to respond to invitation', err);
-  //     this.errorMessage = 'Failed to respond to invitation';
-  //   }
-  // });
+respondToInvitation(teamMemberId: string, status: 'APPROVED' | 'REJECTED'): void {
+  
 }
 
-respondToJoinRequest(requestId: string, status: 'APPROVED' | 'REJECTED'): void {
-  // const currentUser = this.authService.getCurrentUser();
-  // if (!currentUser) return;
+respondToJoinRequest(teamMemberId: string, status: 'APPROVED' | 'REJECTED'): void {
+  console.log('Responding to join request:', teamMemberId, 'with status:', status);
+  const currentUser = this.authService.getCurrentUser();
+  if (!currentUser) {
+    this.errorMessage = 'User not authenticated';
+    return;
+  }
 
-  // // Find the request
-  // const request = this.joinRequests.find(req => req.id === requestId);
-  // if (!request) return;
+  if (!teamMemberId || !status) {
+    this.errorMessage = 'Team member ID and status are required';
+    return;
+  }
 
-  // console.log('Responding to join request:', request);
-  // console.log('New status:', status);
+  console.log('Responding to join request:', teamMemberId, 'with status:', status);
 
-  // // Update team member status
-  // this.teamService.getAllTeamMembers().pipe(takeUntil(this.destroy$)).subscribe({
-  //   next: (allMembers) => {
-  //     const member = allMembers.find(m => m.id === requestId);
-  //     if (member) {
-  //       console.log('Found member to update:', member);
-  //       member.status = status;
-  //       member.respondedAt = new Date().toISOString();
+  // Show loading state
+  this.loading = true;
 
-  //       // Update in localStorage
-  //       localStorage.setItem('teamMembers', JSON.stringify(allMembers));
-  //       console.log('Updated team members in localStorage');
+  // Call the service to respond to the join request
+  this.teamMemberService.respondToJoinRequestByPath(teamMemberId, status as TeamMemberStatus)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (response) => {
+        console.log('Join request response:', response);
+        
+        this.successMessage = status === 'APPROVED' 
+          ? `Successfully approved ${response.userName}'s request to join the team!` 
+          : `Rejected ${response.userName}'s request to join the team`;
 
-  //       // Create notification for the user who requested to join
-  //       // this.notificationService.createApprovalNotification(
-  //       //   member.userId,
-  //       //   'team join request',
-  //       //   request.teamName
-  //       // ).subscribe();
+      
+        // Clear success message after 3 seconds
+        setTimeout(() => this.successMessage = null, 3000);
+        
+        this.loading = false;
+        this.loadRequests();
 
-  //       this.successMessage = status === 'APPROVED' 
-  //         ? `Approved ${request.username}'s request to join ${request.teamName}!` 
-  //         : `Rejected ${request.username}'s request to join ${request.teamName}`;
-
-  //       // Remove from join requests
-  //       this.joinRequests = this.joinRequests.filter(req => req.id !== requestId);
-
-  //       setTimeout(() => this.successMessage = null, 3000);
-  //     } else {
-  //       console.error('Member not found for request ID:', requestId);
-  //       this.errorMessage = 'Request not found';
-  //     }
-  //   },
-  //   error: (err) => {
-  //     console.error('Failed to respond to join request', err);
-  //     this.errorMessage = 'Failed to respond to join request';
-  //   }
-  // });
+      },
+      error: (err) => {
+        console.error('Failed to respond to join request', err);
+        this.errorMessage = err.message || 'Failed to respond to join request';
+        this.loading = false;
+        
+        // Clear error message after 5 seconds
+        setTimeout(() => this.errorMessage = null, 5000);
+      }
+    });
+    // update the requests list from the database service
+    // this.loadRequests();
 }
 
 getTimeAgo(dateString: string): string {

@@ -15,7 +15,7 @@ export interface INotification {
   requestMessage: string;
   senderId : string;
   receiverId : string;
-  joker_id: string;
+  jokerId: string;
   senderEmail: string
   };
 
