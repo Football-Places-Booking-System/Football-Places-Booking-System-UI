@@ -1,26 +1,27 @@
 <div class="match-participants-container">
+  <!-- Error Message -->
   <div *ngIf="errorMessage" class="error-message">
     {{ errorMessage }}
   </div>
 
+  <!-- Main Content -->
   <div *ngIf="combinedData$ | async as data; else loadingOrError">
     <div *ngIf="data.match">
       <h2>Match Details</h2>
       <div class="match-details">
-        <!-- Displaying properties available in IBookingMatch -->
         <p><strong>Booking ID:</strong> {{ data.match.id }}</p>
         <p><strong>Place ID:</strong> {{ data.match.placeId }}</p>
-        <p><strong>Organizer ID:</strong> {{ data.match.organizerId }}</p>
+        <p><strong>Organizer ID:</strong> {{ data.match.userId }}</p>
         <p><strong>Team ID:</strong> {{ data.match.teamId }}</p>
-        <p><strong>Match Date:</strong> {{ data.match.matchDate | date:'medium' }}</p>
-        <p><strong>Start Time:</strong> {{ data.match.startTime }}</p>
-        <p><strong>End Time:</strong> {{ data.match.endTime }}</p>
+        <p><strong>Match Date:</strong> {{ data.match.startTime | date:'mediumDate' }}</p>
+        <p><strong>Start Time:</strong> {{ data.match.startTime | date:'shortTime' }}</p>
+        <p><strong>End Time:</strong> {{ data.match.endTime | date:'shortTime' }}</p>
         <p><strong>Status:</strong> {{ data.match.status }}</p>
         <p><strong>Created At:</strong> {{ data.match.createdAt | date:'medium' }}</p>
       </div>
 
-      <!-- Corrected: Access teamId directly from data -->
-      <h3>List of Players (from Team ID: {{ data.teamId || 'Selected Team' }})</h3>
+      <!-- Players Table -->
+      <h3>Team Players (Team ID: {{ data.teamId || 'Selected Team' }})</h3>
       <div class="players-table-wrapper">
         <table class="players-table">
           <thead>
@@ -28,7 +29,7 @@
               <th>Username</th>
               <th>Email</th>
               <th>Role</th>
-              <th>Invite Button</th>
+              <th>Invite</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -38,15 +39,13 @@
               <td>{{ player.email }}</td>
               <td>{{ player.role }}</td>
               <td>
-                <button
-                  (click)="invitePlayer(player.userId.toString())"
-                  [disabled]="isPlayerInvited(player.userId.toString(), data.participants)"
-                  [ngClass]="{'invited-button': isPlayerInvited(player.userId.toString(), data.participants)}"
-                >
-                  {{ isPlayerInvited(player.userId.toString(), data.participants) ? 'Invited' : 'Invite' }}
+                <button (click)="invitePlayer(player.email)"
+                  [disabled]="isPlayerInvited(player.userId, data.participants)"
+                  [ngClass]="{'invited-button': isPlayerInvited(player.userId, data.participants)}">
+                  {{ isPlayerInvited(player.userId, data.participants) ? 'Invited' : 'Invite' }}
                 </button>
               </td>
-              <td>{{ getPlayerInvitationStatus(player.userId.toString(), data.participants) }}</td>
+              <td>{{ getPlayerInvitationStatus(player.userId, data.participants) }}</td>
             </tr>
             <tr *ngIf="data.players.length === 0">
               <td colspan="5" class="no-players">No players found for this team.</td>
@@ -55,12 +54,17 @@
         </table>
       </div>
     </div>
+
+    <!-- No match found -->
     <div *ngIf="!data.match && !errorMessage" class="no-data">
       No match data available. Please check the match ID.
     </div>
   </div>
 
+  <!-- Loading state -->
   <ng-template #loadingOrError>
-    <div class="loading-state" *ngIf="!errorMessage">Loading match and player data...</div>
+    <div class="loading-state" *ngIf="!errorMessage">
+      Loading match and player data...
+    </div>
   </ng-template>
 </div>

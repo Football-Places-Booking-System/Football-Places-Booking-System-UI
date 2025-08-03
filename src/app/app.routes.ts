@@ -121,26 +121,19 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'matches/schedule',
-        loadComponent: () =>
-          import('./features/matches/schedule-match/schedule-match').then(
-            (m) => m.ScheduleMatch
-          ),
-      },
-      {
         path: 'matches/:id',
         loadComponent: () =>
           import('./features/matches/match-details/match-details').then(
             (m) => m.MatchDetails
           ),
       },
-      {
-        path: 'matches/:id/participants/:teamId',
-        loadComponent: () =>
-          import('./features/matches/match-participants/match-participants').then(
-            (m) => m.MatchParticipants
-          ),
-      },
+      // {
+      //   path: 'matches/:id/participants/:teamId',
+      //   loadComponent: () =>
+      //     import('./features/matches/match-participants/match-participants').then(
+      //       (m) => m.MatchParticipants
+      //     ),
+      // },
       {
         path: 'notifications',
         loadComponent: () =>
