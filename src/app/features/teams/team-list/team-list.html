@@ -38,8 +38,20 @@
       <ng-template #teamListContent>
         <mat-card *ngFor="let team of teams" class="team-card-item" (click)="goToTeamDetails(team.id)" appearance="outlined">
           <mat-card-header>
-            <mat-card-title class="team-item-name">{{ team.name }}</mat-card-title>
-            <mat-card-subtitle class="team-item-description">{{ team.description || 'No description provided.' }}</mat-card-subtitle>
+            <div class="team-header-content">
+              <div class="team-title-section">
+                <mat-card-title class="team-item-name">{{ team.name }}</mat-card-title>
+                <div class="role-indicator" *ngIf="getUserRole(team.id)">
+                  <mat-icon 
+                    [title]="getUserRole(team.id) === 'ORGANIZER' ? 'You are an Organizer' : 'You are a Member'"
+                    [class]="getUserRole(team.id) === 'ORGANIZER' ? 'organizer-icon' : 'member-icon'">
+                    {{ getUserRole(team.id) === 'ORGANIZER' ? 'star' : 'person' }}
+                  </mat-icon>
+                  <span class="role-text">{{ getUserRole(team.id) === 'ORGANIZER' ? 'Organizer' : 'Member' }}</span>
+                </div>
+              </div>
+              <mat-card-subtitle class="team-item-description">{{ team.description || 'No description provided.' }}</mat-card-subtitle>
+            </div>
           </mat-card-header>
           <mat-card-actions align="end">
             <button mat-button class="delete-button" (click)="deleteTeam(team.id); $event.stopPropagation()">Delete</button>

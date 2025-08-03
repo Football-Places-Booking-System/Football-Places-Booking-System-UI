@@ -156,12 +156,23 @@
           <p><strong>Name:</strong> {{ member.username || 'Unknown User' }}</p>
           <p><strong>Email:</strong> {{ member.email || 'N/A' }}</p>
           <p><strong>Role:</strong> {{ member.role }}</p>
-          <p><strong>Status:</strong> {{ member.status }}</p>
         </div>
-        <button *ngIf="isOrganizer" (click)="removeTeamMember(member.id)" class="remove-button">
-          <mat-icon>remove_circle</mat-icon>
-          Remove
-        </button>
+        <div class="member-actions" *ngIf="isOrganizer">
+          <!-- Make Organizer button - only show for regular members -->
+          <button *ngIf="canMakeOrganizer(member)" 
+                  (click)="makeOrganizer(member)" 
+                  class="make-organizer-button">
+            <mat-icon>admin_panel_settings</mat-icon>
+            Make Organizer
+          </button>
+          <!-- Remove button - only show for non-organizer members -->
+          <button *ngIf="canRemoveMember(member)" 
+                  (click)="removeTeamMember(member.id)" 
+                  class="remove-button">
+            <mat-icon>remove_circle</mat-icon>
+            Remove
+          </button>
+        </div>
       </div>
     </div>
 

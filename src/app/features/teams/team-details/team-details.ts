@@ -6,7 +6,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ITeam, ITeamMember, TeamMemberRole, TeamMemberStatus, TeamService } from '../../../core/services/team.service';
-import { TeamMemberService } from '../../../core/services/team-member.service';
+import { TeamMemberService, ITeamMemberUpdateRequest } from '../../../core/services/team-member.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
@@ -121,9 +121,10 @@ export class TeamDetails implements OnInit, OnDestroy {
     console.log(`TeamDetailsComponent: Attempting to load team members for team ID: "${teamId}"`);
     this.teamService.getTeamMembers(teamId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (members) => {
-        this.teamMembers = members;
-        console.log('TeamDetailsComponent: Team members loaded:', this.teamMembers);
-
+        // Filter to show only approved team members
+        this.teamMembers = members.filter(member => member.status === 'APPROVED');
+        console.log('TeamDetailsComponent: Team members loaded (approved only):', this.teamMembers);
+        console.log('TeamDetailsComponent: Total members from API:', members.length, 'Approved members:', this.teamMembers.length);
       },
       error: (err: any) => {
         console.error('TeamDetailsComponent: Error loading team members:', err);
@@ -265,6 +266,49 @@ export class TeamDetails implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  makeOrganizer(member: ITeamMember): void {
+    if (confirm(`Are you sure you want to make ${member.username} an organizer of this team?`)) {
+      console.log(`TeamDetailsComponent: Making ${member.username} an organizer`);
+
+      const updateRequest: ITeamMemberUpdateRequest = {
+        id: member.id,
+        role: 'ORGANIZER',
+        status: member.status
+      };
+
+      this.teamMemberService.updateTeamMember(updateRequest).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (updatedMember) => {
+          // Update the member in the local array
+          const memberIndex = this.teamMembers.findIndex(m => m.id === member.id);
+          if (memberIndex !== -1) {
+            this.teamMembers[memberIndex] = updatedMember;
+          }
+          this.successMessage = `${member.username} is now an organizer!`;
+          this.errorMessage = null;
+          setTimeout(() => this.successMessage = null, 3000);
+          console.log(`TeamDetailsComponent: ${member.username} promoted to organizer successfully.`);
+        },
+        error: (error) => {
+          console.error('Error promoting member to organizer:', error);
+          this.errorMessage = error.message || 'Failed to promote member to organizer';
+          this.successMessage = null;
+          setTimeout(() => this.errorMessage = null, 5000);
+        }
+      });
+    }
+  }
+
+  // Helper method to check if a member can be removed
+  canRemoveMember(member: ITeamMember): boolean {
+    return this.isOrganizer && member.role !== 'ORGANIZER';
+  }
+
+  // Helper method to check if a member can be made organizer
+  canMakeOrganizer(member: ITeamMember): boolean {
+    // Only show "Make Organizer" button for approved members who are NOT already organizers
+    return this.isOrganizer && member.status === 'APPROVED' && member.role !== 'ORGANIZER';
   }
 
   goToInvitePlayer(teamId: string): void {

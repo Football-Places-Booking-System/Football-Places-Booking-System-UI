@@ -39,6 +39,12 @@ export interface IResponseToJoinRequest {
     teamId: string;
 }
 
+export interface ITeamMemberUpdateRequest {
+  id: string;
+  role: TeamMemberRole;
+  status: TeamMemberStatus;
+}
+
 
 @Injectable({
   providedIn: 'root'
@@ -95,9 +101,9 @@ export class TeamMemberService {
   }
 
   // Team Member Management
-  askToJoinTeam(teamId: string): Observable<ITeamMember> {
-    return this.requestToJoinTeam(teamId);
-  }
+  // askToJoinTeam(teamId: string): Observable<ITeamMember> {
+  //   return this.requestToJoinTeam(teamId);
+  // }
 
   /**
    * Request to join a team
@@ -241,6 +247,29 @@ export class TeamMemberService {
       catchError(error => {
         console.error('Error responding to team invitation:', error);
         return throwError(() => new Error(error.error?.message || 'Failed to respond to team invitation'));
+      })
+    );
+  }
+
+  /**
+   * Update a team member (role and status)
+   * @param updateRequest The team member update request containing id, role, and status
+   * @returns Observable with the updated team member response
+   */
+  updateTeamMember(updateRequest: ITeamMemberUpdateRequest): Observable<ITeamMember> {
+    if (!updateRequest.id || !updateRequest.role || !updateRequest.status) {
+      return throwError(() => new Error('Team member ID, role, and status are required'));
+    }
+
+    console.log(`Updating team member ${updateRequest.id} with role ${updateRequest.role} and status ${updateRequest.status}`);
+
+    return this.http.put<ITeamMember>(this.apiUrl, updateRequest).pipe(
+      tap((response) => {
+        console.log('✅ Team member updated successfully:', response);
+      }),
+      catchError(error => {
+        console.error('Error updating team member:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to update team member'));
       })
     );
   }

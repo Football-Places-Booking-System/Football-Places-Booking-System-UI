@@ -31,6 +31,7 @@ export class TeamList implements OnInit, OnDestroy {
   currentUserId: string | null = null;
   isMemberMap: { [teamId: string]: boolean } = {};
   isRequestingJoin: { [teamId: string]: boolean } = {};
+  userRoleMap: { [teamId: string]: 'ORGANIZER' | 'MEMBER' | null } = {};
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -117,12 +118,17 @@ export class TeamList implements OnInit, OnDestroy {
     console.log('TeamList: loadTeams() called');
     this.isLoading = true;
     this.teams = []; // Clear existing teams
+    this.userRoleMap = {}; // Clear existing roles
 
     this.teamService.getAllTeams().pipe(takeUntil(this.destroy$)).subscribe({
       next: (teams) => {
         console.log('TeamList: Received teams from service:', teams);
         console.log('TeamList: Number of teams received:', teams.length);
         this.teams = teams;
+        
+        // Load user roles for each team
+        this.loadUserRoles();
+        
         this.successMessage = null;
         this.errorMessage = null;
         this.isLoading = false;
@@ -138,6 +144,54 @@ export class TeamList implements OnInit, OnDestroy {
 
   goToTeamDetails(id: string): void {
     this.router.navigate(['/dashboard/teams', id]);
+  }
+
+  loadUserRoles(): void {
+    console.log('TeamList: loadUserRoles() called');
+    if (!this.currentUserId) {
+      console.log('TeamList: No current user ID, skipping role loading');
+      return;
+    }
+
+    // Check user role for each team where user is a member
+    this.teams.forEach(team => {
+      // First check if user is a member of this team
+      const userMember = team.members?.find(member => 
+        member.userId === this.currentUserId && 
+        member.status === 'APPROVED'
+      );
+
+      if (!userMember) {
+        // User is not a member of this team
+        console.log(`TeamList: User is not a member of team ${team.id}`);
+        this.userRoleMap[team.id] = null;
+        return;
+      }
+
+      // Check if user is the team creator (automatically organizer)
+      if (team.createdBy === this.currentUserId) {
+        console.log(`TeamList: User is creator/organizer of team ${team.id}`);
+        this.userRoleMap[team.id] = 'ORGANIZER';
+        return;
+      }
+
+      // For other members, check organizer status via API
+      this.teamMemberService.isOrganizer(this.currentUserId!, team.id).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (isOrganizer) => {
+          console.log(`TeamList: User role for team ${team.id}:`, isOrganizer ? 'ORGANIZER' : 'MEMBER');
+          this.userRoleMap[team.id] = isOrganizer ? 'ORGANIZER' : 'MEMBER';
+        },
+        error: (err) => {
+          console.error(`TeamList: Error checking role for team ${team.id}:`, err);
+          // Fallback: assume member role if API call fails
+          this.userRoleMap[team.id] = 'MEMBER';
+        }
+      });
+    });
+  }
+
+  getUserRole(teamId: string): 'ORGANIZER' | 'MEMBER' | null {
+    return this.userRoleMap[teamId] || null;
   }
 
   goToCreateTeam(): void {

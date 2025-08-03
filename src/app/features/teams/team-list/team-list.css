@@ -101,6 +101,50 @@
     align-items: flex-start; /* Align header content to start */
 }
 
+/* Team header content layout */
+.team-header-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.team-title-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+/* Role indicator styles */
+.role-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.organizer-icon {
+    color: #ffd700 !important; /* Gold color for organizer star */
+    font-size: 1.2rem !important;
+}
+
+.member-icon {
+    color: #1976d2 !important; /* Blue color for member person icon */
+    font-size: 1.2rem !important;
+}
+
+.role-text {
+    color: var(--text-dark);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
 .mat-mdc-card-title {
     font-size: 1.3rem !important;
     font-weight: 600 !important;
@@ -216,5 +260,22 @@
     .delete-button {
         padding: 0.3rem 0.6rem !important;
         font-size: 0.75rem !important;
+    }
+    
+    /* Responsive role indicator styles */
+    .team-title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .role-indicator {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.75rem;
+    }
+    
+    .organizer-icon,
+    .member-icon {
+        font-size: 1rem !important;
     }
 }
