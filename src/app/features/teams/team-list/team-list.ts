@@ -9,6 +9,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -20,7 +22,9 @@ import { CommonModule } from '@angular/common';
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatFormFieldModule
   ]
 })
 export class TeamList implements OnInit, OnDestroy {
@@ -32,6 +36,7 @@ export class TeamList implements OnInit, OnDestroy {
   isMemberMap: { [teamId: string]: boolean } = {};
   isRequestingJoin: { [teamId: string]: boolean } = {};
   userRoleMap: { [teamId: string]: 'ORGANIZER' | 'MEMBER' | null } = {};
+  teamViewFilter: 'MY_TEAMS' | 'OTHER_TEAMS' = 'MY_TEAMS';
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -115,25 +120,37 @@ export class TeamList implements OnInit, OnDestroy {
   }
 
   loadTeams(): void {
-    console.log('TeamList: loadTeams() called');
+    console.log('TeamList: loadTeams() called with filter:', this.teamViewFilter);
     this.isLoading = true;
     this.teams = []; // Clear existing teams
     this.userRoleMap = {}; // Clear existing roles
 
-    this.teamService.getAllTeams().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (teams) => {
+    // Choose service method based on filter
+    const teamsObservable = this.teamViewFilter === 'MY_TEAMS' 
+      ? this.teamService.getUserTeams()
+      : this.teamService.getAllTeams();
+
+    teamsObservable.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (teams: ITeam[]) => {
         console.log('TeamList: Received teams from service:', teams);
         console.log('TeamList: Number of teams received:', teams.length);
         this.teams = teams;
         
-        // Load user roles for each team
-        this.loadUserRoles();
+        // Only load user roles for "My Teams" view
+        if (this.teamViewFilter === 'MY_TEAMS') {
+          this.loadUserRoles();
+        } else {
+          // For "Other Teams", set all roles to null (no role indicators)
+          this.teams.forEach(team => {
+            this.userRoleMap[team.id] = null;
+          });
+        }
         
         this.successMessage = null;
         this.errorMessage = null;
         this.isLoading = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('TeamList: Error loading teams:', err);
         this.errorMessage = 'Failed to load teams. Please try again.';
         this.successMessage = null;
@@ -192,6 +209,12 @@ export class TeamList implements OnInit, OnDestroy {
 
   getUserRole(teamId: string): 'ORGANIZER' | 'MEMBER' | null {
     return this.userRoleMap[teamId] || null;
+  }
+
+  onTeamViewFilterChange(newFilter: 'MY_TEAMS' | 'OTHER_TEAMS'): void {
+    console.log('TeamList: Filter changed to:', newFilter);
+    this.teamViewFilter = newFilter;
+    this.loadTeams();
   }
 
   goToCreateTeam(): void {

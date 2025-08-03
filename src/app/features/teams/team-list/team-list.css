@@ -44,6 +44,21 @@
   font-weight: 500;
 }
 
+/* Header Actions Section */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.team-filter {
+  min-width: 140px;
+}
+
+.team-filter .mat-mdc-form-field-wrapper {
+  padding-bottom: 0 !important;
+}
+
 .create-team-btn {
   background-color: #1976d2;
   border: 1px solid #1976d2;
@@ -187,6 +202,31 @@
     background-color: #790404 !important;
 }
 
+/* Join button styles (mat-button) */
+.join-button {
+    background-color: var(--primary-teal) !important;
+    color: white !important;
+    padding: 0.4rem 0.8rem !important;
+    border-radius: 0.5rem !important;
+    font-weight: 500 !important;
+    border: none !important; /* Ensure no border */
+    cursor: pointer !important;
+    transition: background-color 0.2s ease-in-out !important;
+    min-width: unset !important; /* Override Material min-width */
+    line-height: 1 !important; /* Adjust line height for button text */
+    height: auto !important; /* Adjust height */
+}
+
+.join-button:hover:not(:disabled) {
+    background-color: #17a085 !important;
+}
+
+.join-button:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed !important;
+}
+
 /* No teams message */
 .no-teams-message {
     text-align: center;
@@ -260,6 +300,27 @@
     .delete-button {
         padding: 0.3rem 0.6rem !important;
         font-size: 0.75rem !important;
+    }
+    
+    .join-button {
+        padding: 0.3rem 0.6rem !important;
+        font-size: 0.75rem !important;
+    }
+    
+    /* Responsive header styles */
+    .team-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .team-filter {
+        min-width: 120px;
     }
     
     /* Responsive role indicator styles */
