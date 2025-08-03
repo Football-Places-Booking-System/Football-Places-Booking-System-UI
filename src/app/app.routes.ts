@@ -100,7 +100,7 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'bookings/:id',
+        path: 'bookings/details/:id',
         loadComponent: () =>
           import('./features/bookings/booking-details/booking-details').then(
             (m) => m.BookingDetailsComponent

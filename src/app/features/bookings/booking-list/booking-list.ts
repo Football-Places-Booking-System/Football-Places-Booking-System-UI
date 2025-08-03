@@ -11,8 +11,8 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking.service';
-import { MatchService, IBookingMatch, IMatchParticipant } from '../../../core/services/match.service';
-import { TeamService, ITeamMember } from '../../../core/services/team.service';
+import { MatchService, IBookingMatch } from '../../../core/services/match.service';
+import { TeamService } from '../../../core/services/team.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -35,13 +35,14 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class BookingListComponent implements OnInit {
   upcomingBookings: IBooking[] = [];
+  oldBookings: IBooking[] = [];
+  cancelledBookings: IBooking[] = [];
   currentUser: any;
 
   successMessage: string | null = null;
   errorMessage: string | null = null;
   isLoading: boolean = false;
 
-  // Table data
   displayedColumns: string[] = ['place', 'team', 'date', 'time', 'status', 'actions'];
 
   constructor(
@@ -66,15 +67,30 @@ export class BookingListComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // Load upcoming bookings only
-    this.bookingService.getUpcomingBookings(this.currentUser.id).subscribe({
+    // ✅ Load bookings where user is organizer
+    this.bookingService.getMyMatchesAsOrganizer().subscribe({
       next: (bookings) => {
-        this.upcomingBookings = bookings;
+        const now = new Date();
+
+        // Split into upcoming and old bookings
+        this.upcomingBookings = bookings.filter(b => new Date(b.startTime) > now);
+        this.oldBookings = bookings.filter(b => new Date(b.startTime) <= now);
+
+
+        this.cancelledBookings = bookings.filter(b => b.status === 'CANCELLED');
+        this.upcomingBookings = bookings.filter(b => b.status !== 'CANCELLED' && new Date(b.startTime) > new Date());
+        this.oldBookings = bookings.filter(b => b.status !== 'CANCELLED' && new Date(b.startTime) <= new Date());
+
+
+        // Sort each list by date
+        this.upcomingBookings.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+        this.oldBookings.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading upcoming bookings:', error);
-        this.errorMessage = 'Failed to load upcoming bookings.';
+        console.error('Error loading organizer bookings:', error);
+        this.errorMessage = 'Failed to load bookings where you are organizer.';
         this.isLoading = false;
       }
     });
@@ -82,54 +98,38 @@ export class BookingListComponent implements OnInit {
 
   getStatusColor(status: BookingStatus): string {
     switch (status) {
-      case 'CONFIRMED':
-        return 'success';
-      case 'PENDING_PAYMENT':
-        return 'warning';
-      case 'PENDING':
-        return 'info';
-      case 'CANCELLED':
-        return 'error';
-      default:
-        return 'default';
+      case 'CONFIRMED': return 'success';
+      case 'PENDING_PAYMENT': return 'warning';
+      case 'PENDING': return 'info';
+      case 'CANCELLED': return 'error';
+      default: return 'default';
     }
   }
 
   getStatusText(status: BookingStatus): string {
     switch (status) {
-      case 'CONFIRMED':
-        return 'Confirmed';
-      case 'PENDING_PAYMENT':
-        return 'Pending Payment';
-      case 'PENDING':
-        return 'Pending';
-      case 'CANCELLED':
-        return 'Cancelled';
-      default:
-        return status;
+      case 'CONFIRMED': return 'Confirmed';
+      case 'PENDING_PAYMENT': return 'Pending Payment';
+      case 'PENDING': return 'Pending';
+      case 'CANCELLED': return 'Cancelled';
+      default: return status;
     }
   }
 
   formatDate(date: string): string {
     return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+      year: 'numeric', month: 'short', day: 'numeric'
     });
   }
 
   formatTime(date: string): string {
     return new Date(date).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+      hour: '2-digit', minute: '2-digit', hour12: true
     });
   }
 
   formatDateTime(startTime: string, endTime: string): string {
-    const start = this.formatTime(startTime);
-    const end = this.formatTime(endTime);
-    return `${start} - ${end}`;
+    return `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
   }
 
   cancelBooking(booking: IBooking): void {
@@ -137,17 +137,13 @@ export class BookingListComponent implements OnInit {
       this.bookingService.cancelBooking(booking.id).subscribe({
         next: () => {
           this.successMessage = 'Booking cancelled successfully!';
-          this.loadBookings(); // Reload bookings
-          setTimeout(() => {
-            this.successMessage = null;
-          }, 3000);
+          this.loadBookings(); 
+          setTimeout(() => { this.successMessage = null; }, 3000);
         },
         error: (error) => {
           console.error('Error cancelling booking:', error);
           this.errorMessage = 'Failed to cancel booking. Please try again.';
-          setTimeout(() => {
-            this.errorMessage = null;
-          }, 3000);
+          setTimeout(() => { this.errorMessage = null; }, 3000);
         }
       });
     }
@@ -158,12 +154,11 @@ export class BookingListComponent implements OnInit {
   }
 
   viewBookingDetails(booking: IBooking): void {
-    this.router.navigate(['/dashboard/bookings', booking.id]);
+    this.router.navigate(['/dashboard/bookings/details', booking.id]);
   }
 
   canCancelBooking(booking: IBooking): boolean {
-    if (!this.currentUser) return false;
-    return booking.userId === this.currentUser.id && booking.status !== 'CANCELLED';
+    return this.currentUser && booking.userId === this.currentUser.id && booking.status !== 'CANCELLED';
   }
 
   isUpcoming(booking: IBooking): boolean {
@@ -171,13 +166,8 @@ export class BookingListComponent implements OnInit {
   }
 
   getBookingCardClass(booking: IBooking): string {
-    if (booking.status === 'CANCELLED') {
-      return 'cancelled-booking';
-    }
-    if (this.isUpcoming(booking)) {
-      return 'upcoming-booking';
-    }
-    return 'past-booking';
+    if (booking.status === 'CANCELLED') return 'cancelled-booking';
+    return this.isUpcoming(booking) ? 'upcoming-booking' : 'past-booking';
   }
 
   viewMatchParticipants(booking: IBooking): void {

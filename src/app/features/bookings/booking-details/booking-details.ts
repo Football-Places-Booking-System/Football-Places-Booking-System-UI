@@ -6,8 +6,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { TeamService } from '../../../core/services/team.service';
 
 @Component({
   selector: 'app-booking-details',
@@ -18,7 +20,8 @@ import { AuthService } from '../../../core/services/auth.service';
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatTooltipModule
   ],
   templateUrl: './booking-details.html',
   styleUrls: ['./booking-details.css']
@@ -30,12 +33,14 @@ export class BookingDetailsComponent implements OnInit {
   successMessage: string | null = null;
   errorMessage: string | null = null;
   isLoading: boolean = false;
+  isOrganizer: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private bookingService: BookingService,
-    private authService: AuthService
+    private authService: AuthService,
+    private teamService: TeamService
   ) {}
 
   ngOnInit(): void {
@@ -51,10 +56,23 @@ export class BookingDetailsComponent implements OnInit {
     }
 
     this.isLoading = true;
-    this.bookingService.getBookingById(bookingId).subscribe({
+    this.bookingService.getBookingDetailsById(bookingId).subscribe({
       next: (booking) => {
         if (booking) {
           this.booking = booking;
+
+          // Check if current user is an organizer in this team
+          this.teamService.getTeamMembers(booking.teamId).subscribe({
+            next: (members) => {
+              this.isOrganizer = members.some(
+                m => m.userId === this.currentUser.id && m.role === 'ORGANIZER'
+              );
+            },
+            error: () => {
+              this.isOrganizer = false;
+            }
+          });
+
         } else {
           this.errorMessage = 'Booking not found.';
         }
@@ -67,6 +85,7 @@ export class BookingDetailsComponent implements OnInit {
       }
     });
   }
+
 
   getStatusColor(status: BookingStatus): string {
     switch (status) {
@@ -143,10 +162,27 @@ export class BookingDetailsComponent implements OnInit {
     }
   }
 
-  canCancelBooking(): boolean {
-    if (!this.booking || !this.currentUser) return false;
-    return this.booking.userId === this.currentUser.id && this.booking.status !== 'CANCELLED';
-  }
+  get isCancelableByTime(): boolean {
+  if (!this.booking) return false;
+
+  const now = new Date().getTime();
+  const matchStart = new Date(this.booking.startTime).getTime();
+  const threeHoursInMs = 3 * 60 * 60 * 1000;
+
+  return matchStart - now > threeHoursInMs;
+}
+
+canCancelBooking(): boolean {
+  if (!this.booking || !this.currentUser) return false;
+
+  return (
+    this.isOrganizer &&
+    this.booking.status !== 'CANCELLED' &&
+    this.isCancelableByTime
+  );
+}
+
+
 
   goBack(): void {
     // Check if user is admin and navigate accordingly
