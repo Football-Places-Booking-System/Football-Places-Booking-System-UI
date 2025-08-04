@@ -47,15 +47,13 @@ export class CreateTeam implements OnInit {
         return;
       }
       // Build team data to send to the service
-      const teamData: Omit<ITeam, 'id' | 'createdAt'> = {
+      const teamData: Omit<ITeam, 'id' | 'createdAt' | 'createdBy' | 'createdByUsername' | 'members'> = {
         name: this.createTeamForm.value.name,
-        description: this.createTeamForm.value.description,
-        createdBy: currentUser.id,
-        members: []
+        description: this.createTeamForm.value.description
       };
 
       // Call the createTeam method from the service
-      this.teamService.createTeam(teamData, currentUser.id, currentUser.username, currentUser.email)
+      this.teamService.createTeam(teamData)
         .pipe(takeUntil(this.destroy$)) // Ensure subscription is cleaned up
         .subscribe({
           next: (newTeam) => {

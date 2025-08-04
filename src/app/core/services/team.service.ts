@@ -24,6 +24,7 @@ export interface ITeam {
   name: string;
   description?: string;
   createdBy: string; // FK to User(id)
+  createdByUsername: string;
   createdAt: string;
   updatedAt?: string;
   members?: any[]; // Add members property to handle team members from backend
@@ -129,13 +130,10 @@ export class TeamService {
 
 
   // Done
-  createTeam(teamData: { name: string; description?: string }, creatorId: string, creatorUsername: string, creatorEmail: string): Observable<ITeam> {
+  createTeam(teamData: { name: string; description?: string }): Observable<ITeam> {
     const teamRequest = {
       name: teamData.name,
-      description: teamData.description || '',
-      createdBy: creatorId,
-      creatorUsername,
-      creatorEmail
+      description: teamData.description || ''
     };
 
     return this.http.post<ITeam>(this.apiUrl, teamRequest).pipe(

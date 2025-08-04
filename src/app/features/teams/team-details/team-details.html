@@ -15,7 +15,7 @@
     <div *ngIf="!isEditing" class="details-card">
       <p><strong>Name:</strong> {{ team.name }}</p>
       <p><strong>Description:</strong> {{ team.description || 'N/A' }}</p>
-      <p><strong>Created By:</strong> {{ team.createdBy }}</p>
+      <p><strong>Created By:</strong> {{ team.createdByUsername }}</p>
       <p><strong>Created At:</strong> {{ team.createdAt | date:'medium' }}</p>
 
       <div class="button-group">
