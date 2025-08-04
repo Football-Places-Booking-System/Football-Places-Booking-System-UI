@@ -208,7 +208,13 @@ export class NotificationList implements OnInit, OnDestroy {
 
   private handleJoinTeamRequest(notification: INotification, status: 'APPROVED' | 'REJECTED'): void {
     // Use TeamMemberService for join team requests
-    this.teamMemberService.respondToJoinRequestByPath(notification.jokerId, status as TeamMemberStatus)
+    const currentUser = this.authService.getCurrentUser();
+  if (!currentUser) {
+    this.errorMessage = 'User not authenticated';
+    return;
+  }
+
+    this.teamMemberService.respondToJoinRequest(notification.jokerId, status as TeamMemberStatus, currentUser.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -239,7 +245,7 @@ export class NotificationList implements OnInit, OnDestroy {
   private handleMatchInvitation(notification: INotification, status: 'APPROVED' | 'REJECTED'): void {
     // Convert APPROVED/REJECTED to ACCEPTED/DECLINED for match participant service
     const participantStatus = status === 'APPROVED' ? 'ACCEPTED' : 'DECLINED';
-    
+
     // Use MatchParticipantService for match invitations
     this.matchParticipantService.respondToMatchInvitation(notification.jokerId, participantStatus)
       .pipe(takeUntil(this.destroy$))
@@ -255,8 +261,8 @@ export class NotificationList implements OnInit, OnDestroy {
   }
 
   private handleSuccessResponse(status: 'APPROVED' | 'REJECTED', requestType: string): void {
-    this.successMessage = status === 'APPROVED' 
-      ? `Successfully approved the ${requestType}!` 
+    this.successMessage = status === 'APPROVED'
+      ? `Successfully approved the ${requestType}!`
       : `Rejected the ${requestType}`;
 
     // Remove the notification from the list or reload notifications
@@ -264,7 +270,7 @@ export class NotificationList implements OnInit, OnDestroy {
 
     // Clear success message after 3 seconds
     setTimeout(() => this.successMessage = null, 3000);
-    
+
     this.loading = false;
   }
 
@@ -272,7 +278,7 @@ export class NotificationList implements OnInit, OnDestroy {
     console.error(`Failed to respond to ${requestType}`, error);
     this.errorMessage = error.message || `Failed to respond to ${requestType}`;
     this.loading = false;
-    
+
     // Clear error message after 5 seconds
     setTimeout(() => this.errorMessage = null, 5000);
   }

@@ -153,19 +153,21 @@ export class TeamMemberService {
    * @param teamMemberId The ID of the team member request
    * @param status The new status (APPROVED/REJECTED)
    * @param organizerId The ID of the organizer responding to the request
-   * @returns Observable with the updated team member
+   * @returns Observable with void (no content response)
    */
-  respondToJoinRequest(teamMemberId: string, status: TeamMemberStatus, organizerId: string): Observable<ITeamMember> {
+  respondToJoinRequest(teamMemberId: string, status: TeamMemberStatus, organizerId: string): Observable<void> {
     if (!teamMemberId || !status || !organizerId) {
       return throwError(() => new Error('Team member ID, status, and organizer ID are required'));
     }
 
-    console.log(`Updating join request ${teamMemberId} to status ${status}`);
+    console.log(`Updating join request ${teamMemberId} to status ${status} by organizer ${organizerId}`);
 
-    return this.http.patch<ITeamMember>(
-      `${this.apiUrl}/join-request/respond?teamMemberId=${teamMemberId}&status=${status}`,
-      {}
+    return this.http.get<void>(
+      `${this.apiUrl}/join-request/respond/${teamMemberId}/${organizerId}?status=${status}`
     ).pipe(
+      tap(() => {
+        console.log(`✅ Successfully responded to join request ${teamMemberId} with status ${status}`);
+      }),
       catchError(error => {
         console.error('Error responding to join request:', error);
         return throwError(() => new Error(error.error?.message || 'Failed to respond to join request'));
@@ -201,28 +203,28 @@ export class TeamMemberService {
    * Respond to a join request (alternative endpoint)
    * @param teamMemberId The ID of the team member request
    * @param status The status to set for the join request (APPROVED/REJECTED)
-   * @returns Observable with void (no content response)
-   */
-  respondToJoinRequestByPath(teamMemberId: string, status: TeamMemberStatus): Observable<void> {
-    if (!teamMemberId || !status) {
-      return throwError(() => new Error('Team member ID and status are required'));
-    }
+  //  * @returns Observable with void (no content response)
+  //  */
+  // respondToJoinRequestByPath(teamMemberId: string, status: TeamMemberStatus): Observable<void> {
+  //   if (!teamMemberId || !status) {
+  //     return throwError(() => new Error('Team member ID and status are required'));
+  //   }
 
-    console.log(`Responding to join request ${teamMemberId} with status ${status}`);
+  //   console.log(`Responding to join request ${teamMemberId} with status ${status}`);
 
-    return this.http.get<void>(
-      `${this.apiUrl}/join-request/respond/${teamMemberId}?status=${status}`,
-      {}
-    ).pipe(
-      tap(() => {
-        console.log(`✅ Successfully responded to join request ${teamMemberId} with status ${status}`);
-      }),
-      catchError(error => {
-        console.error('Error responding to join request:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to respond to join request'));
-      })
-    );
-  }
+  //   return this.http.get<void>(
+  //     `${this.apiUrl}/join-request/respond/${teamMemberId}?status=${status}`,
+  //     {}
+  //   ).pipe(
+  //     tap(() => {
+  //       console.log(`✅ Successfully responded to join request ${teamMemberId} with status ${status}`);
+  //     }),
+  //     catchError(error => {
+  //       console.error('Error responding to join request:', error);
+  //       return throwError(() => new Error(error.error?.message || 'Failed to respond to join request'));
+  //     })
+  //   );
+  // }
 
   /**
    * Respond to a team member invitation
@@ -274,5 +276,5 @@ export class TeamMemberService {
     );
   }
 
-  
+
 }

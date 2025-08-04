@@ -57,10 +57,10 @@ export class TeamRequests implements OnInit, OnDestroy {
       .subscribe({
         next: (notifications: INotification[]) => {
           this.loading = false;
-          
+
           // Clear existing requests
           this.joinRequests = [];
-          
+
           // Filter and transform notifications to join requests
           for (let i = 0; i < notifications.length; i++) {
             const notification = notifications[i];
@@ -92,7 +92,7 @@ export class TeamRequests implements OnInit, OnDestroy {
   }
 
 respondToInvitation(teamMemberId: string, status: 'APPROVED' | 'REJECTED'): void {
-  
+
 }
 
 respondToJoinRequest(teamMemberId: string, status: 'APPROVED' | 'REJECTED'): void {
@@ -108,26 +108,26 @@ respondToJoinRequest(teamMemberId: string, status: 'APPROVED' | 'REJECTED'): voi
     return;
   }
 
-  console.log('Responding to join request:', teamMemberId, 'with status:', status);
+  // console.log('Responding to join request:', teamMemberId, 'with status:', status);
 
   // Show loading state
   this.loading = true;
 
   // Call the service to respond to the join request
-  this.teamMemberService.respondToJoinRequestByPath(teamMemberId, status as TeamMemberStatus)
+  this.teamMemberService.respondToJoinRequest(teamMemberId, status as TeamMemberStatus, currentUser.id)
     .pipe(takeUntil(this.destroy$))
     .subscribe({
       next: () => {
         console.log('Join Response Finished:');
-        
-        // this.successMessage = status === 'APPROVED' 
-        //   // ? `Successfully approved ${response.userName}'s request to join the team!` 
+
+        // this.successMessage = status === 'APPROVED'
+        //   // ? `Successfully approved ${response.userName}'s request to join the team!`
         //   // : `Rejected ${response.userName}'s request to join the team`;
 
-      
+
         // Clear success message after 3 seconds
         // setTimeout(() => this.successMessage = null, 3000);
-        
+
         this.loading = false;
         this.loadRequests();
 
@@ -136,7 +136,7 @@ respondToJoinRequest(teamMemberId: string, status: 'APPROVED' | 'REJECTED'): voi
         console.error('Failed to respond to join request', err);
         this.errorMessage = err.message || 'Failed to respond to join request';
         this.loading = false;
-        
+
         // Clear error message after 5 seconds
         setTimeout(() => this.errorMessage = null, 5000);
       }
