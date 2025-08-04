@@ -210,7 +210,7 @@ export class TeamMemberService {
 
     console.log(`Responding to join request ${teamMemberId} with status ${status}`);
 
-    return this.http.patch<void>(
+    return this.http.get<void>(
       `${this.apiUrl}/join-request/respond/${teamMemberId}?status=${status}`,
       {}
     ).pipe(
@@ -237,7 +237,7 @@ export class TeamMemberService {
 
     console.log(`Responding to team invitation ${teamMemberId} with status ${status}`);
 
-    return this.http.patch<any>(
+    return this.http.get<any>(
       `${this.apiUrl}/respond/${teamMemberId}?status=${status}`,
       {}
     ).pipe(
