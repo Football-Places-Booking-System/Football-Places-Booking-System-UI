@@ -50,23 +50,23 @@ export class MatchParticipantService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Build headers with JWT token
-   */
-  private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-      'Content-Type': 'application/json',
-    });
-  }
+  // /**
+  //  * Build headers with JWT token
+  //  */
+  // private getAuthHeaders(): HttpHeaders {
+  //   const token = localStorage.getItem('token');
+  //   return new HttpHeaders({
+  //     Authorization: token ? `Bearer ${token}` : '',
+  //     'Content-Type': 'application/json',
+  //   });
+  // }
 
   /**
    * Invite a participant to a match
    */
   inviteParticipant(bookingMatchId: string, dto: IInvitationRequest): Observable<IMatchParticipant | null> {
     return this.http
-      .post<IMatchParticipant>(`${this.API_URL}/invite/${bookingMatchId}`, dto, { headers: this.getAuthHeaders() })
+      .post<IMatchParticipant>(`${this.API_URL}/invite/${bookingMatchId}`, dto)
       .pipe(
         catchError((err) => {
           console.error('Error inviting participant:', err);
@@ -78,16 +78,15 @@ export class MatchParticipantService {
   /**
    * Respond to a match invitation by participant ID
    */
-  respondToMatchInvitation(matchParticipantId: string, status: 'ACCEPTED' | 'DECLINED'): Observable<IMatchParticipant | null> {
+  respondToMatchInvitation(matchParticipantId: string, status: 'ACCEPTED' | 'DECLINED'): Observable<void> {
     return this.http
-      .patch<IMatchParticipant>(`${this.API_URL}/respond/${matchParticipantId}`, null, {
-        headers: this.getAuthHeaders(),
+      .get<void>(`${this.API_URL}/respond/${matchParticipantId}`, {
         params: { status },
       })
       .pipe(
         catchError((err) => {
           console.error('Error responding to match invitation:', err);
-          return of(null);
+          return of();
         })
       );
   }
@@ -97,7 +96,7 @@ export class MatchParticipantService {
    */
   getParticipantsByMatch(matchId: string): Observable<IMatchParticipant[]> {
     return this.http
-      .get<IMatchParticipant[]>(`${this.API_URL}/match/${matchId}`, { headers: this.getAuthHeaders() })
+      .get<IMatchParticipant[]>(`${this.API_URL}/match/${matchId}`)
       .pipe(
         catchError((err) => {
           console.error('Error fetching participants:', err);
@@ -112,7 +111,7 @@ export class MatchParticipantService {
    */
   getUserParticipatedMatches(): Observable<IUserMatch[]> {
     return this.http
-      .get<IUserMatch[]>(`${this.API_URL}/user/matches`, { headers: this.getAuthHeaders() })
+      .get<IUserMatch[]>(`${this.API_URL}/user/matches`)
       .pipe(
         map((res) => res || []),
         catchError((err) => {
