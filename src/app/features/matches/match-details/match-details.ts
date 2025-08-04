@@ -3,7 +3,7 @@ import { CommonModule, NgIf } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { MatchParticipantService, IBookingMatch } from '../../../core/services/match-participant.service';
+import { MatchParticipantService, IUserMatch } from '../../../core/services/match-participant.service';
 import { TeamService } from '../../../core/services/team.service';
 
 @Component({
@@ -13,7 +13,7 @@ import { TeamService } from '../../../core/services/team.service';
   styleUrls: ['./match-details.css']
 })
 export class MatchDetails implements OnInit, OnDestroy {
-  match: IBookingMatch | null = null;
+  match: IUserMatch | null = null;
   errorMessage: string | null = null;
   isLoading = true;
   private destroy$ = new Subject<void>();
@@ -63,7 +63,7 @@ export class MatchDetails implements OnInit, OnDestroy {
 
   goToParticipants(): void {
     if (this.match) {
-      this.router.navigate(['/dashboard/matches', this.match.id, 'participants', this.match.teamId]);
+      this.router.navigate(['/dashboard/matches', this.match.matchId, 'participants', this.match.teamId]);
     }
   }
 
