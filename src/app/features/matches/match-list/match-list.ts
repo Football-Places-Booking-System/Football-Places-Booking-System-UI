@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angula
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { MatchParticipantService, IBookingMatch, IMatchParticipant } from '../../../core/services/match-participant.service';
+import { MatchParticipantService, IUserMatch, IMatchParticipant } from '../../../core/services/match-participant.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -33,12 +33,11 @@ import { MatMenu, MatMenuModule } from "@angular/material/menu";
 ]
 })
 export class MatchList implements OnInit, OnDestroy {
-  matches: IBookingMatch[] = [];
+  matches: IUserMatch[] = [];
 
-  upcomingAcceptedMatches: IBookingMatch[] = [];
-  pendingInvitations: IBookingMatch[] = [];
-  pastAcceptedMatches: IBookingMatch[] = [];
-  declinedMatches: IBookingMatch[] = [];
+  upcomingAcceptedMatches: IUserMatch[] = [];
+  pendingInvitations: IUserMatch[] = [];
+  pastAcceptedMatches: IUserMatch[] = [];
   selectedParticipants: IMatchParticipant[] = [];
 
   successMessage: string | null = null;
@@ -68,7 +67,7 @@ export class MatchList implements OnInit, OnDestroy {
     this.matchParticipantService.getUserParticipatedMatches()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (matches: IBookingMatch[]) => {
+        next: (matches: IUserMatch[]) => {
           console.log('Matches fetched successfully:', matches);
           this.matches = matches;
           this.categorizeMatches();
@@ -90,26 +89,38 @@ export class MatchList implements OnInit, OnDestroy {
   const now = new Date();
 
   this.upcomingAcceptedMatches = this.matches.filter(
-    m => m.status === 'CONFIRMED' && new Date(m.startTime) > now
+    m => m.invitationStatus === 'ACCEPTED' && new Date(m.startTime) > now
   );
 
   this.pendingInvitations = this.matches.filter(
-    m => m.status === 'PENDING' && new Date(m.startTime) > now
+    m => m.invitationStatus === 'INVITED' && new Date(m.startTime) > now
   );
 
   this.pastAcceptedMatches = this.matches.filter(
-    m => m.status === 'CONFIRMED' && new Date(m.startTime) <= now
-  );
-
-  this.declinedMatches = this.matches.filter(
-    m => m.status === 'CANCELLED'
+    m => m.bookingStatus === 'CONFIRMED' && new Date(m.startTime) <= now && m.invitationStatus === 'ACCEPTED'
   );
 
   console.log('Upcoming Accepted:', this.upcomingAcceptedMatches);
   console.log('Pending Invitations:', this.pendingInvitations);
   console.log('Past Accepted:', this.pastAcceptedMatches);
-  console.log('Declined Matches:', this.declinedMatches);
 }
+
+respondToInvitation(participantId: string, status: 'ACCEPTED' | 'DECLINED'): void {
+  this.matchParticipantService.respondToMatchInvitation(participantId, status)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (res: any) => {
+        console.log(`Invitation ${status} successfully`, res);
+        this.successMessage = `You have ${status === 'ACCEPTED' ? 'accepted' : 'declined'} the invitation.`;
+        this.loadUserParticipatedMatches(); // refresh list
+      },
+      error: (err: any) => {
+        console.error(`Failed to respond invitation:`, err);
+        this.errorMessage = 'Failed to send your response. Please try again.';
+      }
+    });
+}
+
 
 viewParticipants(matchId: string): void {
   this.matchParticipantService.getParticipantsByMatch(matchId)

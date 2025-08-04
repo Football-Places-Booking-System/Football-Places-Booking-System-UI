@@ -4,37 +4,42 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING' | 'PENDING_PAYMENT';
-export type invitationStatus = 'INVITED' | 'ACCEPTED' | 'DECLINED';
+export type InvitationStatus = 'INVITED' | 'ACCEPTED' | 'DECLINED';
 
+/**
+ * Participant entity for a specific match
+ */
 export interface IMatchParticipant {
   id: string;
   bookingMatchId: string;
   userId: string;
   username: string;
   userEmail: string;
-  status: invitationStatus;
+  status: InvitationStatus;
   respondedAt?: string;
 }
 
+/**
+ * Request body for inviting a participant
+ */
 export interface IInvitationRequest {
   email: string;
 }
 
-export interface IBookingMatch {
-  id: string;
-  startTime: string;
-  endTime: string;
-  status: BookingStatus;
-  userId: string;
+/**
+ * Combined Match + Invitation DTO from backend
+ */
+export interface IUserMatch {
+  matchId: string;
+  participantId: string;
   teamId: string;
   teamName: string;
   placeId: string;
   placeName: string;
-}
-
-export interface IBookingMatchDetails extends IBookingMatch {
-  createdAt?: string;
-  userName?: string;
+  startTime: string;
+  endTime: string;
+  bookingStatus: BookingStatus;
+  invitationStatus: InvitationStatus;
 }
 
 @Injectable({
@@ -46,7 +51,7 @@ export class MatchParticipantService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Helper: Build HTTP headers with JWT token
+   * Build headers with JWT token
    */
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');
@@ -57,7 +62,7 @@ export class MatchParticipantService {
   }
 
   /**
-   * Invite a participant to a match by email
+   * Invite a participant to a match
    */
   inviteParticipant(bookingMatchId: string, dto: IInvitationRequest): Observable<IMatchParticipant | null> {
     return this.http
@@ -71,27 +76,7 @@ export class MatchParticipantService {
   }
 
   /**
-   * Respond to an invitation (ACCEPTED or DECLINED)
-   */
-  respondToInvitation(participantId: string, status: 'ACCEPTED' | 'DECLINED'): Observable<IMatchParticipant | null> {
-    return this.http
-      .patch<IMatchParticipant>(`${this.API_URL}/respond/${participantId}`, null, {
-        headers: this.getAuthHeaders(),
-        params: { status },
-      })
-      .pipe(
-        catchError((err) => {
-          console.error('Error responding to invitation:', err);
-          return of(null);
-        })
-      );
-  }
-
-  /**
    * Respond to a match invitation by participant ID
-   * @param matchParticipantId The ID of the match participant
-   * @param status The response status (ACCEPTED or DECLINED)
-   * @returns Observable with the updated match participant response
    */
   respondToMatchInvitation(matchParticipantId: string, status: 'ACCEPTED' | 'DECLINED'): Observable<IMatchParticipant | null> {
     return this.http
@@ -122,30 +107,16 @@ export class MatchParticipantService {
   }
 
   /**
-   * Get all matches where the current user is a participant (simple response)
+   * Get all matches where the current user is a participant
+   * (Now includes participantId and invitationStatus)
    */
-  getUserParticipatedMatches(): Observable<IBookingMatch[]> {
+  getUserParticipatedMatches(): Observable<IUserMatch[]> {
     return this.http
-      .get<IBookingMatch[]>(`${this.API_URL}/user/matches`, { headers: this.getAuthHeaders() })
+      .get<IUserMatch[]>(`${this.API_URL}/user/matches`, { headers: this.getAuthHeaders() })
       .pipe(
         map((res) => res || []),
         catchError((err) => {
           console.error('Error fetching participated matches:', err);
-          return of([]);
-        })
-      );
-  }
-
-  /**
-   * Get all matches where the current user is a participant (detailed response)
-   */
-  getUserParticipatedMatchesDetailed(): Observable<IBookingMatchDetails[]> {
-    return this.http
-      .get<IBookingMatchDetails[]>(`${this.API_URL}/user/matches/details`, { headers: this.getAuthHeaders() })
-      .pipe(
-        map((res) => res || []),
-        catchError((err) => {
-          console.error('Error fetching detailed participated matches:', err);
           return of([]);
         })
       );

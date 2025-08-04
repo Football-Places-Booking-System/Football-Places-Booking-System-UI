@@ -127,13 +127,13 @@ export const routes: Routes = [
             (m) => m.MatchDetails
           ),
       },
-      // {
-      //   path: 'matches/:id/participants/:teamId',
-      //   loadComponent: () =>
-      //     import('./features/matches/match-participants/match-participants').then(
-      //       (m) => m.MatchParticipants
-      //     ),
-      // },
+      {
+        path: 'bookings/:bookingId/invite',
+        loadComponent: () =>
+          import('./features/bookings/invite-participants/invite-participants').then(
+            (m) => m.InviteParticipantsComponent
+          ),
+      },
       {
         path: 'notifications',
         loadComponent: () =>
