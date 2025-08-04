@@ -160,6 +160,13 @@ export const routes: Routes = [
             (m) => m.AdminDashboardComponent
           ),
       },
+      {
+        path: 'calendar',
+        loadComponent: () =>
+          import('./features/dashboard/calendar-view/calendar-view').then(
+            (m) => m.CalendarViewComponent
+          ),
+      },
     ],
   },
   {
