@@ -119,19 +119,6 @@ export class EventDetailsDialogComponent {
     }
   }
 
-  getStatusText(status: string): string {
-    switch (status?.toLowerCase()) {
-      case 'confirmed':
-        return 'Confirmed';
-      case 'pending':
-        return 'Pending';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return 'Unknown';
-    }
-  }
-
   getMatchStatusColor(status: string): string {
     switch (status) {
       case 'CONFIRMED':
@@ -147,20 +134,20 @@ export class EventDetailsDialogComponent {
     }
   }
 
-  getMatchStatusText(status: string): string {
-    switch (status) {
-      case 'CONFIRMED':
-        return 'Confirmed';
-      case 'SCHEDULED':
-        return 'Scheduled';
-      case 'PENDING_PAYMENT':
-        return 'Pending Payment';
-      case 'CANCELLED':
-        return 'Cancelled';
-      default:
-        return 'Unknown';
-    }
+getMatchStatusText(status: string): string {
+  switch (status) {
+    case 'CONFIRMED':
+      return 'Confirmed';
+    case 'PENDING_PLAYERS':
+      return 'Pending Players';
+    case 'PENDING_PAYMENT':
+      return 'Pending Payment';
+    case 'CANCELLED':
+      return 'Cancelled';
+    default:
+      return 'Unknown';
   }
+}
 
   onClose(): void {
     this.dialogRef.close();

@@ -37,8 +37,8 @@ export class BookingService {
 
   // Get all bookings (Admin or Organizer)
   getBookings(): Observable<IBooking[]> {
-    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}`).pipe(
-      map(res => res.content || []),  
+    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/all`).pipe(
+      map(res => res.content || []),
       catchError(err => {
         console.error('Error fetching all bookings:', err);
         return of([]);
