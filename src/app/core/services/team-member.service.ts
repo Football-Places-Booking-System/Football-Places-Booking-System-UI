@@ -232,7 +232,7 @@ export class TeamMemberService {
    * @param status The status to set for the invitation (APPROVED/REJECTED)
    * @returns Observable with the invitation response
    */
-  respondToInvitation(teamMemberId: string, status: TeamMemberStatus): Observable<any> {
+  respondToInvitation(teamMemberId: string, status: TeamMemberStatus): Observable<void> {
     if (!teamMemberId || !status) {
       return throwError(() => new Error('Team member ID and status are required'));
     }
