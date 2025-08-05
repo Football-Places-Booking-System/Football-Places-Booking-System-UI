@@ -47,6 +47,16 @@
         </button>
       </div>
 
+      <!-- Invite Capacity Info -->
+      <div class="invite-capacity" *ngIf="data.match && data.participants">
+        <mat-icon>group_add</mat-icon>
+        <span>
+          {{ getCurrentAcceptedCount(data.participants) }}/{{ getMaxCapacity(data.match.placeType || '') }}
+          invitations sent
+        </span>
+      </div>
+
+
       <!-- Players Table -->
       <h3>Team Players</h3>
       <div class="players-table-wrapper">
@@ -67,12 +77,13 @@
               <td>{{ player.email }}</td>
               <td>{{ player.role }}</td>
               <td>
-                <button *ngIf="!isOrganizer(player.userId, data.match.userId)" mat-button
-                  matTooltip="Send match invitation" (click)="invitePlayer(player.email)"
+                <button *ngIf="!isOrganizer(player.userId, data.match.userId)" mat-button matTooltip="Send match invitation"
+                  (click)="invitePlayer(player.email, data.match, data.participants)"
                   [disabled]="isPlayerInvited(player.userId, data.participants)"
                   [ngClass]="{'invited-button': isPlayerInvited(player.userId, data.participants)}">
                   {{ isPlayerInvited(player.userId, data.participants) ? 'Invited' : 'Invite' }}
                 </button>
+
                 <span *ngIf="isOrganizer(player.userId, data.match.userId)" class="organizer-label">
                   Organizer
                 </span>

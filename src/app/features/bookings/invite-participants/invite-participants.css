@@ -294,3 +294,21 @@ h3 {
   font-style: italic;
   color: #888;
 }
+
+.invite-capacity {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: #444;
+}
+
+.invite-capacity mat-icon {
+  margin-right: 5px;
+  color: #1976d2;
+}
+
+.snackbar-error {
+  background-color: #d32f2f;
+  color: #fff;
+}

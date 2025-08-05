@@ -14,6 +14,7 @@ export interface IBooking {
   status: BookingStatus;
   createdAt?: string;
   placeName?: string;
+  placeType?: string;
   teamName?: string;
   userName?: string;
 }

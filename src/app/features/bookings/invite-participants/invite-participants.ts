@@ -7,6 +7,8 @@ import { MatchParticipantService, IMatchParticipant, IInvitationRequest } from '
 import { TeamService, ITeamMember } from '../../../core/services/team.service';
 import { BookingService, IBooking } from '../../../core/services/booking.service';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIconModule } from "@angular/material/icon";
 
 @Component({
@@ -38,7 +40,9 @@ export class InviteParticipantsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private bookingService: BookingService,
     private matchParticipantService: MatchParticipantService,
-    private teamService: TeamService
+    private teamService: TeamService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
@@ -50,10 +54,9 @@ export class InviteParticipantsComponent implements OnInit, OnDestroy {
 
   this.combinedData$ = this.route.paramMap.pipe(
     map(params => {
-      this.matchId = params.get('bookingId') || '';   // ✅ correct param
-      this.teamId = passedBooking?.teamId || '';      // ✅ teamId from state
+      this.matchId = params.get('bookingId') || '';
+      this.teamId = passedBooking?.teamId || '';
       console.log(`Route Params - matchId: ${this.matchId}, teamId: ${this.teamId}`);
-
       if (!this.matchId || !this.teamId) {
         this.errorMessage = 'Booking ID or Team ID is missing in the route.';
         throw new Error(this.errorMessage);
@@ -63,13 +66,21 @@ export class InviteParticipantsComponent implements OnInit, OnDestroy {
     switchMap(({ matchId, teamId }) => {
       console.log(`Service calls for matchId: ${matchId}, teamId: ${teamId}`);
 
+      // Fetch from backend if booking is missing OR missing placeType
+      const needsFetch = !passedBooking || !passedBooking.placeType;
+
       return combineLatest([
-        passedBooking ? of(passedBooking) : this.bookingService.getBookingById(matchId).pipe(catchError(() => of(null))),
+        needsFetch
+          ? this.bookingService.getBookingDetailsById(matchId).pipe(
+              tap(res => console.log("✅ BookingMatchDetails API Response:", res)),
+              catchError(() => of(null))
+            )
+          : of(passedBooking),
         this.teamService.getTeamMembers(teamId).pipe(catchError(() => of([]))),
         this.matchParticipantService.getParticipantsByMatch(matchId).pipe(catchError(() => of([])))
       ]).pipe(
         tap(([match, players, participants]) => {
-          console.log('Match data:', match);
+          console.log('Match data (final):', match);
           console.log('Players:', players);
           console.log('Participants:', participants);
         }),
@@ -128,23 +139,62 @@ isOrganizerAlreadyParticipant(organizerId: string, participants: IMatchParticipa
   /**
    * Invite a player by userId (this assumes you can get their email from team members)
    */
-  invitePlayer(email: string): void {
-    if (!this.matchId) {
-      this.errorMessage = 'Match ID is not available.';
-      return;
-    }
+  // Add this mapping at the top of your component
+private readonly MAX_CAPACITY_MAP: Record<string, number> = {
+  FIVE: 10,
+  SEVEN: 14,
+  ELEVEN: 22
+};
 
-    const dto: IInvitationRequest = { email };
-    this.matchParticipantService.inviteParticipant(this.matchId, dto).subscribe({
-      next: (participant) => {
-        console.log('User invited successfully:', participant);
-        this.refreshParticipants();
-      },
-      error: (err) => {
-        this.errorMessage = `Failed to invite user: ${err.message}`;
-      }
-    });
+getMaxCapacity(placeType: string): number {
+  return this.MAX_CAPACITY_MAP[placeType] || 0;
+}
+
+getCurrentAcceptedCount(participants: IMatchParticipant[]): number {
+  return participants.filter(p => p.status === 'ACCEPTED').length;
+}
+
+isCapacityFull(placeType: string, participants: IMatchParticipant[]): boolean {
+  return this.getCurrentAcceptedCount(participants) >= this.getMaxCapacity(placeType);
+}
+
+// Modified invitePlayer
+invitePlayer(email: string, match: IBooking, participants: IMatchParticipant[]): void {
+  if (!this.matchId) {
+    this.snackBar.open('Match ID is not available.', 'Close', { duration: 3000 });
+    return;
   }
+
+  const maxCapacity = this.getMaxCapacity(match.placeType || '');
+  const acceptedCount = this.getCurrentAcceptedCount(participants);
+
+  if (acceptedCount >= maxCapacity) {
+    this.snackBar.open(`Max capacity of ${maxCapacity} reached. Cannot invite more players.`, 'Close', {
+      duration: 4000,
+      panelClass: 'snackbar-error'
+    });
+    return;
+  }
+
+  const alreadyInvited = participants.some(p => p.userEmail === email);
+  if (alreadyInvited) {
+    this.snackBar.open(`User with email ${email} is already invited or participating.`, 'Close', { duration: 3000 });
+    return;
+  }
+
+  const dto: IInvitationRequest = { email };
+  this.matchParticipantService.inviteParticipant(this.matchId, dto).subscribe({
+    next: () => {
+      this.snackBar.open('Invitation sent successfully!', 'Close', { duration: 2000 });
+      this.refreshParticipants();
+    },
+    error: (err) => {
+      this.snackBar.open(`Failed to invite user: ${err.message}`, 'Close', { duration: 3000 });
+    }
+  });
+}
+
+
 
   joinMatchAsOrganizer(): void {
   if (!this.matchId) {

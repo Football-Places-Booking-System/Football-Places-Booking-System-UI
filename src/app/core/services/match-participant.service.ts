@@ -95,19 +95,22 @@ export class MatchParticipantService {
    * Join match as organizer
    */
   joinMatchAsOrganizer(matchId: string): Observable<IMatchParticipant> {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      return throwError(() => new Error('User not authenticated'));
-    }
-
-    return this.http.post<IMatchParticipant>(`${this.API_URL}/join-as-organizer/${matchId}`, {}).pipe(
-      tap(() => console.log(`✅ Organizer joined match ${matchId}`)),
-      catchError(error => {
-        console.error('Error joining match as organizer:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to join match as organizer'));
-      })
-    );
+  const currentUser = this.authService.getCurrentUser();
+  if (!currentUser) {
+    return throwError(() => new Error('User not authenticated'));
   }
+
+  return this.http.post<IMatchParticipant>(`${this.API_URL}/join-as-organizer/${matchId}`, {}).pipe(
+    tap(() => console.log(`✅ Organizer joined match ${matchId}`)),
+    catchError(error => {
+      // Preserve full backend error message
+      const backendMsg = error.error?.msg || error.error?.message || 'Failed to join match as organizer';
+      console.error('❌ Backend Error:', error);
+      return throwError(() => new Error(backendMsg));
+    })
+  );
+}
+
 
   /**
    * Get all participants for a specific match
