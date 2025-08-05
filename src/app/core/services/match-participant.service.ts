@@ -50,27 +50,6 @@ export class MatchParticipantService {
 
   constructor(private http: HttpClient) {}
 
-  // /**
-  //  * Build headers with JWT token
-  //  */
-  // private getAuthHeaders(): HttpHeaders {
-  //   const token = localStorage.getItem('token');
-  //   return new HttpHeaders({
-  //     Authorization: token ? `Bearer ${token}` : '',
-  //     'Content-Type': 'application/json',
-  //   });
-  // }
-  /**
-   * Build headers with JWT token
-   */
-  private getAuthHeaders(): HttpHeaders {
-    const token = sessionStorage.getItem('token');
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-      'Content-Type': 'application/json',
-    });
-  }
-
   /**
    * Invite a participant to a match
    */
