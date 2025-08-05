@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
-import { MatSortModule, MatSort } from '@angular/material/sort';
+import { MatSortModule, MatSort, Sort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -69,12 +69,23 @@ export class UserList implements OnInit, AfterViewInit {
 
   // Pagination properties
   totalUsers = 0;
-  pageSize = 5;
+  pageSize = 10;
   currentPage = 0;
   pageSizeOptions = [5, 10, 25, 50];
 
+  // Sorting properties
+  sortBy = 'createdAt';
+  sortDirection = 'asc';
+
+  // Filter properties (optional)
+  emailFilter = '';
+  usernameFilter = '';
+  roleFilter = '';
+  statusFilter = '';
+
   // ViewChild decorators to access Material components
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
 
 
   // // Filter properties
@@ -104,6 +115,16 @@ export class UserList implements OnInit, AfterViewInit {
       this.paginator.pageSize = this.pageSize;
       this.paginator.pageIndex = this.currentPage;
     }
+
+    // Configure sorting for server-side sorting
+    if (this.sort) {
+      // Connect the data source to the sort (for visual indication)
+      this.dataSource.sort = this.sort;
+
+      // Set initial sort state
+      this.sort.active = this.sortBy;
+      this.sort.direction = this.sortDirection as 'asc' | 'desc';
+    }
   }
 
 
@@ -118,14 +139,104 @@ export class UserList implements OnInit, AfterViewInit {
     this.loadUsers();
   }
 
+  onSortChange(sortEvent?: Sort): void {
+    console.log('Sort change triggered:', sortEvent);
+
+    // Use the event parameter if provided, otherwise use the sort ViewChild
+    const sort = sortEvent || this.sort;
+
+    if (sort && sort.active && sort.direction) {
+      this.sortBy = sort.active;
+      this.sortDirection = sort.direction;
+
+      // Reset to first page when sorting changes
+      this.currentPage = 0;
+      if (this.paginator) {
+        this.paginator.pageIndex = 0;
+      }
+
+      // Update the MatSort visual state
+      if (this.sort && sortEvent) {
+        this.sort.active = sort.active;
+        this.sort.direction = sort.direction as 'asc' | 'desc';
+      }
+
+      console.log(`🔄 Sorting by ${this.sortBy} in ${this.sortDirection} direction`);
+      this.loadUsers();
+    } else if (sort && sort.active && !sort.direction) {
+      // Handle the case when sort is cleared (no direction)
+      this.sortBy = 'createdAt'; // Reset to default sort
+      this.sortDirection = 'asc'; // Reset to default direction
+
+      // Reset to first page when sorting changes
+      this.currentPage = 0;
+      if (this.paginator) {
+        this.paginator.pageIndex = 0;
+      }
+
+      // Update the MatSort visual state
+      if (this.sort) {
+        this.sort.active = this.sortBy;
+        this.sort.direction = this.sortDirection as 'asc' | 'desc';
+      }
+
+      console.log(`🔄 Sort cleared, resetting to default: ${this.sortBy} ${this.sortDirection}`);
+      this.loadUsers();
+    } else {
+      console.log('❌ Sort event is invalid:', { sort, active: sort?.active, direction: sort?.direction });
+    }
+  }
+
+  /**
+   * Apply filters and reload users
+   */
+  applyFilters(): void {
+    // Reset to first page when applying filters
+    this.currentPage = 0;
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
+    this.loadUsers();
+  }
+
+  /**
+   * Clear all filters and reload users
+   */
+  clearFilters(): void {
+    this.emailFilter = '';
+    this.usernameFilter = '';
+    this.roleFilter = '';
+    this.statusFilter = '';
+    this.applyFilters();
+  }
+
 
   loadUsers(): void {
-    console.log('Loading users with pagination:', this.currentPage, this.pageSize);
+    console.log('Loading users with pagination and sorting:', {
+      page: this.currentPage,
+      size: this.pageSize,
+      sortBy: this.sortBy,
+      sortDirection: this.sortDirection,
+      filters: {
+        email: this.emailFilter,
+        username: this.usernameFilter,
+        role: this.roleFilter,
+        status: this.statusFilter
+      }
+    });
     this.isLoading = true;
     this.error = null;
 
-
-    this.userService.getAllUsers(this.currentPage, this.pageSize).subscribe({
+    this.userService.getAllUsers(
+      this.currentPage,
+      this.pageSize,
+      this.sortBy,
+      this.sortDirection,
+      this.emailFilter || undefined,
+      this.roleFilter || undefined,
+      this.statusFilter || undefined,
+      this.usernameFilter || undefined
+    ).subscribe({
       next: (response) => {
         console.log('Received users from API:', response);
         let users: IUser[] = [];
@@ -135,8 +246,6 @@ export class UserList implements OnInit, AfterViewInit {
           // Paginated response from backend
           users = response.content;
           this.totalUsers = response.totalElements;
-
-
         } else {
           // Non-paginated response
           users = response;
@@ -151,12 +260,17 @@ export class UserList implements OnInit, AfterViewInit {
         if (this.paginator) {
           this.paginator.length = this.totalUsers;
         }
+
+        // Ensure sort state is preserved visually
+        if (this.sort && this.sortBy && this.sortDirection) {
+          this.sort.active = this.sortBy;
+          this.sort.direction = this.sortDirection as 'asc' | 'desc';
+        }
       },
       error: (err) => {
         this.error = 'Failed to load users';
         this.isLoading = false;
         console.error('Error loading Users:', err);
-
       }
     });
   }

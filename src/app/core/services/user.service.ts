@@ -81,13 +81,63 @@ export class UserService {
 //   );
 // }
 
-  getAllUsers(page?: number, size?: number): Observable<any> {
+  // getAllUsers(page?: number, size?: number): Observable<any> {
+  //   console.log("Inside getAllUsers method of UserService");
+  //   const params = new HttpParams()
+  //     .set('page', page?.toString() || '0')
+  //     .set('size', size?.toString() || '5');
+  //   return this.http.get<IUser[]>(`${this.apiUrl}/all`, { params });
+  // }
+
+  /**
+   * Get all users with filtering, sorting, and pagination
+   * @param page Page number (default: 0)
+   * @param size Page size (default: 10)
+   * @param sortBy Field to sort by (default: 'createdAt')
+   * @param sortDirection Sort direction 'asc' or 'desc' (default: 'asc')
+   * @param email Filter by email (optional)
+   * @param role Filter by role (optional)
+   * @param status Filter by status (optional)
+   * @param username Filter by username (optional)
+   * @returns Observable with paginated user data
+   */
+  getAllUsers(
+    page?: number,
+    size?: number,
+    sortBy?: string,
+    sortDirection?: string,
+    email?: string,
+    role?: string,
+    status?: string,
+    username?: string
+  ): Observable<any> {
     console.log("Inside getAllUsers method of UserService");
-    const params = new HttpParams()
+
+    let params = new HttpParams()
       .set('page', page?.toString() || '0')
-      .set('size', size?.toString() || '5');
-    return this.http.get<IUser[]>(`${this.apiUrl}/all`, { params });
+      .set('size', size?.toString() || '10')
+      .set('sortBy', sortBy || 'createdAt')
+      .set('sortDirection', sortDirection || 'asc');
+
+    // Add optional filter parameters
+    if (email) {
+      params = params.set('email', email);
+    }
+    if (role) {
+      params = params.set('role', role);
+    }
+    if (status) {
+      params = params.set('status', status);
+    }
+    if (username) {
+      params = params.set('username', username);
+    }
+
+    return this.http.get<any>(`${this.apiUrl}/all-sorted`, { params });
   }
+
+
+
 
   checkPassword(password: string): Observable<boolean> {
     console.log("Checking password via API");
