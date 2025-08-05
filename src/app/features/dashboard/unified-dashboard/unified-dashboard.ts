@@ -29,7 +29,7 @@ export class UnifiedDashboardComponent implements OnInit {
   private loadUserTeams(): void {
     if (this.currentUser) {
       // Load teams created by the current user
-      this.teamService.getTeamsByCreator(this.currentUser.id).subscribe({
+      this.teamService.getTeamsByCreator().subscribe({
         next: (teams) => {
           this.userTeams = teams;
           this.checkIfUserIsOrganizer();
@@ -46,7 +46,7 @@ export class UnifiedDashboardComponent implements OnInit {
 
     // Check if user is organizer in any team
     const checkPromises = this.userTeams.map(team =>
-      this.teamService.isUserTeamOrganizer(this.currentUser.id, team.id).toPromise()
+      this.teamService.isUserTeamOrganizer(team.id).toPromise()
     );
 
     Promise.all(checkPromises).then(results => {

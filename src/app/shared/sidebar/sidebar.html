@@ -14,39 +14,43 @@
     Users
   </a>
 
-  <a *ngIf="canAccessTeams && role !== 'ADMIN'" mat-list-item routerLink="/dashboard/teams" routerLinkActive="active-link">
+  <a *ngIf=" role !== 'ADMIN'" mat-list-item routerLink="/dashboard/teams" routerLinkActive="active-link">
     <mat-icon class="me-2">groups</mat-icon>
     Teams
   </a>
 
-  <a *ngIf="canAccessMatches && role !== 'ADMIN'" mat-list-item routerLink="/dashboard/matches" routerLinkActive="active-link">
+  <a *ngIf=" role !== 'ADMIN'" mat-list-item routerLink="/dashboard/matches" routerLinkActive="active-link">
     <mat-icon class="me-2">sports_soccer</mat-icon>
     Matches
   </a>
 
-  <a *ngIf="canAccessPlaces" mat-list-item routerLink="/dashboard/places" routerLinkActive="active-link">
+  <a mat-list-item routerLink="/dashboard/places" routerLinkActive="active-link">
     <mat-icon class="me-2">location_on</mat-icon>
     Places
   </a>
 
-  <a *ngIf="canAccessBookings && role === 'ADMIN'" mat-list-item routerLink="/dashboard/admin/bookings" routerLinkActive="active-link">
+  <a *ngIf="  role === 'ADMIN'" mat-list-item routerLink="/dashboard/admin/bookings" routerLinkActive="active-link">
     <mat-icon class="me-2">event</mat-icon>
     Manage Bookings
   </a>
 
-  <a *ngIf="canAccessBookings && role !== 'ADMIN'" mat-list-item routerLink="/dashboard/bookings" routerLinkActive="active-link">
+  <a *ngIf=" role !== 'ADMIN'" mat-list-item routerLink="/dashboard/bookings" routerLinkActive="active-link">
     <mat-icon class="me-2">event</mat-icon>
     My Bookings
   </a>
 
-  <a *ngIf="canAccessProfile && role !== 'ADMIN'" mat-list-item routerLink="/dashboard/profile" routerLinkActive="active-link">
+  <a mat-list-item routerLink="/dashboard/profile" routerLinkActive="active-link">
     <mat-icon class="me-2">person</mat-icon>
     Profile
   </a>
 
-  <a *ngIf="effectiveRole === 'PLAYER' && role !== 'ADMIN'" mat-list-item routerLink="/dashboard/teams/create" routerLinkActive="active-link">
-    <mat-icon class="me-2">add_circle</mat-icon>
-    Create Team
+  <!-- Notifications with badge -->
+  <a *ngIf="role !== 'ADMIN'" mat-list-item routerLink="/dashboard/notifications" routerLinkActive="active-link" class="notification-link">
+    <mat-icon class="me-2">notifications</mat-icon>
+    Notifications
+    <span *ngIf="unreadNotificationCount > 0" class="notification-badge">
+      {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
+    </span>
   </a>
 
   <!-- Logout button -->

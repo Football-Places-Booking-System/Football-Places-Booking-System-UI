@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, catchError, map } from 'rxjs';
+import { Observable, of, catchError, map, tap, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from './auth.service';
 
 export type TeamMemberRole = 'MEMBER' | 'ORGANIZER';
 export type TeamMemberStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -23,8 +24,10 @@ export interface ITeam {
   name: string;
   description?: string;
   createdBy: string; // FK to User(id)
+  createdByUsername: string;
   createdAt: string;
   updatedAt?: string;
+  members?: any[]; // Add members property to handle team members from backend
 }
 
 @Injectable({
@@ -33,58 +36,104 @@ export interface ITeam {
 export class TeamService {
   private apiUrl = 'http://localhost:8080/api/teams'; // Update with your Spring backend URL
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
-  
-  getTeams(): Observable<ITeam[]> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      const teams = teamsString ? JSON.parse(teamsString) : [];
-      return of(teams);
-    } catch (error) {
-      console.error('Error loading teams from sessionStorage:', error);
-      return of([]);
-    }
+  /**
+   * Fetches all teams without pagination
+   */
+  getAllTeams(): Observable<ITeam[]> {
+    const url = `${this.apiUrl}/all`;
+    console.log('TeamService: Fetching all teams from:', url);
+    
+    return this.http.get<ITeam[]>(url).pipe(
+      tap(teams => {
+        console.log('TeamService: Received teams from server:', teams);
+        console.log('TeamService: Number of teams received:', teams?.length || 0);
+      }),
+      catchError(error => {
+        console.error('TeamService: Error loading all teams:', error);
+        return of([]);
+      })
+    );
   }
 
-  // Get teams created by a specific user
-  getTeamsByCreator(userId: string): Observable<ITeam[]> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      if (teamsString) {
-        const teams: ITeam[] = JSON.parse(teamsString);
-        const userTeams = teams.filter(team => team.createdBy === userId);
-        return of(userTeams);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading teams by creator from sessionStorage:', error);
-      return of([]);
+
+  getPaginatedTeams(page: number = 0, size: number = 10): Observable<ITeam[]> {
+    const url = `${this.apiUrl}/all-filtered?page=${page}&size=${size}`;
+    console.log('TeamService: Making request to:', url);
+
+    interface PaginatedResponse {
+      content: ITeam[];
+      totalElements: number;
+      totalPages: number;
+      // Add other pagination properties if needed
     }
+
+    return this.http.get<PaginatedResponse>(url).pipe(
+      tap(response => {
+        console.log('TeamService: Raw response from server:', response);
+        console.log('TeamService: Response content type:', typeof response.content);
+        console.log('TeamService: Response content is array?', Array.isArray(response.content));
+        console.log('TeamService: Response content length:', response.content?.length);
+      }),
+      map(response => {
+        if (!response || !response.content) {
+          console.warn('TeamService: No content in response');
+          return [];
+        }
+
+        // Ensure we're returning a proper array
+        const teams = Array.isArray(response.content) ? response.content : [];
+        console.log('TeamService: Returning teams:', teams);
+        return teams;
+      }),
+      catchError(error => {
+        console.error('TeamService: Error loading teams:', error);
+        return of([]);
+      })
+    );
   }
 
+  // Done
+  getTeamsByCreator(): Observable<ITeam[]> {
+    return this.http.get<ITeam[]>(`${this.apiUrl}/my-teams`).pipe(
+      map(response => {
+        console.log('Teams fetched from backend:', response);
+        return response || [];
+      }),
+      catchError(error => {
+        console.error('Error fetching teams from backend:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // Done
   getTeamById(id: string): Observable<ITeam | null> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      if (teamsString) {
-        const teams: ITeam[] = JSON.parse(teamsString);
-        const team = teams.find(t => t.id === id);
-        return of(team || null);
-      }
-      return of(null);
-    } catch (error) {
-      console.error('Error loading team by ID from sessionStorage:', error);
-      return of(null);
-    }
+    const url = `${this.apiUrl}/${id}`;
+    console.log('TeamService: Fetching team by ID from:', url);
+
+    return this.http.get<ITeam>(url).pipe(
+      map(team => {
+        console.log('TeamService: Successfully fetched team:', team);
+        return team;
+      }),
+      catchError(error => {
+        console.error('TeamService: Error fetching team by ID:', error);
+        return of(null);
+      })
+    );
   }
 
-  createTeam(teamData: { name: string; description?: string }, creatorId: string, creatorUsername: string, creatorEmail: string): Observable<ITeam> {
+
+  // Done
+  createTeam(teamData: { name: string; description?: string }): Observable<ITeam> {
     const teamRequest = {
       name: teamData.name,
-      description: teamData.description || '',
-      createdBy: creatorId,
-      creatorUsername,
-      creatorEmail
+      description: teamData.description || ''
     };
 
     return this.http.post<ITeam>(this.apiUrl, teamRequest).pipe(
@@ -95,27 +144,28 @@ export class TeamService {
     );
   }
 
-  updateTeam(team: ITeam): Observable<ITeam> {
-    try {
-      const teamsString = sessionStorage.getItem('teams');
-      if (teamsString) {
-        const teams: ITeam[] = JSON.parse(teamsString);
-        const index = teams.findIndex(t => t.id === team.id);
-        if (index !== -1) {
-          const updatedTeam: ITeam = {
-            ...team,
-            updatedAt: new Date().toISOString()
-          };
-          teams[index] = updatedTeam;
-          sessionStorage.setItem('teams', JSON.stringify(teams));
-          return of(updatedTeam);
-        }
-      }
-      throw new Error('Team not found');
-    } catch (error) {
-      console.error('Error updating team:', error);
-      throw new Error('Failed to update team');
+  updateTeam(teamId: string, teamData: { name: string; description?: string }): Observable<ITeam> {
+    if (!teamId) {
+      return throwError(() => new Error('Team ID is required'));
     }
+
+    const teamRequest = {
+      name: teamData.name,
+      description: teamData.description || ''
+    };
+
+    const url = `${this.apiUrl}/${teamId}`;
+    console.log('TeamService: Updating team at:', url, 'with data:', teamRequest);
+
+    return this.http.patch<ITeam>(url, teamRequest).pipe(
+      tap(response => {
+        console.log('TeamService: Successfully updated team:', response);
+      }),
+      catchError(error => {
+        console.error('TeamService: Error updating team:', error);
+        throw new Error(error.error?.message || 'Failed to update team. Please try again.');
+      })
+    );
   }
 
   deleteTeam(teamId: string): Observable<void> {
@@ -128,48 +178,48 @@ export class TeamService {
     );
   }
 
-  // Team Member Management
-  addTeamMember(teamId: string, userId: string, username: string, email: string, role: TeamMemberRole, status: TeamMemberStatus = 'PENDING', invitedBy?: string): Observable<ITeamMember> {
-    try {
-      const newMember: ITeamMember = {
-        id: Date.now().toString(),
-        teamId,
-        userId,
-        username,
-        email,
-        role,
-        status,
-        invitedBy,
-        createdAt: new Date().toISOString()
-      };
-
-      const membersString = sessionStorage.getItem('teamMembers');
-      const members: ITeamMember[] = membersString ? JSON.parse(membersString) : [];
-      members.push(newMember);
-      sessionStorage.setItem('teamMembers', JSON.stringify(members));
-
-      return of(newMember);
-    } catch (error) {
-      console.error('Error adding team member:', error);
-      throw new Error('Failed to add team member');
-    }
-  }
-
+  // Done (Need Optimization)
   getTeamMembers(teamId: string): Observable<ITeamMember[]> {
-    try {
-      const membersString = sessionStorage.getItem('teamMembers');
-      if (membersString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const teamMembers = members.filter(m => m.teamId === teamId);
-        return of(teamMembers);
-      }
-      return of([]);
-    } catch (error) {
-      console.error('Error loading team members:', error);
-      return of([]);
-    }
+    console.log('TeamService: Fetching team members for teamId:', teamId);
+
+    return this.getTeamById(teamId).pipe(
+      map(team => {
+        if (!team) {
+          console.warn('TeamService: Team not found for ID:', teamId);
+          return [];
+        }
+
+        console.log('TeamService: Team found, extracting members:', team);
+
+        // Extract members array from team object
+        const members = team.members || [];
+        console.log('TeamService: Raw members from team:', members);
+
+        // Map the members to match ITeamMember interface structure
+        const teamMembers: ITeamMember[] = members.map((member: any) => ({
+          id: member.id || `${member.userId}-${teamId}`, // Generate ID if not present
+          teamId: member.teamId || teamId,
+          userId: member.userId,
+          username: member.userName || member.username, // Handle both possible field names
+          email: member.email || '', // Default empty if not present
+          role: member.role as TeamMemberRole,
+          status: member.status as TeamMemberStatus,
+          invitedBy: member.invitedBy,
+          createdAt: member.createdAt || new Date().toISOString(),
+          respondedAt: member.respondedAt
+        }));
+
+        console.log('TeamService: Mapped team members:', teamMembers);
+        return teamMembers;
+      }),
+      catchError(error => {
+        console.error('TeamService: Error fetching team members via getTeamById:', error);
+        return of([]);
+      })
+    );
   }
 
+  // Done
   getUserTeams(): Observable<ITeam[]> {
     const url = `${this.apiUrl}/my-teams`;
     console.log('TeamService: Making request to:', url);
@@ -178,7 +228,14 @@ export class TeamService {
       map(response => {
         console.log('TeamService: Received response:', response);
         // Extract the teams array from the content property
-        return response.content || [];
+        if (response) {
+          console.log('TeamService: No content in response');
+          return response.content;
+        }
+        else {
+          console.log('TeamService: Response is null or undefined');
+          return [];
+        }
       }),
       catchError(error => {
         console.error('TeamService: Error loading user teams from backend:', error);
@@ -190,33 +247,35 @@ export class TeamService {
     );
   }
 
-  isUserTeamOrganizer(userId: string, teamId: string): Observable<boolean> {
-    try {
-      const membersString = sessionStorage.getItem('teamMembers');
-      if (membersString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const member = members.find(m => m.userId === userId && m.teamId === teamId && m.status === 'APPROVED');
-        return of(member?.role === 'ORGANIZER');
-      }
-      return of(false);
-    } catch (error) {
-      console.error('Error checking if user is team organizer:', error);
-      return of(false);
-    }
+  getOtherTeams(): Observable<ITeam[]> {
+    return this.http.get<{content: ITeam[]}>(`${this.apiUrl}/other-teams`).pipe(
+      map(response => {
+        if (response) {
+          console.log('TeamService: No content in response');
+          return response.content;
+        }
+        else {
+          console.log('TeamService: Response is null or undefined');
+          return [];
+        }
+      }),
+      catchError(error => {
+        console.error('Error fetching other teams from backend:', error);
+        return of([]);
+      })
+    );
   }
 
-  removeTeamMember(teamId: string, userId: string): Observable<void> {
-    try {
-      const membersString = sessionStorage.getItem('teamMembers');
-      if (membersString) {
-        const members: ITeamMember[] = JSON.parse(membersString);
-        const filteredMembers = members.filter(m => !(m.teamId === teamId && m.userId === userId));
-        sessionStorage.setItem('teamMembers', JSON.stringify(filteredMembers));
-      }
-      return of(void 0);
-    } catch (error) {
-      console.error('Error removing team member:', error);
-      throw new Error('Failed to remove team member');
-    }
+  isUserTeamOrganizer(teamId: string): Observable<boolean> {
+    console.log('TeamService: Checking if user is team organizer for team:', teamId);
+    const url = `${this.apiUrl}/isOrganizer/${teamId}`;
+    return this.http.get<boolean>(url).pipe(
+      catchError(error => {
+        console.error('TeamService: Error checking if user is team organizer:', error);
+        return of(false);
+      })
+    );
   }
+
+
 }

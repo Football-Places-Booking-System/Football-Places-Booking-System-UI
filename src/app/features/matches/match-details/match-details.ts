@@ -3,7 +3,7 @@ import { CommonModule, NgIf } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { MatchService, IBookingMatch } from '../../../core/services/match.service';
+import { MatchParticipantService, IUserMatch } from '../../../core/services/match-participant.service';
 import { TeamService } from '../../../core/services/team.service';
 
 @Component({
@@ -13,7 +13,7 @@ import { TeamService } from '../../../core/services/team.service';
   styleUrls: ['./match-details.css']
 })
 export class MatchDetails implements OnInit, OnDestroy {
-  match: IBookingMatch | null = null;
+  match: IUserMatch | null = null;
   errorMessage: string | null = null;
   isLoading = true;
   private destroy$ = new Subject<void>();
@@ -21,7 +21,7 @@ export class MatchDetails implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private matchService: MatchService,
+    private matchParticipantService: MatchParticipantService,
     private teamService: TeamService
   ) {}
 
@@ -33,7 +33,7 @@ export class MatchDetails implements OnInit, OnDestroy {
       return;
     }
 
-    this.loadMatchDetails(matchId);
+    // this.loadMatchDetails(matchId);
   }
 
   ngOnDestroy(): void {
@@ -41,29 +41,29 @@ export class MatchDetails implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadMatchDetails(matchId: string): void {
-    this.matchService.getBookingMatchById(matchId).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (match) => {
-        if (!match) {
-          this.errorMessage = 'Match not found';
-        } else {
-          this.match = match;
-        }
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading match details:', err);
-        this.errorMessage = 'Failed to load match details';
-        this.isLoading = false;
-      }
-    });
-  }
+  // private loadMatchDetails(matchId: string): void {
+  //   this.matchParticipantService.getBookingMatchById(matchId).pipe(
+  //     takeUntil(this.destroy$)
+  //   ).subscribe({
+  //     next: (match: IBookingMatch | null) => {
+  //       if (!match) {
+  //         this.errorMessage = 'Match not found';
+  //       } else {
+  //         this.match = match;
+  //       }
+  //       this.isLoading = false;
+  //     },
+  //     error: (err: any) => {
+  //       console.error('Error loading match details:', err);
+  //       this.errorMessage = 'Failed to load match details';
+  //       this.isLoading = false;
+  //     }
+  //   });
+  // }
 
   goToParticipants(): void {
     if (this.match) {
-      this.router.navigate(['/dashboard/matches', this.match.id, 'participants', this.match.teamId]);
+      this.router.navigate(['/dashboard/matches', this.match.matchId, 'participants', this.match.teamId]);
     }
   }
 

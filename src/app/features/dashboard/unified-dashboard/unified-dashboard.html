@@ -74,18 +74,4 @@
       </div>
     </div>
   </div>
-
-  <!-- Role Information -->
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="alert alert-info text-center">
-        <strong>Current Role:</strong> {{ userRole }}
-        <span *ngIf="userRole === 'ORGANIZER' && currentUser?.role === 'PLAYER'">
-          (You are an organizer in your teams, but your main role is Player)
-        </span>
-        <br>
-        <strong>Teams Created:</strong> {{ teamCount }}
-      </div>
-    </div>
-  </div>
 </div> 

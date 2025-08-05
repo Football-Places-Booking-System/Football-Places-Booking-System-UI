@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService, TeamMemberRole } from '../../../core/services/team.service';
+import { TeamMemberService } from '../../../core/services/team-member.service';
 
 
 
@@ -26,14 +27,16 @@ export class InvitePlayer implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private teamService: TeamService,
+    private teamMemberService: TeamMemberService,
     private authService: AuthService
-  ) { }
+  ) {
+    // Initialize the form with email validation
+    this.inviteForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]]
+    });
+  }
 
   ngOnInit(): void {
-    this.inviteForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]] // Changed to email input
-    });
-
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const id = params.get('id');
       if (id) {
@@ -59,47 +62,35 @@ export class InvitePlayer implements OnInit, OnDestroy {
     if (this.inviteForm.valid && this.teamId) {
       const { email } = this.inviteForm.value;
       const role: TeamMemberRole = 'MEMBER';
-      const currentUser = this.authService.getCurrentUser();
 
-      if (!currentUser) {
-        this.errorMessage = 'User not authenticated. Please login again.';
-        return;
-      }
+      console.log(`InvitePlayerComponent: Attempting to invite user with email: ${email} to team ${this.teamId} as ${role}`);
 
-      console.log(`InvitePlayerComponent: Attempting to invite user with email: ${email} to team ${this.teamId} as ${role} by ${currentUser.id}`);
+      // Show loading state
+      this.inviteForm.disable();
 
-      // For now, we'll use a mock user since getUserByEmail doesn't exist
-      // In a real app, you would implement this method in the team service
-      const mockUser = {
-        id: "999", // Mock user ID
-        username: email.split('@')[0], // Use email prefix as username
-        email: email
-      };
-
-      // Add team member with the required parameters
-      this.teamService.addTeamMember(
-        this.teamId,
-        mockUser.id,
-        mockUser.username,
-        mockUser.email,
-        role,
-        'PENDING',
-        currentUser.id
-      ).pipe(takeUntil(this.destroy$))
+      // Call the new inviteUserByEmail method
+      this.teamMemberService.inviteUserByEmail(this.teamId, email)
+        .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (member) => {
-            this.successMessage = `Player ${mockUser.username} (${mockUser.email}) invited successfully! Status: ${member.status}`;
+            this.successMessage = `Invitation sent successfully to ${email}!`;
             console.log('InvitePlayerComponent: Invitation successful:', member);
+
+            // Reset form and navigate back after a delay
+            this.inviteForm.reset();
             setTimeout(() => {
               this.router.navigate(['/dashboard/teams', this.teamId]);
             }, 1500);
           },
           error: (err) => {
-            this.errorMessage = `Failed to invite player: ${err.message || 'Unknown error'}`;
+            this.errorMessage = `Failed to send invitation: ${err.message || 'Unknown error'}`;
             console.error('InvitePlayerComponent: Invitation failed:', err);
+            this.inviteForm.enable();
+          },
+          complete: () => {
+            this.inviteForm.enable();
           }
         });
-
     } else {
       this.errorMessage = 'Please enter a valid email address.';
       this.inviteForm.markAllAsTouched();

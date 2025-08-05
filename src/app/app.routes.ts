@@ -58,6 +58,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'teams/requests',
+        loadComponent: () =>
+          import('./features/teams/team-requests/team-requests').then(
+            (m) => m.TeamRequests
+          ),
+      },
+      {
         path: 'teams/:id',
         loadComponent: () =>
           import('./features/teams/team-details/team-details').then(
@@ -69,13 +76,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/teams/invite-player/invite-player').then(
             (m) => m.InvitePlayer
-          ),
-      },
-      {
-        path: 'teams/requests',
-        loadComponent: () =>
-          import('./features/teams/team-requests/team-requests').then(
-            (m) => m.TeamRequests
           ),
       },
       {
@@ -100,7 +100,7 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'bookings/:id',
+        path: 'bookings/details/:id',
         loadComponent: () =>
           import('./features/bookings/booking-details/booking-details').then(
             (m) => m.BookingDetailsComponent
@@ -121,13 +121,6 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'matches/schedule',
-        loadComponent: () =>
-          import('./features/matches/schedule-match/schedule-match').then(
-            (m) => m.ScheduleMatch
-          ),
-      },
-      {
         path: 'matches/:id',
         loadComponent: () =>
           import('./features/matches/match-details/match-details').then(
@@ -135,10 +128,10 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'matches/:id/participants/:teamId',
+        path: 'bookings/:bookingId/invite',
         loadComponent: () =>
-          import('./features/matches/match-participants/match-participants').then(
-            (m) => m.MatchParticipants
+          import('./features/bookings/invite-participants/invite-participants').then(
+            (m) => m.InviteParticipantsComponent
           ),
       },
       {

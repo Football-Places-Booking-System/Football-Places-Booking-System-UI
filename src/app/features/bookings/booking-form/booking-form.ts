@@ -12,7 +12,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { BookingService, IBooking, ITimeSlot } from '../../../core/services/booking.service';
+import { BookingService, ITimeSlot } from '../../../core/services/booking.service';
+import { WebSocketService } from '../../../core/services/websocket.service';
 import { TeamService } from '../../../core/services/team.service';
 import { PlaceService } from '../../../core/services/place.service';
 import { IPlace } from '../../../core/models/iplace.model';
@@ -62,6 +63,7 @@ export class BookingFormComponent implements OnInit, OnDestroy {
   successMessage: string | null = null;
   errorMessage: string | null = null;
   isLoading: boolean = false;
+  minDate: Date = new Date();
 
   constructor(
     private fb: FormBuilder,
@@ -70,7 +72,8 @@ export class BookingFormComponent implements OnInit, OnDestroy {
     private bookingService: BookingService,
     private teamService: TeamService,
     private placeService: PlaceService,
-    private authService: AuthService
+    private authService: AuthService,
+    private webSocketService: WebSocketService
   ) {}
 
   ngOnInit(): void {
@@ -78,6 +81,18 @@ export class BookingFormComponent implements OnInit, OnDestroy {
     this.initForm();
     this.loadPlaces();
     this.loadUserTeams();
+    this.webSocketService.onBookingUpdate().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((msg) => {
+      const placeId = this.bookingForm.get('place_id')?.value;
+      const selectedDate = this.bookingForm.get('date')?.value;
+      const localDateString = selectedDate.toLocaleDateString('en-CA');
+
+      // Only reload if the place and date match current view
+      if (placeId === msg.placeId && msg.date === localDateString) {
+        this.loadAvailableTimeSlots();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -107,20 +122,22 @@ export class BookingFormComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  private loadUserTeams(): void {
-    if (this.currentUser) {
-      this.teamService.getTeamsByCreator(this.currentUser.id).subscribe({
-        next: (teams) => {
-          this.userTeams = teams;
-        },
-        error: (error: any) => {
-          console.error('Error loading user teams:', error);
-          this.errorMessage = 'Failed to load your teams.';
-        }
-      });
+private loadUserTeams(): void {
+  this.teamService.getTeamsByCreator().subscribe({
+    next: (response: any) => {
+      const teams = response?.content || [];
+      this.userTeams = teams.filter((team: any) =>
+        team.members?.some((m: any) => m.role === 'ORGANIZER')
+      );
+      console.log('Organizer teams:', this.userTeams);
+    },
+    error: (error: any) => {
+      console.error('Error loading user teams:', error);
+      this.errorMessage = 'Failed to load your teams.';
     }
-  }
+  });
+}
+
 
   onPlaceChange(): void {
     const placeId = this.bookingForm.get('place_id')?.value;
@@ -135,24 +152,44 @@ export class BookingFormComponent implements OnInit, OnDestroy {
   }
 
   private loadAvailableTimeSlots(): void {
-    const placeId = this.bookingForm.get('place_id')?.value;
-    const date = this.bookingForm.get('date')?.value;
+  const placeId = this.bookingForm.get('place_id')?.value;
+  const date: Date = this.bookingForm.get('date')?.value;
 
-    if (placeId && date) {
-      this.isLoading = true;
-      this.bookingService.getAvailableTimeSlots(placeId, date.toISOString()).subscribe({
-        next: (slots) => {
-          this.availableTimeSlots = slots;
-          this.isLoading = false;
-        },
-        error: (error: any) => {
-          console.error('Error loading time slots:', error);
-          this.errorMessage = 'Failed to load available time slots.';
-          this.isLoading = false;
-        }
-      });
-    }
+  if (placeId && date) {
+    this.isLoading = true;
+
+    // Format date as YYYY-MM-DD (no timezone shift)
+    const localDateString = date.toLocaleDateString('en-CA'); // e.g., "2025-08-02"
+
+    this.bookingService.getAvailableTimeSlots(placeId, localDateString).subscribe({
+      next: (slots) => {
+        console.log("🔹 Slots received from service:", slots);
+
+        const now = new Date();
+        const selectedDate = new Date(date);
+
+        this.availableTimeSlots = slots.filter(slot => {
+          const slotStart = new Date(slot.start_time);
+          if (selectedDate.toDateString() === now.toDateString()) {
+            return slotStart.getTime() >= now.getTime() + 60 * 60 * 1000;
+          }
+          return true;
+        });
+
+        console.log("Filtered availableTimeSlots for UI:", this.availableTimeSlots);
+        this.isLoading = false;
+      },
+      error: (error: any) => {
+        console.error('Error loading time slots:', error);
+        this.errorMessage = 'Failed to load available time slots.';
+        this.isLoading = false;
+      }
+    });
   }
+}
+
+
+
 
   toggleTimeSlot(slot: ITimeSlot): void {
     if (!slot.is_available) return;
@@ -252,57 +289,69 @@ export class BookingFormComponent implements OnInit, OnDestroy {
   }
 
   onSubmit(): void {
-    if (this.bookingForm.valid && this.currentUser && this.bookingGroups.length > 0) {
-      this.isLoading = true;
-      this.errorMessage = null;
-      this.successMessage = null;
+  if (this.bookingForm.valid && this.currentUser && this.bookingGroups.length > 0) {
+    this.isLoading = true;
+    this.errorMessage = null;
+    this.successMessage = null;
 
-      const formValue = this.bookingForm.value;
+    const formValue = this.bookingForm.value;
 
-      // Create one booking for each group of consecutive slots
-      const bookingPromises = this.bookingGroups.map((group) => {
-        const bookingData = {
-          place_id: formValue.place_id,
-          user_id: this.currentUser.id,
-          team_id: formValue.team_id,
-          start_time: group.start_time,
-          end_time: group.end_time,
-          status: 'PENDING_PAYMENT' as const,
-          place_name: this.selectedPlace?.name,
-          team_name: this.userTeams.find(t => t.id === formValue.team_id)?.name,
-          user_name: this.currentUser.username
-        };
+    // Create one booking for each group of consecutive slots
+    const bookingPromises = this.bookingGroups.map((group) => {
+      const bookingData = {
+        placeId: formValue.place_id, //
+        userId: this.currentUser.id,
+        teamId: formValue.team_id,   //
+        startTime: this.formatLocalDateTime(new Date(group.start_time)),
+        endTime: this.formatLocalDateTime(new Date(group.end_time)),
+        status: 'PENDING_PAYMENT' as const,
+        placeName: this.selectedPlace?.name,
+        teamName: this.userTeams.find(t => t.id === formValue.team_id)?.name,
+        userName: this.currentUser.username
+      };
 
-        return this.bookingService.createBooking(bookingData).toPromise();
+      return this.bookingService.createBooking(bookingData).toPromise();
+    });
+
+    Promise.all(bookingPromises)
+      .then(() => {
+        const totalDuration = this.bookingGroups.reduce((sum, group) => sum + group.duration, 0);
+        this.successMessage = `Successfully created ${this.bookingGroups.length} booking(s) for a total of ${this.formatDuration(totalDuration)}!`;
+        this.bookingForm.reset();
+        this.selectedTimeSlots = [];
+        this.bookingGroups = [];
+        this.availableTimeSlots = [];
+
+        setTimeout(() => {
+          this.router.navigate(['/dashboard/bookings']);
+        }, 2000);
+      })
+      .catch((error) => {
+        console.error('Error creating bookings:', error);
+        this.errorMessage = 'Failed to create bookings. Please try again.';
+      })
+      .finally(() => {
+        this.isLoading = false;
       });
-
-      Promise.all(bookingPromises)
-        .then(() => {
-          const totalDuration = this.bookingGroups.reduce((sum, group) => sum + group.duration, 0);
-          this.successMessage = `Successfully created ${this.bookingGroups.length} booking(s) for a total of ${this.formatDuration(totalDuration)}!`;
-          this.bookingForm.reset();
-          this.selectedTimeSlots = [];
-          this.bookingGroups = [];
-          this.availableTimeSlots = [];
-
-          setTimeout(() => {
-            this.router.navigate(['/dashboard/bookings']);
-          }, 2000);
-        })
-        .catch((error) => {
-          console.error('Error creating bookings:', error);
-          this.errorMessage = 'Failed to create bookings. Please try again.';
-        })
-        .finally(() => {
-          this.isLoading = false;
-        });
-    } else {
-      this.errorMessage = 'Please fill in all required fields and select at least one time slot.';
-      this.bookingForm.markAllAsTouched();
-    }
+  } else {
+    this.errorMessage = 'Please fill in all required fields and select at least one time slot.';
+    this.bookingForm.markAllAsTouched();
   }
+}
+
 
   onCancel(): void {
     this.router.navigate(['/dashboard/bookings']);
   }
+
+  private formatLocalDateTime(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
 }

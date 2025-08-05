@@ -7,7 +7,7 @@
     <p>Loading match details...</p>
   </div>
 
-  <div *ngIf="match && !isLoading" class="match-content">
+  <!-- <div *ngIf="match && !isLoading" class="match-content">
     <div class="header">
       <h1>Match Details</h1>
       <p>{{ match.matchDate | date:'mediumDate' }} at {{ match.startTime }} - {{ match.endTime }}</p>
@@ -102,7 +102,7 @@
         Back to Matches
       </button>
     </div>
-  </div>
+  </div> -->
 
   <div *ngIf="!match && !isLoading && !errorMessage" class="no-data">
     <p>No match data available.</p>
