@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING' | 'PENDING_PAYMENT';
+export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING_PLAYERS' | 'PENDING_PAYMENT';
 export type InvitationStatus = 'INVITED' | 'ACCEPTED' | 'DECLINED';
 
 /**

@@ -12,11 +12,11 @@ import { CalendarOptions, EventClickArg, EventApi } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { BookingService } from '../../../core/services/booking.service';
-import { MatchParticipantService, IBookingMatch } from '../../../core/services/match-participant.service';
+import { BookingService,  IBooking } from '../../../core/services/booking.service';
+import { MatchParticipantService, IUserMatch } from '../../../core/services/match-participant.service';
+
 import { PlaceService } from '../../../core/services/place.service';
 import { AuthService } from '../../../core/services/auth.service';
-
 @Component({
   selector: 'app-calendar-view',
   standalone: true,
@@ -143,7 +143,7 @@ export class CalendarViewComponent implements OnInit {
       // 2. Upcoming Matches (from BookingMatch)
       console.log('Loading matches:', matches);
       if (matches && Array.isArray(matches) && places) {
-        matches.forEach((match: IBookingMatch) => {
+        matches.forEach((match: IUserMatch) => {
           const place = places.find(p => p.id.toString() === match.placeId?.toString());
           const team = this.getTeamById(match.teamId);
           console.log('Processing match:', match, 'Place:', place, 'Team:', team);
@@ -154,12 +154,12 @@ export class CalendarViewComponent implements OnInit {
           const endDate = new Date(match.endTime);
           
           if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            console.error('Invalid date format for match:', match.id);
+            console.error('Invalid date format for match:', match.matchId);
             return;
           }
           
           events.push({
-            id: `match-${match.id}`,
+            id: `match-${match.matchId}`,
             title: `Match: ${match.teamName || 'Team'}`,
             start: match.startTime,
             end: match.endTime,
