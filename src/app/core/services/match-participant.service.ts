@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING' | 'PENDING_PAYMENT';
+export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING_PLAYERS' | 'PENDING_PAYMENT';
 export type InvitationStatus = 'INVITED' | 'ACCEPTED' | 'DECLINED';
 
 /**
@@ -91,6 +91,20 @@ export class MatchParticipantService {
         })
       );
   }
+
+  joinMatchAsOrganizer(matchId: string): Observable<IMatchParticipant | null> {
+  return this.http
+    .post<IMatchParticipant>(`${this.API_URL}/join-as-organizer/${matchId}`, null, {
+      headers: this.getAuthHeaders()
+    })
+    .pipe(
+      catchError((err) => {
+        console.error('Error joining match as organizer:', err);
+        return of(null);
+      })
+    );
+}
+
 
   /**
    * Get all participants for a specific match

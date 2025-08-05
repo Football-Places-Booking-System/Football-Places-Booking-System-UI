@@ -6,44 +6,76 @@
 
   <!-- Main Content -->
   <div *ngIf="combinedData$ | async as data; else loadingOrError">
-    <div *ngIf="data.match">
-      <h2>Match Details</h2>
-      <div class="match-details">
-        <p><strong>Booking ID:</strong> {{ data.match.id }}</p>
-        <p><strong>Place ID:</strong> {{ data.match.placeId }}</p>
-        <p><strong>Organizer ID:</strong> {{ data.match.userId }}</p>
-        <p><strong>Team ID:</strong> {{ data.match.teamId }}</p>
-        <p><strong>Match Date:</strong> {{ data.match.startTime | date:'mediumDate' }}</p>
-        <p><strong>Start Time:</strong> {{ data.match.startTime | date:'shortTime' }}</p>
-        <p><strong>End Time:</strong> {{ data.match.endTime | date:'shortTime' }}</p>
-        <p><strong>Status:</strong> {{ data.match.status }}</p>
-        <p><strong>Created At:</strong> {{ data.match.createdAt | date:'medium' }}</p>
+    <div *ngIf="data.match" class="match-info-section">
+
+      <!-- Organizer Info Card -->
+      <div class="organizer-info">
+        <div>
+          <h2 class="match-title">
+            <mat-icon class="match-icon">sports_soccer</mat-icon>
+            <span>{{ data.match.teamName || 'Match Details' }}</span>
+          </h2>
+          <p class="subtext">
+            <mat-icon>person</mat-icon>
+            Organized by: <strong>{{ data.match.userName || 'You' }}</strong>
+          </p>
+          <p class="subtext">
+            <mat-icon>location_on</mat-icon>
+            Location: <strong>{{ data.match.placeName }}</strong>
+          </p>
+          <p class="subtext">
+            <mat-icon>event</mat-icon>
+            Date: <strong>{{ data.match.startTime | date:'mediumDate' }}</strong>
+          </p>
+          <p class="subtext">
+            <mat-icon>schedule</mat-icon>
+            Time: <strong>{{ data.match.startTime | date:'shortTime' }}</strong> -
+            <strong>{{ data.match.endTime | date:'shortTime' }}</strong>
+          </p>
+          <p class="subtext status">
+            <mat-icon>info</mat-icon>
+            Status: <span class="status-badge">{{ data.match.status }}</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Join Match Button -->
+      <div class="join-match-section"
+        *ngIf="data.match && !isOrganizerAlreadyParticipant(data.match.userId, data.participants)">
+        <button class="join-match-btn" (click)="joinMatchAsOrganizer()">
+          <mat-icon>check_circle</mat-icon> Join Match as Organizer
+        </button>
       </div>
 
       <!-- Players Table -->
-      <h3>Team Players (Team ID: {{ data.teamId || 'Selected Team' }})</h3>
+      <h3>Team Players</h3>
       <div class="players-table-wrapper">
         <table class="players-table">
           <thead>
             <tr>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Invite</th>
-              <th>Status</th>
+              <th><mat-icon>person</mat-icon> Username</th>
+              <th><mat-icon>email</mat-icon> Email</th>
+              <th><mat-icon>assignment_ind</mat-icon> Role</th>
+              <th><mat-icon>person_add</mat-icon> Invite</th>
+              <th><mat-icon>info</mat-icon> Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let player of data.players">
+            <tr *ngFor="let player of data.players"
+              [ngClass]="{'organizer-row': isOrganizer(player.userId, data.match.userId)}">
               <td>{{ player.username }}</td>
               <td>{{ player.email }}</td>
               <td>{{ player.role }}</td>
               <td>
-                <button (click)="invitePlayer(player.email)"
+                <button *ngIf="!isOrganizer(player.userId, data.match.userId)" mat-button
+                  matTooltip="Send match invitation" (click)="invitePlayer(player.email)"
                   [disabled]="isPlayerInvited(player.userId, data.participants)"
                   [ngClass]="{'invited-button': isPlayerInvited(player.userId, data.participants)}">
                   {{ isPlayerInvited(player.userId, data.participants) ? 'Invited' : 'Invite' }}
                 </button>
+                <span *ngIf="isOrganizer(player.userId, data.match.userId)" class="organizer-label">
+                  Organizer
+                </span>
               </td>
               <td>{{ getPlayerInvitationStatus(player.userId, data.participants) }}</td>
             </tr>
@@ -64,6 +96,7 @@
   <!-- Loading state -->
   <ng-template #loadingOrError>
     <div class="loading-state" *ngIf="!errorMessage">
+      <mat-spinner diameter="40"></mat-spinner>
       Loading match and player data...
     </div>
   </ng-template>

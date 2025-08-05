@@ -6,11 +6,13 @@ import { Observable, combineLatest, map, switchMap, of, catchError, tap, takeUnt
 import { MatchParticipantService, IMatchParticipant, IInvitationRequest } from '../../../core/services/match-participant.service';
 import { TeamService, ITeamMember } from '../../../core/services/team.service';
 import { BookingService, IBooking } from '../../../core/services/booking.service';
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatIconModule } from "@angular/material/icon";
 
 @Component({
   selector: 'app-match-participants',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatIconModule],
   templateUrl: './invite-participants.html',
   styleUrls: ['./invite-participants.css']
 })
@@ -112,6 +114,17 @@ export class InviteParticipantsComponent implements OnInit, OnDestroy {
     return participant ? participant.status.charAt(0).toUpperCase() + participant.status.slice(1).toLowerCase() : 'Not Invited';
   }
 
+  isOrganizer(playerId: string, organizerId: string): boolean {
+  return playerId === organizerId;
+}
+
+isOrganizerAlreadyParticipant(organizerId: string, participants: IMatchParticipant[]): boolean {
+  return participants.some(
+    p => p.userId === organizerId && p.status === 'ACCEPTED'
+  );
+}
+
+
   /**
    * Invite a player by userId (this assumes you can get their email from team members)
    */
@@ -132,6 +145,24 @@ export class InviteParticipantsComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  joinMatchAsOrganizer(): void {
+  if (!this.matchId) {
+    this.errorMessage = 'Match ID is missing.';
+    return;
+  }
+
+  this.matchParticipantService.joinMatchAsOrganizer(this.matchId).subscribe({
+    next: (participant) => {
+      console.log('Organizer joined the match successfully:', participant);
+      this.refreshParticipants();
+    },
+    error: (err) => {
+      this.errorMessage = 'Failed to join match as organizer.';
+    }
+  });
+}
+
 
   /**
    * Refresh participants list after an invitation

@@ -15,9 +15,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { BookingStatus } from '../../../core/services/match-participant.service';
+import { BookingService, IBooking } from '../../../core/services/booking.service';
 
 @Component({
   selector: 'app-admin-booking-management',
@@ -136,9 +137,9 @@ export class AdminBookingManagementComponent implements OnInit {
         return 'success';
       case 'CANCELLED':
         return 'error';
-      case 'PENDING_PAYMENT':
+      case 'PENDING_PLAYERS':
         return 'warning';
-      case 'PENDING':
+      case 'PENDING_PAYMENT':
         return 'info';
       default:
         return 'default';
@@ -153,8 +154,8 @@ export class AdminBookingManagementComponent implements OnInit {
         return 'Cancelled';
       case 'PENDING_PAYMENT':
         return 'Pending Payment';
-      case 'PENDING':
-        return 'Pending';
+      case 'PENDING_PLAYERS':
+        return 'Pending_Players';
       default:
         return status;
     }
@@ -167,8 +168,8 @@ export class AdminBookingManagementComponent implements OnInit {
       case 'CANCELLED':
         return 'cancel';
       case 'PENDING_PAYMENT':
-        return 'pending';
-      case 'PENDING':
+        return 'pending payment';
+      case 'PENDING_PLAYERS':
         return 'schedule';
       default:
         return 'help';
