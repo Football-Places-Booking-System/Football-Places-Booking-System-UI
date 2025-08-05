@@ -58,8 +58,8 @@ export class Register implements OnInit {
       this.authService.register({ username, email, password }).subscribe
         (response => {
           console.log('Registration successful:', response)
-          // this.router.navigate(['/login'])
-          this.router.navigate(['/dashboard']);
+          // Use the new redirect method to go to the originally requested page or dashboard
+          this.authService.redirectAfterLogin();
 
         }, error => {
           console.error('Registration error:', error)

@@ -6,7 +6,15 @@ import { Router } from '@angular/router';
 export const authGuard: CanActivateFn = (route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  console.log('authGuard called');
-  return !!auth.getCurrentUser() ? true : router.createUrlTree(['/login']);
-  // return !!auth.getCurrentUser() ? true : true;
+
+  console.log('authGuard called for URL:', state.url);
+
+  if (auth.getCurrentUser()) {
+    return true;
+  } else {
+    // Store the attempted URL for redirecting after login
+    console.log('User not authenticated, storing return URL:', state.url);
+    sessionStorage.setItem('returnUrl', state.url);
+    return router.createUrlTree(['/login']);
+  }
 };
