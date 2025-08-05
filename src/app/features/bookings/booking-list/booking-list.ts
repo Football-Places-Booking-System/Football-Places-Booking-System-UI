@@ -10,8 +10,8 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking.service';
-import { MatchParticipantService, IMatchParticipant } from '../../../core/services/match-participant.service';
+import { BookingService, IBooking } from '../../../core/services/booking.service';
+import { MatchParticipantService, IMatchParticipant, BookingStatus } from '../../../core/services/match-participant.service';
 import { TeamService } from '../../../core/services/team.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -102,7 +102,7 @@ export class BookingListComponent implements OnInit {
     switch (status) {
       case 'CONFIRMED': return 'success';
       case 'PENDING_PAYMENT': return 'warning';
-      case 'PENDING': return 'info';
+      case 'PENDING_PLAYERS': return 'info';
       case 'CANCELLED': return 'error';
       default: return 'default';
     }
@@ -112,7 +112,7 @@ export class BookingListComponent implements OnInit {
     switch (status) {
       case 'CONFIRMED': return 'Confirmed';
       case 'PENDING_PAYMENT': return 'Pending Payment';
-      case 'PENDING': return 'Pending';
+      case 'PENDING_PLAYERS': return 'Pending Players';
       case 'CANCELLED': return 'Cancelled';
       default: return status;
     }

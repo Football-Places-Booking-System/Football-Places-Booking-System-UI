@@ -95,8 +95,8 @@
                 {{ getStatusText(booking.status) }}
               </mat-chip>
               <div class="status-description">
-                <p *ngIf="booking.status === 'PENDING'">
-                  This booking is pending approval. You will be notified once it's confirmed.
+                <p *ngIf="booking.status === 'PENDING_PAYMENT'">
+                  This booking is pending payment. You will be notified once it's confirmed.
                 </p>
                 <p *ngIf="booking.status === 'CONFIRMED'">
                   Your booking has been confirmed. Please be on time for your scheduled match.

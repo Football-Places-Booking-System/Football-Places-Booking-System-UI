@@ -1,0 +1,140 @@
+<div class="event-details-dialog">
+  <!-- Header -->
+  <div class="dialog-header" [style.background-color]="getEventColor()">
+    <div class="header-content">
+      <div class="event-icon">
+        <i class="material-icons">{{ getEventIcon() }}</i>
+      </div>
+      <div class="event-title">
+        <h2>{{ getEventTitle() }}</h2>
+      </div>
+    </div>
+    <button mat-icon-button (click)="onClose()" class="close-btn">
+      <i class="material-icons">close</i>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="dialog-content">
+    <ng-container [ngSwitch]="data.type">
+
+      <!-- Booking Details (Green / Gray cards) -->
+      <div *ngSwitchCase="'booking'" class="event-details">
+        <mat-card class="detail-card">
+          <mat-card-content>
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">group</i>
+                Team:
+                </div>
+                <div class="detail-value">{{ data.data.teamName || 'Team' }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">schedule</i>
+                Date & Time:
+              </div>
+              <div class="detail-value">{{ formatDate(data.data.startTime) }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">schedule</i>
+                Duration:
+              </div>
+              <div class="detail-value">{{ getDuration(data.data.startTime, data.data.endTime) }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">location_on</i>
+                Place:
+              </div>
+              <div class="detail-value">{{ data.data.placeName || 'Place' }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">person</i>
+                Booker:
+              </div>
+              <div class="detail-value">{{ data.data.userName || 'User' }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">info</i>
+                Status:
+              </div>
+              <div class="detail-value">
+                <mat-chip [color]="getMatchStatusColor(data.data.status)" selected>
+                  {{ getMatchStatusText(data.data.status) }}
+                </mat-chip>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Match Details (Orange cards, participants removed) -->
+      <div *ngSwitchCase="'match'" class="event-details">
+        <mat-card class="detail-card">
+          <mat-card-content>
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">group</i>
+                Team:
+              </div>
+              <div class="detail-value">{{ data.data.teamName || 'Team' }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">schedule</i>
+                Date & Time:
+              </div>
+              <div class="detail-value">{{ formatDate(data.data.startTime) }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">schedule</i>
+                Duration:
+              </div>
+              <div class="detail-value">{{ getDuration(data.data.startTime, data.data.endTime) }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">location_on</i>
+                Place:
+              </div>
+              <div class="detail-value">{{ data.data.placeName || 'Place' }}</div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label">
+                <i class="material-icons">info</i>
+                Status:
+              </div>
+              <div class="detail-value">
+                <mat-chip [color]="getMatchStatusColor(data.data.status || data.data.bookingStatus)" selected>
+                  {{ getMatchStatusText(data.data.status || data.data.bookingStatus) }}
+                </mat-chip>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </ng-container>
+  </div>
+
+  <!-- Actions -->
+  <div class="dialog-actions">
+    <button mat-button (click)="onClose()">
+      Close
+    </button>
+  </div>
+</div>

@@ -147,6 +147,13 @@ export const routes: Routes = [
           import('./features/users/profile/profile').then((m) => m.Profile),
       },
       {
+        path: 'calendar',
+        loadComponent: () =>
+          import('./features/dashboard/calendar-view/calendar-view').then(
+            (m) => m.CalendarViewComponent
+          ),
+      },
+      {
         path: 'admin',
         loadComponent: () =>
           import('./features/dashboard/admin-dashboard/admin-dashboard').then(

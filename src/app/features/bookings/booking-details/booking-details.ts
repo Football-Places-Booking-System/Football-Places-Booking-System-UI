@@ -7,9 +7,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { BookingService, IBooking, BookingStatus } from '../../../core/services/booking.service';
+import { BookingService, IBooking } from '../../../core/services/booking.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TeamService } from '../../../core/services/team.service';
+import { BookingStatus } from '../../../core/services/match-participant.service';
 
 @Component({
   selector: 'app-booking-details',
@@ -93,7 +94,7 @@ export class BookingDetailsComponent implements OnInit {
         return 'success';
       case 'PENDING_PAYMENT':
         return 'warning';
-      case 'PENDING':
+      case 'PENDING_PLAYERS':
         return 'info';
       case 'CANCELLED':
         return 'error';
@@ -108,8 +109,8 @@ export class BookingDetailsComponent implements OnInit {
         return 'Confirmed';
       case 'PENDING_PAYMENT':
         return 'Pending Payment';
-      case 'PENDING':
-        return 'Pending';
+      case 'PENDING_PLAYERS':
+        return 'Pending Players';
       case 'CANCELLED':
         return 'Cancelled';
       default:

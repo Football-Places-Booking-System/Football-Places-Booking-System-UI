@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-
-export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING' | 'PENDING_PAYMENT';
+import { BookingStatus } from './match-participant.service';
 
 export interface IBooking {
   id: string;
@@ -15,6 +14,7 @@ export interface IBooking {
   status: BookingStatus;
   createdAt?: string;
   placeName?: string;
+  placeType?: string;
   teamName?: string;
   userName?: string;
 }
@@ -38,8 +38,8 @@ export class BookingService {
 
   // Get all bookings (Admin or Organizer)
   getBookings(): Observable<IBooking[]> {
-    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}`).pipe(
-      map(res => res.content || []),  
+    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/all`).pipe(
+      map(res => res.content || []),
       catchError(err => {
         console.error('Error fetching all bookings:', err);
         return of([]);

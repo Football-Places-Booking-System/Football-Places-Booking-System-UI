@@ -1,0 +1,50 @@
+<div class="calendar-container">
+  <!-- Header Section -->
+  <div class="calendar-header mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-12">
+        <h2 class="calendar-title">
+          <i class="fas fa-calendar-alt me-2"></i>
+          Comprehensive Calendar
+        </h2>
+        <p class="text-muted">View all matches including yours and others</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend Section -->
+  <div class="calendar-legend mb-3">
+    <div class="row">
+      <div class="col-12">
+        <div class="legend-container">
+          <!-- 🟠 My Organized Matches -->
+          <div class="legend-item">
+            <div class="legend-color organized-color"></div>
+            <span class="legend-text">My Matches as an Organizer</span>
+          </div>
+
+          <!-- 🟢 Matches I Will Participate In -->
+          <div class="legend-item">
+            <div class="legend-color participant-color"></div>
+            <span class="legend-text">My Matches as a Player</span>
+          </div>
+
+          <!-- ⚪ Other Matches -->
+          <div class="legend-item">
+            <div class="legend-color other-color"></div>
+            <span class="legend-text">Other Matches</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Card -->
+  <mat-card class="calendar-card">
+    <mat-card-content>
+      <div class="calendar-wrapper">
+        <full-calendar [options]="calendarOptions"></full-calendar>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
