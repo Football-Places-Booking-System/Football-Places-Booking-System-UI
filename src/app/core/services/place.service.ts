@@ -23,7 +23,7 @@ export class PlaceService {
     return this.http.get<any>(`${this.apiUrl}/all`).pipe(
       map((response: any) => {
         // Extract places from paginated response
-        const places = response.content || [];
+        const places = (!response)? [] : response.content;
         console.log('PlaceService: Retrieved', places.length, 'places from API');
 
         // Transform places to ensure consistent structure

@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BookingService, ITimeSlot } from '../../../core/services/booking.service';
+import { WebSocketService } from '../../../core/services/websocket.service';
 import { TeamService } from '../../../core/services/team.service';
 import { PlaceService } from '../../../core/services/place.service';
 import { IPlace } from '../../../core/models/iplace.model';
@@ -71,7 +72,8 @@ export class BookingFormComponent implements OnInit, OnDestroy {
     private bookingService: BookingService,
     private teamService: TeamService,
     private placeService: PlaceService,
-    private authService: AuthService
+    private authService: AuthService,
+    private webSocketService: WebSocketService
   ) {}
 
   ngOnInit(): void {
@@ -79,6 +81,18 @@ export class BookingFormComponent implements OnInit, OnDestroy {
     this.initForm();
     this.loadPlaces();
     this.loadUserTeams();
+    this.webSocketService.onBookingUpdate().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((msg) => {
+      const placeId = this.bookingForm.get('place_id')?.value;
+      const selectedDate = this.bookingForm.get('date')?.value;
+      const localDateString = selectedDate.toLocaleDateString('en-CA');
+
+      // Only reload if the place and date match current view
+      if (placeId === msg.placeId && msg.date === localDateString) {
+        this.loadAvailableTimeSlots();
+      }
+    });
   }
 
   ngOnDestroy(): void {
