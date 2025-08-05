@@ -54,7 +54,7 @@ export class MatchParticipantService {
    * Build headers with JWT token
    */
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     return new HttpHeaders({
       Authorization: token ? `Bearer ${token}` : '',
       'Content-Type': 'application/json',
