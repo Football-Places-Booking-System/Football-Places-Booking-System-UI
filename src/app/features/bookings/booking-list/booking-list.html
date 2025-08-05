@@ -67,10 +67,10 @@
             <mat-icon>visibility</mat-icon>
             View Details
           </button>
-          <!-- <button mat-button color="accent" (click)="viewMatchParticipants(booking)">
-            <mat-icon>group</mat-icon>
+          <button mat-button color="accent" (click)="inviteParticipants(booking)">
+            <mat-icon>group_add</mat-icon>
             Invite Participants
-          </button> -->
+          </button>
         </mat-card-actions>
       </mat-card>
     </div>
@@ -88,7 +88,7 @@
         <mat-card-header>
           <mat-card-title>{{ booking.teamName }}</mat-card-title>
         </mat-card-header>
-
+      
         <mat-card-content>
           <div class="booking-details">
             <div class="detail-item">
@@ -105,18 +105,31 @@
             </div>
           </div>
         </mat-card-content>
-
+      
         <mat-card-actions align="end">
           <button mat-button color="primary" (click)="viewBookingDetails(booking)">
             <mat-icon>visibility</mat-icon>
             View Details
           </button>
-          <!-- <button mat-button color="accent" (click)="viewMatchParticipants(booking)">
+          <button mat-button color="accent" (click)="viewMatchParticipants(booking)">
             <mat-icon>group</mat-icon>
             View Participants
-          </button> -->
+          </button>
         </mat-card-actions>
+      
+        <!-- ✅ Participants modal below the card -->
+        <div *ngIf="expandedBookingId === booking.id && selectedParticipants.length > 0" class="participants-modal">
+          <h3>Match Participants</h3>
+          <ul>
+            <li *ngFor="let p of selectedParticipants">
+              <mat-icon>person</mat-icon> {{ p.username }}
+              <span class="status">({{ p.status }})</span>
+            </li>
+          </ul>
+          <button mat-button color="warn" (click)="closeParticipants()">Close</button>
+        </div>
       </mat-card>
+
     </div>
 
     <!-- CANCELLED BOOKINGS SECTION -->
@@ -158,10 +171,6 @@
             <mat-icon>visibility</mat-icon>
             View Details
           </button>
-          <!-- <button mat-button color="accent" (click)="viewMatchParticipants(booking)">
-            <mat-icon>group</mat-icon>
-            View Participants
-          </button> -->
         </mat-card-actions>
       </mat-card>
     </div>

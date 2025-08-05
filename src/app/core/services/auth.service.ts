@@ -134,7 +134,7 @@ export class AuthService {
           );
         } else {
           console.log('AuthService: No user ID found in login response. Unable to fetch user profile.');
-          return of(response); 
+          return of(response);
         }
       }),
       catchError(error => {
@@ -199,5 +199,28 @@ export class AuthService {
    */
   isOrganizer(): boolean {
     return sessionStorage.getItem('currentUserRole') === 'organizer';
+  }
+
+  /**
+   * Redirects to the stored return URL after successful login, or to dashboard if no return URL.
+   */
+  redirectAfterLogin(): void {
+    const returnUrl = sessionStorage.getItem('returnUrl');
+    if (returnUrl) {
+      console.log('AuthService: Redirecting to stored return URL:', returnUrl);
+      sessionStorage.removeItem('returnUrl'); // Clean up
+      this.router.navigateByUrl(returnUrl);
+    } else {
+      console.log('AuthService: No return URL found, redirecting to dashboard');
+      this.router.navigate(['/dashboard']);
+    }
+  }
+
+  /**
+   * Gets the stored return URL without removing it.
+   * @returns The stored return URL or null if none exists.
+   */
+  getReturnUrl(): string | null {
+    return sessionStorage.getItem('returnUrl');
   }
 }

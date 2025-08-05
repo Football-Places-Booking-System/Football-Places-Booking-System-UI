@@ -11,10 +11,10 @@ import { BookingService, IBooking } from '../../../core/services/booking.service
   selector: 'app-match-participants',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './match-participants.html',
-  styleUrls: ['./match-participants.css']
+  templateUrl: './invite-participants.html',
+  styleUrls: ['./invite-participants.css']
 })
-export class MatchParticipantsComponent implements OnInit, OnDestroy {
+export class InviteParticipantsComponent implements OnInit, OnDestroy {
   matchId!: string;
   teamId!: string;
 
@@ -40,51 +40,57 @@ export class MatchParticipantsComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    console.log('MatchParticipantsComponent: ngOnInit started.');
+  console.log('InviteParticipantsComponent: ngOnInit started.');
 
-    this.combinedData$ = this.route.paramMap.pipe(
-      map(params => {
-        this.matchId = params.get('id') || '';
-        this.teamId = params.get('teamId') || '';
-        console.log(`MatchParticipantsComponent: Route Params - matchId: ${this.matchId}, teamId: ${this.teamId}`);
+  // Get passed booking details
+  const navigation = history.state;
+  const passedBooking: IBooking | undefined = navigation.booking;
 
-        if (!this.matchId || !this.teamId) {
-          this.errorMessage = 'Match ID or Team ID is missing in the route.';
-          throw new Error(this.errorMessage);
-        }
-        return { matchId: this.matchId, teamId: this.teamId };
-      }),
-      switchMap(({ matchId, teamId }) => {
-        console.log(`MatchParticipantsComponent: Initiating service calls for matchId: ${matchId}, teamId: ${teamId}`);
-        return combineLatest([
-          this.bookingService.getBookingById(matchId).pipe(catchError(() => of(null))),
-          this.teamService.getTeamMembers(teamId).pipe(catchError(() => of([]))),
-          this.matchParticipantService.getParticipantsByMatch(matchId).pipe(catchError(() => of([])))
-        ]).pipe(
-          tap(([match, players, participants]) => {
-            console.log('Match data:', match);
-            console.log('Players:', players);
-            console.log('Participants:', participants);
-          }),
-          map(([match, players, participants]) => ({ match, players, participants, teamId })),
-          catchError((err) => {
-            this.errorMessage = `Error loading data: ${err.message}`;
-            return of({ match: null, players: [], participants: [], teamId });
-          })
-        );
-      }),
-      takeUntil(this.destroy$)
-    );
+  this.combinedData$ = this.route.paramMap.pipe(
+    map(params => {
+      this.matchId = params.get('bookingId') || '';   // ✅ correct param
+      this.teamId = passedBooking?.teamId || '';      // ✅ teamId from state
+      console.log(`Route Params - matchId: ${this.matchId}, teamId: ${this.teamId}`);
 
-    this.combinedData$.subscribe({
-      next: (data) => {
-        console.log('Combined data received:', data);
-      },
-      error: (err) => {
-        console.error('Error in combinedData$ subscription:', err);
+      if (!this.matchId || !this.teamId) {
+        this.errorMessage = 'Booking ID or Team ID is missing in the route.';
+        throw new Error(this.errorMessage);
       }
-    });
-  }
+      return { matchId: this.matchId, teamId: this.teamId };
+    }),
+    switchMap(({ matchId, teamId }) => {
+      console.log(`Service calls for matchId: ${matchId}, teamId: ${teamId}`);
+
+      return combineLatest([
+        passedBooking ? of(passedBooking) : this.bookingService.getBookingById(matchId).pipe(catchError(() => of(null))),
+        this.teamService.getTeamMembers(teamId).pipe(catchError(() => of([]))),
+        this.matchParticipantService.getParticipantsByMatch(matchId).pipe(catchError(() => of([])))
+      ]).pipe(
+        tap(([match, players, participants]) => {
+          console.log('Match data:', match);
+          console.log('Players:', players);
+          console.log('Participants:', participants);
+        }),
+        map(([match, players, participants]) => ({ match, players, participants, teamId })),
+        catchError((err) => {
+          this.errorMessage = `Error loading data: ${err.message}`;
+          return of({ match: null, players: [], participants: [], teamId });
+        })
+      );
+    }),
+    takeUntil(this.destroy$)
+  );
+
+  this.combinedData$.subscribe({
+    next: (data) => {
+      console.log('Combined data received:', data);
+    },
+    error: (err) => {
+      console.error('Error in combinedData$ subscription:', err);
+    }
+  });
+}
+
 
   ngOnDestroy(): void {
     this.destroy$.next();

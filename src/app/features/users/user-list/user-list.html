@@ -24,29 +24,29 @@
       </div>
 
       <div *ngIf="!isLoading && totalUsers > 0" class="table-responsive">
-        <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z2 w-100 table table-hover align-middle rounded-3 overflow-hidden">
+        <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z2 w-100 table table-hover align-middle rounded-3 overflow-hidden">
 
           <!-- ID Column -->
           <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-secondary text-white">#</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="id" class="bg-secondary text-white">#</th>
             <td mat-cell *matCellDef="let user">{{ user.id }}</td>
           </ng-container>
 
           <!-- Username Column -->
           <ng-container matColumnDef="username">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-secondary text-white">Username</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="username" class="bg-secondary text-white">Username</th>
             <td mat-cell *matCellDef="let user"><b>{{ user.username }}</b></td>
           </ng-container>
 
           <!-- Email Column -->
           <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-secondary text-white">Email</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="email" class="bg-secondary text-white">Email</th>
             <td mat-cell *matCellDef="let user"><i class="fa fa-envelope me-1"></i>{{ user.email }}</td>
           </ng-container>
 
           <!-- Role Column -->
           <ng-container matColumnDef="role">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-secondary text-white">Role</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="role" class="bg-secondary text-white">Role</th>
             <td mat-cell *matCellDef="let user">
               <span class="badge" [ngClass]="{
                 'bg-danger': user.role === 'ADMIN',
@@ -63,7 +63,7 @@
 
           <!-- Status Column -->
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="bg-secondary text-white">Status</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="status" class="bg-secondary text-white">Status</th>
             <td mat-cell *matCellDef="let user">
               <span class="badge" [ngClass]="{
                 'bg-success': user.status === 'ACTIVE',

@@ -27,7 +27,8 @@
           <mat-card-subtitle>
             {{ match.startTime | date:'medium' }} - {{ match.endTime | date:'shortTime' }}
           </mat-card-subtitle>
-          <mat-chip color="primary" selected class="status-chip">Accepted</mat-chip>
+          <mat-chip color="warn" selected class="status-chip">{{match.bookingStatus}}</mat-chip>
+          <!-- <mat-chip color="primary" selected class="status-chip">Accepted</mat-chip> -->
         </mat-card-header>
 
         <mat-card-content>
@@ -44,9 +45,9 @@
         </mat-card-content>
 
         <mat-card-actions align="end">
-          <!-- ✅ Popover Trigger -->
+          <!-- Popover Trigger -->
           <button mat-button color="primary" [matMenuTriggerFor]="participantsMenu"
-            (click)="viewParticipants(match.id)">
+            (click)="viewParticipants(match.matchId)">
             <mat-icon>group</mat-icon>
             View Participants
           </button>
@@ -69,7 +70,7 @@
           <mat-card-subtitle>
             {{ match.startTime | date:'medium' }} - {{ match.endTime | date:'shortTime' }}
           </mat-card-subtitle>
-          <mat-chip color="warn" selected class="status-chip">Pending</mat-chip>
+          <mat-chip color="warn" selected class="status-chip">{{match.bookingStatus}}</mat-chip>
         </mat-card-header>
         <mat-card-content>
           <div class="match-details">
@@ -79,9 +80,22 @@
             </div>
           </div>
         </mat-card-content>
+  
+        <mat-card-actions align="end">
+          <button mat-icon-button color="primary" (click)="respondToInvitation(match.participantId, 'ACCEPTED')"
+            matTooltip="Accept Invitation">
+            <mat-icon>check_circle</mat-icon>
+          </button>
+  
+          <button mat-icon-button color="warn" (click)="respondToInvitation(match.participantId, 'DECLINED')"
+            matTooltip="Decline Invitation">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-card-actions>
       </mat-card>
     </div>
   </div>
+
 
   <!-- =============== PAST MATCHES ================== -->
   <div class="matches-section">
@@ -97,7 +111,7 @@
           <mat-card-subtitle>
             {{ match.startTime | date:'medium' }} - {{ match.endTime | date:'shortTime' }}
           </mat-card-subtitle>
-          <mat-chip color="primary" selected class="status-chip">Played</mat-chip>
+          <!-- <mat-chip color="primary" selected class="status-chip">Played</mat-chip> -->
         </mat-card-header>
         <mat-card-content>
           <div class="match-details">
@@ -111,41 +125,10 @@
     </div>
   </div>
 
-  <!-- =============== DECLINED MATCHES ================== -->
-  <div class="matches-section">
-    <h2>Declined Matches</h2>
-    <div *ngIf="declinedMatches.length === 0" class="no-matches">
-      <mat-icon>cancel</mat-icon>
-      <h3>No Declined Matches</h3>
-    </div>
-    <div *ngIf="declinedMatches.length > 0" class="matches-grid">
-      <mat-card *ngFor="let match of declinedMatches" class="match-card declined-match">
-        <mat-card-header>
-          <mat-card-title>{{ match.placeName }}</mat-card-title>
-          <mat-card-subtitle>
-            {{ match.startTime | date:'medium' }} - {{ match.endTime | date:'shortTime' }}
-          </mat-card-subtitle>
-          <mat-chip color="accent" selected class="status-chip">Declined</mat-chip>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="match-details">
-            <div class="detail-item">
-              <mat-icon>group</mat-icon>
-              <span>Team: {{ match.teamName }}</span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  </div>
+  
 
-  <!-- ✅ GLOBAL PARTICIPANTS MENU (Popover) -->
+  <!-- GLOBAL PARTICIPANTS MENU (Popover) -->
   <mat-menu #participantsMenu="matMenu" class="participants-popover">
-    <!-- Loading State -->
-    <!-- <button mat-menu-item disabled *ngIf="loadingParticipants">
-      <mat-spinner diameter="20"></mat-spinner> Loading...
-    </button> -->
-
     <!-- Participants List -->
     <ng-container *ngIf="selectedParticipants.length > 0; else noParticipants">
       <button mat-menu-item *ngFor="let p of selectedParticipants">

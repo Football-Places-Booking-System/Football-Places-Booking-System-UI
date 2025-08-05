@@ -35,8 +35,8 @@ export class Login implements OnInit{
       this.authService.login(email, password).subscribe({
         next: () => {
           console.log('Login successful');
-          console.log('Navigaaaattttee');
-          this.router.navigate(['/dashboard']);
+          // Use the new redirect method to go to the originally requested page or dashboard
+          this.authService.redirectAfterLogin();
         },
         error: (err) => {
           console.error('Login failed', err);
