@@ -140,7 +140,7 @@ private async loadCalendarEvents() {
           title: `Booking: ${booking.teamName || 'Team'}`,
           start: booking.startTime,
           end: booking.endTime,
-          backgroundColor: '#9e9e9e',
+          backgroundColor: '#96ac1dff',
           borderColor: '#9e9e9e',
           textColor: '#ffffff',
           extendedProps: {
@@ -156,57 +156,57 @@ private async loadCalendarEvents() {
       }
     }
 
-    // ✅ 3. Matches as Participant (Orange) - skipping CANCELLED
-    if (Array.isArray(participantMatches)) {
-      const detailedMatches = await Promise.all(
-        participantMatches.map(async (match: IUserMatch) => {
-          if (match.bookingStatus === 'CANCELLED') return undefined;
+    // // ✅ 3. Matches as Participant (Orange) - skipping CANCELLED
+    // if (Array.isArray(participantMatches)) {
+    //   const detailedMatches = await Promise.all(
+    //     participantMatches.map(async (match: IUserMatch) => {
+    //       if (match.bookingStatus === 'CANCELLED') return undefined;
 
-          try {
-            const detailedBooking = await this.bookingService.getBookingDetailsById(match.matchId).toPromise();
-            if (detailedBooking?.status === 'CANCELLED') return undefined;
+    //       try {
+    //         const detailedBooking = await this.bookingService.getBookingDetailsById(match.matchId).toPromise();
+    //         if (detailedBooking?.status === 'CANCELLED') return undefined;
 
-            const place = safePlaces.find(
-              p => p.id.toString() === (match.placeId?.toString() || detailedBooking?.placeId?.toString())
-            );
+    //         const place = safePlaces.find(
+    //           p => p.id.toString() === (match.placeId?.toString() || detailedBooking?.placeId?.toString())
+    //         );
 
-            return {
-              ...match,
-              placeName: place?.name || detailedBooking?.placeName || 'Pitch',
-              location: place?.location || detailedBooking?.placeName || 'Unknown Location',
-              startTime: detailedBooking?.startTime || match.startTime,
-              endTime: detailedBooking?.endTime || match.endTime,
-              bookingStatus: detailedBooking?.status || match.bookingStatus || 'PENDING_PLAYERS',
-              teamName: match.teamName || detailedBooking?.teamName || 'Team'
-            } as IUserMatch & { location: string };
-          } catch {
-            return {
-              ...match,
-              placeName: 'Pitch',
-              location: 'Unknown Location',
-              bookingStatus: 'PENDING_PLAYERS'
-            } as IUserMatch & { location: string };
-          }
-        })
-      );
+    //         return {
+    //           ...match,
+    //           placeName: place?.name || detailedBooking?.placeName || 'Pitch',
+    //           location: place?.location || detailedBooking?.placeName || 'Unknown Location',
+    //           startTime: detailedBooking?.startTime || match.startTime,
+    //           endTime: detailedBooking?.endTime || match.endTime,
+    //           bookingStatus: detailedBooking?.status || match.bookingStatus || 'PENDING_PLAYERS',
+    //           teamName: match.teamName || detailedBooking?.teamName || 'Team'
+    //         } as IUserMatch & { location: string };
+    //       } catch {
+    //         return {
+    //           ...match,
+    //           placeName: 'Pitch',
+    //           location: 'Unknown Location',
+    //           bookingStatus: 'PENDING_PLAYERS'
+    //         } as IUserMatch & { location: string };
+    //       }
+    //     })
+    //   );
 
-      (detailedMatches.filter((m): m is IUserMatch & { location: string } => m !== undefined))
-        .forEach(enrichedMatch => {
-          events.push({
-            id: `match-${enrichedMatch.matchId}`,
-            title: `Match: ${enrichedMatch.teamName}`,
-            start: enrichedMatch.startTime,
-            end: enrichedMatch.endTime,
-            backgroundColor: '#ff9800',
-            borderColor: '#ff9800',
-            textColor: '#ffffff',
-            extendedProps: {
-              type: 'match',
-              data: enrichedMatch
-            }
-          });
-        });
-    }
+    //   (detailedMatches.filter((m): m is IUserMatch & { location: string } => m !== undefined))
+    //     .forEach(enrichedMatch => {
+    //       events.push({
+    //         id: `match-${enrichedMatch.matchId}`,
+    //         title: `Match: ${enrichedMatch.teamName}`,
+    //         start: enrichedMatch.startTime,
+    //         end: enrichedMatch.endTime,
+    //         backgroundColor: '#ff9800',
+    //         borderColor: '#ff9800',
+    //         textColor: '#ffffff',
+    //         extendedProps: {
+    //           type: 'match',
+    //           data: enrichedMatch
+    //         }
+    //       });
+    //     });
+    // }
 
     this.calendarOptions.events = events;
 
