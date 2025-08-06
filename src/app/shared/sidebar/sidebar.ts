@@ -31,14 +31,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
-  ngOnInit(): void {
-    this.role = this.authService.getCurrentUser()?.role;
+ngOnInit(): void {
+  this.role = this.authService.getCurrentUser()?.role?.toUpperCase();
+  console.log('Sidebar detected role:', this.role, 'Raw user:', this.authService.getCurrentUser());
+  
+  if (this.role !== 'ADMIN') {
     this.loadUserTeams();
-    this.loadNotificationCount();
-
-    // Listen for team creation events to refresh sidebar state
-    window.addEventListener('teamCreated', this.handleTeamCreated.bind(this) as EventListener);
   }
+  
+  this.loadNotificationCount();
+}
 
   ngOnDestroy(): void {
     // Clean up event listener
@@ -54,9 +56,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
 private loadUserTeams(): void {
+  if (this.role === 'ADMIN') {
+    this.userTeams = [];
+    console.log('Admin user detected, skipping team fetch.');
+    return;
+  }
+
   this.teamService.getTeamsByCreator().subscribe({
     next: (response: any) => {
-      const teams = response?.content || []; // Access content array
+      const teams = response?.content || [];
       this.userTeams = teams.filter((team: any) =>
         team.members?.some((m: any) => m.role === 'ORGANIZER')
       );
@@ -67,6 +75,7 @@ private loadUserTeams(): void {
     }
   });
 }
+
 
   private loadNotificationCount(): void {
     const currentUser = this.authService.getCurrentUser();

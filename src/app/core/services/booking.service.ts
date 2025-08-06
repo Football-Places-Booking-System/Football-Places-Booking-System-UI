@@ -37,15 +37,14 @@ export class BookingService {
   constructor(private http: HttpClient) {}
 
   // Get all bookings (Admin or Organizer)
-  getBookings(): Observable<IBooking[]> {
-    return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/all`).pipe(
-      map(res => res.content || []),
+getBookings(): Observable<IBooking[]> {
+    return this.http.get<IBooking[]>(`${this.apiUrl}/all`).pipe(
       catchError(err => {
         console.error('Error fetching all bookings:', err);
         return of([]);
       })
     );
-  }
+}
 
   // Get bookings for a specific user
   getUserBookings(userId: string): Observable<IBooking[]> {

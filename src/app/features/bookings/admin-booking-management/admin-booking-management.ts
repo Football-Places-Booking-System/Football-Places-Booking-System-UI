@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { CommonModule, NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -54,31 +54,39 @@ export class AdminBookingManagementComponent implements OnInit {
   cancelledBookings: IBooking[] = [];
   currentUser: any;
 
-  displayedColumns: string[] = ['id', 'user', 'place', 'team', 'date', 'time', 'status', 'actions'];
-
   constructor(
     private bookingService: BookingService,
     private authService: AuthService,
     private router: Router
   ) {}
 
-  ngOnInit(): void {
-    this.currentUser = this.authService.getCurrentUser();
-    this.loadAllBookings();
+  displayedColumns: string[] = [];
+
+ngOnInit(): void {
+  this.currentUser = this.authService.getCurrentUser();
+  this.displayedColumns = this.currentUser?.role === 'ADMIN'
+    ? ['id', 'user', 'place', 'team', 'date', 'time', 'status', 'actions']
+  : ['id', 'place', 'date', 'time', 'status', 'actions'];
+
+
+  // Admin has all columns
+  if (this.currentUser?.role === 'ADMIN') {
+    this.displayedColumns = ['id', 'user', 'place', 'team', 'date', 'time', 'status', 'actions'];
+  } else {
+    // Fallback for non-admin users if same table reused
+    this.displayedColumns = ['id', 'place', 'date', 'time', 'status', 'actions'];
   }
 
-  ngAfterViewInit(): void {
-    // Set up pagination and sorting
-    if (this.paginator && this.sort) {
-      // Connect paginator and sort to the table
-    }
-  }
+  this.loadAllBookings();
+}
+
 
   loadAllBookings(): void {
     this.bookingService.getBookings().subscribe({
       next: (bookings) => {
         this.allBookings = bookings;
         this.categorizeBookings();
+        console.log('All bookings loaded:', this.allBookings);
       },
       error: (error) => {
         console.error('Error loading bookings:', error);
@@ -93,36 +101,28 @@ export class AdminBookingManagementComponent implements OnInit {
   }
 
   approveBooking(booking: IBooking): void {
+    if (!this.canApprove(booking)) return;
+
     this.bookingService.approveBooking(booking.id).subscribe({
-      next: (updatedBooking) => {
-        this.loadAllBookings();
-      },
-      error: (error) => {
-        console.error('Error approving booking:', error);
-      }
+      next: () => this.loadAllBookings(),
+      error: (error) => console.error('Error approving booking:', error)
     });
   }
 
   cancelBooking(booking: IBooking): void {
+    if (!this.canCancel(booking)) return;
+
     this.bookingService.cancelBooking(booking.id).subscribe({
-      next: (updatedBooking) => {
-        this.loadAllBookings();
-      },
-      error: (error) => {
-        console.error('Error cancelling booking:', error);
-      }
+      next: () => this.loadAllBookings(),
+      error: (error) => console.error('Error cancelling booking:', error)
     });
   }
 
   deleteBooking(booking: IBooking): void {
     if (confirm('Are you sure you want to delete this booking?')) {
       this.bookingService.deleteBooking(booking.id).subscribe({
-        next: () => {
-          this.loadAllBookings();
-        },
-        error: (error) => {
-          console.error('Error deleting booking:', error);
-        }
+        next: () => this.loadAllBookings(),
+        error: (error) => console.error('Error deleting booking:', error)
       });
     }
   }
@@ -155,7 +155,7 @@ export class AdminBookingManagementComponent implements OnInit {
       case 'PENDING_PAYMENT':
         return 'Pending Payment';
       case 'PENDING_PLAYERS':
-        return 'Pending_Players';
+        return 'Pending Players';
       default:
         return status;
     }
@@ -168,7 +168,7 @@ export class AdminBookingManagementComponent implements OnInit {
       case 'CANCELLED':
         return 'cancel';
       case 'PENDING_PAYMENT':
-        return 'pending payment';
+        return 'hourglass_empty';
       case 'PENDING_PLAYERS':
         return 'schedule';
       default:
@@ -188,13 +188,12 @@ export class AdminBookingManagementComponent implements OnInit {
     return new Date(dateString).toLocaleString();
   }
 
+  /** Admin can only approve/cancel if booking status is PENDING_PAYMENT */
   canApprove(booking: IBooking): boolean {
     return booking.status === 'PENDING_PAYMENT';
   }
 
   canCancel(booking: IBooking): boolean {
-    return booking.status === 'PENDING_PAYMENT' || booking.status === 'CONFIRMED';
+    return booking.status === 'PENDING_PAYMENT';
   }
-
-
 }
