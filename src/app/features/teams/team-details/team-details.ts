@@ -283,6 +283,10 @@ export class TeamDetails implements OnInit, OnDestroy {
           this.errorMessage = null;
           // Success message will be cleared by user interaction or page navigation
           console.log(`TeamDetailsComponent: ${member.username} promoted to organizer successfully.`);
+          //update the team details to reflect the change
+          this.loadTeamDetails(this.teamId);
+        this.loadTeamMembers(this.teamId);
+        this.checkUserTeamStatus(this.teamId);
         },
         error: (error) => {
           console.error('Error promoting member to organizer:', error);
