@@ -1,19 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { Router ,RouterModule} from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule,NgIf],
+  imports: [ReactiveFormsModule, RouterModule],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
 export class Login implements OnInit{
   loginForm!: FormGroup;
   errorMessage: string = '';
+  isLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -31,15 +31,18 @@ export class Login implements OnInit{
   onSubmit(): void {
     this.errorMessage = '';
     if (this.loginForm.valid) {
+      this.isLoading = true;
       const { email, password } = this.loginForm.value;
       this.authService.login(email, password).subscribe({
         next: () => {
           console.log('Login successful');
+          this.isLoading = false;
           // Use the new redirect method to go to the originally requested page or dashboard
           this.authService.redirectAfterLogin();
         },
         error: (err) => {
           console.error('Login failed', err);
+          this.isLoading = false;
           this.errorMessage = 'Login failed. Please check your credentials.';
         }
       });

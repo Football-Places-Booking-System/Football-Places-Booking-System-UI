@@ -66,11 +66,9 @@ export class CreateTeam implements OnInit {
               detail: { teamId: newTeam.id, userId: currentUser.id }
             }));
 
-            // Navigate to the team list page after a short delay
-            setTimeout(() => {
-              console.log('Navigating to team list page...');
-              this.router.navigate(['/dashboard/teams']);
-            }, 1500);
+            // Navigate to the team list page immediately
+            console.log('Navigating to team list page...');
+            this.router.navigate(['/dashboard/teams']);
           },
           error: (err) => {
             console.error("Error creating team via service:", err);

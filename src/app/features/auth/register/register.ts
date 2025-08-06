@@ -1,19 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { Router ,RouterModule} from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterModule,NgIf],
+  imports: [ReactiveFormsModule, RouterModule],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })
 export class Register implements OnInit {
   registerForm!: FormGroup;
   errorMessage: string = '';
+  isLoading: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -46,6 +46,7 @@ export class Register implements OnInit {
   onSubmit(): void {
     this.errorMessage = '';
     if (this.registerForm.valid) {
+      this.isLoading = true;
       const { username, email, password } = this.registerForm.value;
       // const success = this.authService.register({ username, email, password });
       // if (success) {
@@ -58,11 +59,13 @@ export class Register implements OnInit {
       this.authService.register({ username, email, password }).subscribe
         (response => {
           console.log('Registration successful:', response)
+          this.isLoading = false;
           // Use the new redirect method to go to the originally requested page or dashboard
           this.authService.redirectAfterLogin();
 
         }, error => {
           console.error('Registration error:', error)
+          this.isLoading = false;
           this.errorMessage = 'Registration failed. Please try again.'
         })
       console.log('Registration attempt:', { username, email, password });

@@ -76,11 +76,9 @@ export class InvitePlayer implements OnInit, OnDestroy {
             this.successMessage = `Invitation sent successfully to ${email}!`;
             console.log('InvitePlayerComponent: Invitation successful:', member);
 
-            // Reset form and navigate back after a delay
+            // Reset form and navigate back immediately
             this.inviteForm.reset();
-            setTimeout(() => {
-              this.router.navigate(['/dashboard/teams', this.teamId]);
-            }, 1500);
+            this.router.navigate(['/dashboard/teams', this.teamId]);
           },
           error: (err) => {
             this.errorMessage = `Failed to send invitation: ${err.message || 'Unknown error'}`;

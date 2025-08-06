@@ -187,19 +187,13 @@ export class TeamDetails implements OnInit, OnDestroy {
           this.teamMembers = [...this.teamMembers, newMember];
         }
 
-        // Clear success message after 5 seconds
-        setTimeout(() => {
-          this.successMessage = null;
-        }, 5000);
+        // Success message will be cleared by user interaction or page navigation
       },
       error: (error) => {
         console.error('Failed to send join request:', error);
         this.errorMessage = error.message || 'Failed to send join request. Please try again.';
 
-        // Clear error message after 5 seconds
-        setTimeout(() => {
-          this.errorMessage = null;
-        }, 5000);
+        // Error message will be cleared by user interaction or page navigation
       }
     });
   }
@@ -231,7 +225,7 @@ export class TeamDetails implements OnInit, OnDestroy {
           this.successMessage = 'Team updated successfully!';
           this.errorMessage = null;
           this.isEditing = false;
-          setTimeout(() => this.successMessage = null, 3000);
+          // Success message will be cleared by user interaction or page navigation
         },
         error: (err: any) => {
           console.error('Failed to update team', err);
@@ -255,14 +249,14 @@ export class TeamDetails implements OnInit, OnDestroy {
           this.teamMembers = this.teamMembers.filter(member => member.id !== teamMemberId);
           this.successMessage = 'Member removed successfully!';
           this.errorMessage = null;
-          setTimeout(() => this.successMessage = null, 3000);
+          // Success message will be cleared by user interaction or page navigation
           console.log(`TeamDetailsComponent: Team member ${teamMemberId} removed successfully.`);
         },
         error: (error) => {
           console.error('Error removing team member:', error);
           this.errorMessage = error.message || 'Failed to remove team member';
           this.successMessage = null;
-          setTimeout(() => this.errorMessage = null, 5000);
+          // Error message will be cleared by user interaction or page navigation
         }
       });
     }
@@ -287,14 +281,14 @@ export class TeamDetails implements OnInit, OnDestroy {
           }
           this.successMessage = `${member.username} is now an organizer!`;
           this.errorMessage = null;
-          setTimeout(() => this.successMessage = null, 3000);
+          // Success message will be cleared by user interaction or page navigation
           console.log(`TeamDetailsComponent: ${member.username} promoted to organizer successfully.`);
         },
         error: (error) => {
           console.error('Error promoting member to organizer:', error);
           this.errorMessage = error.message || 'Failed to promote member to organizer';
           this.successMessage = null;
-          setTimeout(() => this.errorMessage = null, 5000);
+          // Error message will be cleared by user interaction or page navigation
         }
       });
     }

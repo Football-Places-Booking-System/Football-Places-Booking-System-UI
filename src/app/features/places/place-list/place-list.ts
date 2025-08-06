@@ -159,7 +159,7 @@ export class PlaceList implements OnInit, OnDestroy {
         this.refreshPlaces();
         this.closeAddPlaceModal();
         this.successMessage = 'Place added successfully!';
-        setTimeout(() => this.successMessage = '', 2500);
+        // Success message will be cleared by user interaction or page navigation
       },
       error: (error) => {
         console.error('Failed to add place:', error);
@@ -250,17 +250,17 @@ export class PlaceList implements OnInit, OnDestroy {
           this.loadPlaces(); // Reload places to refresh the list
           this.closeEditPlaceModal();
           this.successMessage = 'Place updated successfully!';
-          setTimeout(() => this.successMessage = '', 2500);
+          // Success message will be cleared by user interaction or page navigation
         } else {
           console.error('Update failed - service returned false');
           this.successMessage = 'Failed to update place. Please try again.';
-          setTimeout(() => this.successMessage = '', 2500);
+          // Error message will be cleared by user interaction or page navigation
         }
       },
       error: (error) => {
         console.error('Failed to update place - error occurred:', error);
         this.successMessage = 'Error updating place. Please try again.';
-        setTimeout(() => this.successMessage = '', 2500);
+        // Error message will be cleared by user interaction or page navigation
       }
     });
   }
@@ -287,7 +287,7 @@ export class PlaceList implements OnInit, OnDestroy {
           if (success) {
             this.refreshPlaces();
             this.successMessage = 'Place deleted successfully!';
-            setTimeout(() => this.successMessage = '', 2500);
+            // Success message will be cleared by user interaction or page navigation
           }
         },
         error: (error) => {

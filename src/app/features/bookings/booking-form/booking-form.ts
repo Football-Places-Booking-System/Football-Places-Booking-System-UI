@@ -322,9 +322,7 @@ private loadUserTeams(): void {
         this.bookingGroups = [];
         this.availableTimeSlots = [];
 
-        setTimeout(() => {
-          this.router.navigate(['/dashboard/bookings']);
-        }, 2000);
+        this.router.navigate(['/dashboard/bookings']);
       })
       .catch((error) => {
         console.error('Error creating bookings:', error);

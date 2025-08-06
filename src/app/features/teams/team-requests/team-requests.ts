@@ -137,8 +137,7 @@ respondToJoinRequest(teamMemberId: string, status: 'APPROVED' | 'REJECTED'): voi
         this.errorMessage = err.message || 'Failed to respond to join request';
         this.loading = false;
 
-        // Clear error message after 5 seconds
-        setTimeout(() => this.errorMessage = null, 5000);
+        // Error message will be cleared by user interaction or page navigation
       }
     });
     // update the requests list from the database service

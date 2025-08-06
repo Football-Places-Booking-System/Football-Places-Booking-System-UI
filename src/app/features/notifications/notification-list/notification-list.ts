@@ -268,8 +268,7 @@ export class NotificationList implements OnInit, OnDestroy {
     // Remove the notification from the list or reload notifications
     this.loadNotifications();
 
-    // Clear success message after 3 seconds
-    setTimeout(() => this.successMessage = null, 3000);
+    // Success message will be cleared by user interaction or page navigation
 
     this.loading = false;
   }
@@ -279,7 +278,6 @@ export class NotificationList implements OnInit, OnDestroy {
     this.errorMessage = error.message || `Failed to respond to ${requestType}`;
     this.loading = false;
 
-    // Clear error message after 5 seconds
-    setTimeout(() => this.errorMessage = null, 5000);
+    // Error message will be cleared by user interaction or page navigation
   }
 }

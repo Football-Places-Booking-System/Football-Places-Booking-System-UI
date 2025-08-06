@@ -148,16 +148,12 @@ export class BookingDetailsComponent implements OnInit {
         next: () => {
           this.successMessage = 'Booking cancelled successfully!';
           this.loadBookingDetails(); // Reload booking details
-          setTimeout(() => {
-            this.successMessage = null;
-          }, 3000);
+          // Success message will be cleared by user interaction or page navigation
         },
         error: (error) => {
           console.error('Error cancelling booking:', error);
           this.errorMessage = 'Failed to cancel booking. Please try again.';
-          setTimeout(() => {
-            this.errorMessage = null;
-          }, 3000);
+          // Error message will be cleared by user interaction or page navigation
         }
       });
     }

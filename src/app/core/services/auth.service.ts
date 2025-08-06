@@ -8,6 +8,7 @@ import { Observable, throwError, of } from 'rxjs';
 import { tap, catchError, switchMap, map } from 'rxjs/operators';
 
 import { IUser, UserRole, UserStatus, IRegisterUser, IRegisterResponseUser } from '../models/iuser.model';
+import { ErrorUtils } from '../utils/error-utils';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,12 @@ export class AuthService {
   // private apiUrl = '/api/auth';
   private apiUrl = 'http://localhost:8080/api/auth';
 
-  constructor(private router: Router, private http: HttpClient, private userService: UserService) {
+  constructor(
+    private router: Router, 
+    private http: HttpClient, 
+    private userService: UserService,
+    private errorUtils: ErrorUtils
+  ) {
   }
 
   /**
@@ -40,6 +46,7 @@ export class AuthService {
               sessionStorage.setItem('currentUserRole', response.role);
             }
             console.log('AuthService: Registration successful with backend. Role:', response.role);
+            this.errorUtils.showSuccess('Registration successful! Welcome to Football Places Booking System.');
           } else {
             throw new Error('Registration failed: Invalid response from server.');
           }
@@ -73,15 +80,7 @@ export class AuthService {
             return of(response); // Return the response without fetching user profile
           }
         }),
-        catchError(error => {
-          if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.removeItem('isLoggedIn');
-            sessionStorage.removeItem('jwt_token');
-            sessionStorage.removeItem('currentUserRole');
-          }
-          console.error('AuthService: Registration failed with backend error:', error);
-          return throwError(() => new Error(error.error?.message || 'Registration failed. Please try again.'));
-        })
+        catchError(this.errorUtils.handleError<IRegisterResponseUser>())
       );
   }
 
@@ -105,6 +104,7 @@ export class AuthService {
             sessionStorage.setItem('currentUserRole', response.role);
           }
           console.log('AuthService: Login successful with backend. Role:', response.role);
+          this.errorUtils.showSuccess('Login successful! Welcome back.');
         } else {
           throw new Error('Login failed: Invalid response from server.');
         }
@@ -137,15 +137,7 @@ export class AuthService {
           return of(response);
         }
       }),
-      catchError(error => {
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.removeItem('isLoggedIn');
-          sessionStorage.removeItem('jwt_token');
-          sessionStorage.removeItem('currentUserRole');
-        }
-        console.error('AuthService: Login failed with backend error:', error);
-        return throwError(() => new Error(error.error?.message || 'Login failed. Please check your credentials.'));
-      })
+      catchError(this.errorUtils.handleError<IRegisterResponseUser>())
     );
   }
 
@@ -160,6 +152,7 @@ export class AuthService {
       sessionStorage.removeItem('currentUser'); // Clear the current user
     }
     console.log('AuthService: Logged out. Redirecting to login.');
+    this.errorUtils.showInfo('You have been logged out successfully.');
     this.router.navigate(['/login']); // Redirect to the login page
   }
 

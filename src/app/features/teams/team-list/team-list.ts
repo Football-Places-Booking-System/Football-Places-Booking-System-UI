@@ -78,14 +78,14 @@ export class TeamList implements OnInit, OnDestroy {
         this.isRequestingJoin[teamId] = false;
         // Update UI to show request pending
         this.isMemberMap[teamId] = true;
-        setTimeout(() => this.successMessage = null, 3000);
+        // Success message will be cleared by user interaction or page navigation
       },
       error: (err) => {
         console.error('Error requesting to join team:', err);
         this.errorMessage = err.message || 'Failed to send join request';
         this.successMessage = null;
         this.isRequestingJoin[teamId] = false;
-        setTimeout(() => this.errorMessage = null, 5000);
+        // Error message will be cleared by user interaction or page navigation
       }
     });
   }
@@ -224,7 +224,7 @@ export class TeamList implements OnInit, OnDestroy {
   editTeamList(): void {
     console.log('Edit team list clicked');
     this.successMessage = 'Edit Team List functionality would go here!';
-    setTimeout(() => this.successMessage = null, 2000);
+    // Success message will be cleared by user interaction or page navigation
   }
 
   deleteTeam(id: string): void {
