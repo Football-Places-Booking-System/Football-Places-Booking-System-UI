@@ -1,6 +1,6 @@
 import { myUserRole } from '../enums/user-role';
 
-export type UserRole = 'PLAYER' | 'USER' | 'ADMIN' | 'ORGANIZER';
+export type UserRole =  'USER' | 'ADMIN';
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE';
 

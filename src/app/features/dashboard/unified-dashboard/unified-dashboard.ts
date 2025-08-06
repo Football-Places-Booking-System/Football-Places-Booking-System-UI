@@ -58,10 +58,8 @@ export class UnifiedDashboardComponent implements OnInit {
   }
 
   get userRole(): string {
-    if (this.currentUser?.role === 'ORGANIZER' || this.isOrganizer) {
-      return 'ORGANIZER';
-    }
-    return 'PLAYER';
+
+    return 'USER';
   }
 
   get teamCount(): number {

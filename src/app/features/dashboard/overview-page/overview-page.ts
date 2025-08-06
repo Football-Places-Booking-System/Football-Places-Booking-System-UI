@@ -73,14 +73,13 @@ export class OverviewComponent implements OnInit {
   }
 
   get shouldShowUnifiedDashboard(): boolean {
-    return this.role === 'PLAYER' || this.role === 'ORGANIZER' || this.isOrganizerInAnyTeam;
+    return this.role === 'USER' 
   }
 
   // Get effective role for dashboard display
   get effectiveRole(): string {
     if (this.role === 'ADMIN') return 'ADMIN';
-    if (this.role === 'ORGANIZER' || this.isOrganizerInAnyTeam) return 'ORGANIZER';
-    return 'PLAYER';
+    return 'USER';
   }
 }
 

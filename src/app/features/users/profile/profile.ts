@@ -37,7 +37,7 @@ export class Profile implements OnInit {
   isEditing = false;
   isLoading = false;
   isSaving = false;
-  effectiveRole: string = 'PLAYER';
+  effectiveRole: string = 'USER';
   userTeams: any[] = [];
 
   // Form data for editing
@@ -116,10 +116,8 @@ export class Profile implements OnInit {
   private setEffectiveRole(isOrganizerInAnyTeam: boolean = false): void {
     if (this.currentUser?.role === 'ADMIN') {
       this.effectiveRole = 'ADMIN';
-    } else if (this.currentUser?.role === 'ORGANIZER' || isOrganizerInAnyTeam) {
-      this.effectiveRole = 'ORGANIZER';
-    } else {
-      this.effectiveRole = 'PLAYER';
+    }  else {
+      this.effectiveRole = 'USER';
     }
   }
 
@@ -226,9 +224,10 @@ export class Profile implements OnInit {
 
   getRoleDisplayName(role: string): string {
     switch (role) {
-      case 'ADMIN': return 'Administrator';
-      case 'ORGANIZER': return 'Organizer';
-      case 'PLAYER': return 'Player';
+      case 'ADMIN': return 'ADMIN';
+      // case 'ORGANIZER': return 'Organizer';
+      // case 'PLAYER': return 'Player';
+      case 'USER':return 'USER';
       default: return role;
     }
   }
@@ -245,8 +244,8 @@ export class Profile implements OnInit {
   getRoleColor(role: string): string {
     switch (role) {
       case 'ADMIN': return 'danger';
-      case 'ORGANIZER': return 'primary';
-      case 'PLAYER': return 'success';
+      // case 'ORGANIZER': return 'primary';
+      case 'USER': return 'primary';
       default: return 'secondary';
     }
   }

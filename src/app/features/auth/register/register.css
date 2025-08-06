@@ -5,7 +5,7 @@
 .auth-container {
   position: relative;
   height: 100vh;
-  background-image: url('/3139256.jpg');
+  background-image: url('/360_F_868510427_vsvN67LV1zSmLMyXMOFG05tRCmTAj1xL.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -240,6 +240,10 @@
 }
 
 .auth-footer .text-muted {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.card-header .text-muted {
   color: rgba(255, 255, 255, 0.9) !important;
 }
 

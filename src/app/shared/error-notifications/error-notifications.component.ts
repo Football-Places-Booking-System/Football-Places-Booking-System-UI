@@ -21,9 +21,9 @@ import { ErrorHandlerService } from '../../core/services/error-handler.service';
           </div>
           <div class="notification-message">
             <div class="message-text">{{ notification.message }}</div>
-            <div class="error-code" *ngIf="notification.code">
+            <!-- <div class="error-code" *ngIf="notification.code">
               Error Code: {{ notification.code }}
-            </div>
+            </div> -->
           </div>
           <div class="notification-actions">
             <button 
