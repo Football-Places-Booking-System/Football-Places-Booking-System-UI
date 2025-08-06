@@ -137,20 +137,20 @@ getPlaceBookings(placeId: string): Observable<IBooking[]> {
   }
 
   // Cancel a booking
-  cancelBooking(id: string): Observable<IBooking> {
-    return this.http.patch<IBooking>(`${this.apiUrl}/cancel/${id}`, {}).pipe(
+  confirmBooking(id: string): Observable<IBooking> {
+    return this.http.patch<IBooking>(`${this.apiUrl}/confirm/${id}`, {}).pipe(
       catchError(err => {
-        console.error('Error cancelling booking:', err);
+        console.error('Error confirming booking:', err);
         throw err;
       })
     );
   }
 
-  // Approve a booking (Admin only)
-  approveBooking(id: string): Observable<IBooking> {
-    return this.http.patch<IBooking>(`${this.apiUrl}/${id}/approve`, {}).pipe(
+  // Cancel a booking
+  cancelBooking(id: string): Observable<IBooking> {
+    return this.http.patch<IBooking>(`${this.apiUrl}/cancel/${id}`, {}).pipe(
       catchError(err => {
-        console.error('Error approving booking:', err);
+        console.error('Error cancelling booking:', err);
         throw err;
       })
     );

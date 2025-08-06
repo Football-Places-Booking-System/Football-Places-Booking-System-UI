@@ -103,9 +103,9 @@ ngOnInit(): void {
   approveBooking(booking: IBooking): void {
     if (!this.canApprove(booking)) return;
 
-    this.bookingService.approveBooking(booking.id).subscribe({
+    this.bookingService.confirmBooking(booking.id).subscribe({
       next: () => this.loadAllBookings(),
-      error: (error) => console.error('Error approving booking:', error)
+      error: (error) => console.error('Error confirming booking:', error)
     });
   }
 
