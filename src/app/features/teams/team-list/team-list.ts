@@ -5,6 +5,8 @@ import { takeUntil } from 'rxjs/operators';
 import { TeamService } from '../../../core/services/team.service';
 import { TeamMemberService, ITeam, TeamMemberStatus } from '../../../core/services/team-member.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ErrorHandlerService } from '../../../core/services/error-handler.service';
+import { ConfirmationDialogComponent, ConfirmationDialogData } from '../../../shared/confirmation-dialog/confirmation-dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,7 +26,8 @@ import { CommonModule } from '@angular/common';
     MatIconModule,
     MatProgressSpinnerModule,
     MatSelectModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    ConfirmationDialogComponent
   ]
 })
 export class TeamList implements OnInit, OnDestroy {
@@ -37,12 +40,23 @@ export class TeamList implements OnInit, OnDestroy {
   isRequestingJoin: { [teamId: string]: boolean } = {};
   userRoleMap: { [teamId: string]: 'ORGANIZER' | 'MEMBER' | null } = {};
   teamViewFilter: 'MY_TEAMS' | 'OTHER_TEAMS' = 'MY_TEAMS';
+  
+  // Confirmation dialog properties
+  showConfirmationDialog: boolean = false;
+  confirmationDialogData: ConfirmationDialogData = {
+    title: '',
+    message: '',
+    type: 'warning'
+  };
+  pendingDeleteTeamId: string | null = null;
+  
   private destroy$ = new Subject<void>();
 
   constructor(
     private teamService: TeamService,
     private teamMemberService: TeamMemberService,
     private authService: AuthService,
+    private errorHandler: ErrorHandlerService,
     private router: Router
   ) {
     const user = this.authService.getCurrentUser();
@@ -73,6 +87,9 @@ export class TeamList implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: () => {
+        // Show success snack bar notification
+        this.errorHandler.showSuccessNotification('Join request sent successfully!');
+        
         this.successMessage = 'Join request sent successfully!';
         this.errorMessage = null;
         this.isRequestingJoin[teamId] = false;
@@ -228,20 +245,53 @@ export class TeamList implements OnInit, OnDestroy {
   }
 
   deleteTeam(id: string): void {
-    if (confirm('Are you sure you want to delete this team?')) {
-      this.teamService.deleteTeam(id).pipe(takeUntil(this.destroy$)).subscribe({
-        next: () => {
-          this.successMessage = 'Team deleted successfully!';
-          this.errorMessage = null;
-          this.loadTeams();
-        },
-        error: (err) => {
-          console.error('Failed to delete team', err);
-          this.errorMessage = 'Failed to delete team. Please try again.';
-          this.successMessage = null;
-        }
-      });
-    }
+    const team = this.teams.find(t => t.id === id);
+    if (!team) return;
+
+    this.pendingDeleteTeamId = id;
+    this.confirmationDialogData = {
+      title: 'Delete Team',
+      message: `Are you sure you want to delete "${team.name}"? This action cannot be undone and will remove all team members and data.`,
+      confirmText: 'Delete Team',
+      cancelText: 'Cancel',
+      type: 'danger'
+    };
+    this.showConfirmationDialog = true;
+  }
+
+  private executeDeleteTeam(): void {
+    if (!this.pendingDeleteTeamId) return;
+
+    this.teamService.deleteTeam(this.pendingDeleteTeamId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        // Show success snack bar notification
+        this.errorHandler.showSuccessNotification('Team deleted successfully!');
+        
+        this.successMessage = 'Team deleted successfully!';
+        this.errorMessage = null;
+        this.loadTeams();
+        this.closeConfirmationDialog();
+      },
+      error: (err) => {
+        console.error('Failed to delete team', err);
+        this.errorMessage = 'Failed to delete team. Please try again.';
+        this.successMessage = null;
+        this.closeConfirmationDialog();
+      }
+    });
+  }
+
+  closeConfirmationDialog(): void {
+    this.showConfirmationDialog = false;
+    this.pendingDeleteTeamId = null;
+  }
+
+  onConfirmationConfirmed(): void {
+    this.executeDeleteTeam();
+  }
+
+  onConfirmationCancelled(): void {
+    this.closeConfirmationDialog();
   }
 
   goToHome(): void {
