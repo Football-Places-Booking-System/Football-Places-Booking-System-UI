@@ -250,19 +250,6 @@ private parseLocalDateTime(dateTime: string): Date {
   return new Date(year, month - 1, day, hour, minute, second || 0);
 }
 
-
-
-
-  // Delete a booking
-  deleteBooking(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(err => {
-        console.error('Error deleting booking:', err);
-        throw err;
-      })
-    );
-  }
-
   // Get upcoming bookings for a user
   getUpcomingBookings(userId: string): Observable<IBooking[]> {
     return this.http.get<{ content: IBooking[] }>(`${this.apiUrl}/user/${userId}/upcoming`).pipe(

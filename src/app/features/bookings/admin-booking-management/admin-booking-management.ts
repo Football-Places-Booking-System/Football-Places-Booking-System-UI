@@ -118,15 +118,6 @@ ngOnInit(): void {
     });
   }
 
-  deleteBooking(booking: IBooking): void {
-    if (confirm('Are you sure you want to delete this booking?')) {
-      this.bookingService.deleteBooking(booking.id).subscribe({
-        next: () => this.loadAllBookings(),
-        error: (error) => console.error('Error deleting booking:', error)
-      });
-    }
-  }
-
   viewBookingDetails(booking: IBooking): void {
     this.router.navigate(['/dashboard/bookings', booking.id]);
   }
