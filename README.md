@@ -286,7 +286,7 @@ This frontend application integrates with a Spring Boot backend API. The main AP
 ##  Project Structure
 
 ```
-Football-Places-Booking-System-UI/
+Football-Places-Booking-System-UI/Frontend/
 ├── src/
 │   ├── app/
 │   │   ├── core/                          # Core functionality
